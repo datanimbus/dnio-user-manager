@@ -1,0 +1,3619 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: User Management APIs
+host: 'localhost:10004'
+basePath: /rbac
+schemes:
+- http
+consumes:
+- multipart/form-data
+- application/json
+produces:
+- application/json
+- text/plain
+paths:
+  /usr:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new User
+      operationId: UserCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a User
+        schema:
+          $ref: '#/definitions/Usercreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /usr/app/{app}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User in the app
+      operationId: UserInApp
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  /bot/app/{app}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of bot in the app
+      operationId: BotInApp
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error        
+  '/usr/bulkCreate/{fileId}/validate':
+    x-swagger-router-controller: controller
+    put:
+      description: payload
+      operationId: BulkAddUserValidate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: fileId
+        in: path
+        type: string
+        required: true
+        description: Id of the file
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          $ref: '#/definitions/BulkAddUserValidate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/bulkCreate/{fileId}':
+    x-swagger-router-controller: controller
+    post:
+      description: To bulk add users
+      operationId: BulkAddUserCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: fileId
+        in: path
+        type: string
+        required: true
+        description: Id of the file
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          $ref: '#/definitions/BulkAddUserCreate'          
+      responses:
+        '200':
+          description: meta data of file
+        '400': 
+          description: Bad parameters
+        '404':
+          description: file not found
+        '500': 
+          description: Internal server error
+  '/usr/bulkCreate/{fileId}/download':
+    x-swagger-router-controller: controller
+    get:
+      description: To download bulk add users
+      operationId: BulkAddUserDownload
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: fileId
+        in: path
+        type: string
+        required: true
+        description: Id of the file      
+      responses:
+        '200':
+          description: meta data of file
+        '400': 
+          description: Bad parameters
+        '404':
+          description: file not found
+        '500': 
+          description: Internal server error
+  '/usr/bulkCreate/{fileId}/count':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of user
+      operationId: BulkCreateUserCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: fileId
+        in: path
+        required: true
+        type: string
+        description: fileId against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  '/usr/bulkCreate/{fileId}/userList':
+    x-swagger-router-controller: controller
+    get:
+      description: list of user created with fileId
+      operationId: BulkCreateUserList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: fileId
+        in: path
+        required: true
+        type: string
+        description: fileId against which we db will be querried  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+            
+  /usr/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /usr/app/{app}/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of user in app
+      operationId: UserInAppCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /usr/app/{app}/distinctAttributes:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the distinct attributes of the users in the app
+      operationId: distinctUserAttribute
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error        
+  /bot/app/{app}/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of bot in app
+      operationId: BotInAppCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error                
+  '/usr/reviewpermission/{app}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve if user has review permission for an App
+      operationId: ReviewPermission
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried
+      responses:
+        '200':
+          description: Atleast one service has review permission
+        '400':
+          description: Bad Parameter
+        '500':
+          description: Internal server error
+  '/usr/reviewpermissionservice/{entity}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve if user has review permission for an Service
+      operationId: ReviewPermissionService
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: entity
+        in: path
+        required: true
+        type: string
+        description: service id against which we db will be querried
+      - name: user
+        in: query
+        type: string
+        description: user id to check is user has review permission
+      responses:
+        '200':
+          description: Atleast one service has review permission
+        '404':
+          description: No service with role permission as review
+        '500':
+          description: Internal server error
+  '/usr/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update User
+      operationId: UserUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          $ref: '#/definitions/Userupdate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a new User
+      operationId: UserDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/{id}/allRoles':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of roles of a User
+      operationId: UserAllRoles
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be updated
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/{usrId}/appList':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieves a list of apps of a user is part of. The app list will not contain the apps which the requesting user in not part of.
+      operationId: UserAppList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: usrId
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                
+  '/usr/{id}/password':
+    x-swagger-router-controller: controller
+    put:
+      description: Update existing user password
+      operationId: UserUpdatePassword
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          $ref: '#/definitions/Userupdatepassword'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/changeAdAttribute':
+    x-swagger-router-controller: controller
+    put:
+      description: Update AD config. Change AD username attribute
+      operationId: UserChangeADAttribute
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: object
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/fixUser':
+    x-swagger-router-controller: controller
+    put:
+      description: Fix azure user if something fails.
+      operationId: UserADFix
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: object
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/fixUserEmail':
+    x-swagger-router-controller: controller
+    put:
+      description: Fix azure user email.
+      operationId: UserADEmailFix
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: object
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error        
+  '/usr/{userId}/appAdmin/{action}':
+    x-swagger-router-controller: controller
+    put:
+      description: Update user's appAdmin access
+      operationId: UserEditAppAdmin
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: userId
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      - name: action
+        in: path
+        type: string
+        required: true
+        description: action grant or revoke
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: 'object'  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error        
+  '/usr/{userId}/superAdmin/{action}':
+    x-swagger-router-controller: controller
+    put:
+      description: Update user's appAdmin access
+      operationId: UserEditSuperAdmin
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: userId
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      - name: action
+        in: path
+        type: string
+        required: true
+        description: action grant or revoke
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: 'object'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                
+  '/{idType}/roles':
+    x-swagger-router-controller: controller
+    get:
+      description: Get list of roles can be added to a user/group
+      operationId: UserRolesListing
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: query
+        type: string
+        description: Id of the user/group
+      - name: text
+        in: query
+        type: string
+        description: text to be searched
+      - name: entity
+        in: query
+        type: string
+        description: entity to be searched  
+      - name: idType
+        in: path
+        type: string
+        required: true
+        description: Type group or user 
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/{userId}/operations':
+    x-swagger-router-controller: controller
+    get:
+      description: Get list of roles can be added to a user
+      operationId: UserRolesType
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: userId
+        in: path
+        type: string
+        required: true
+        description: Id of the user
+      responses:
+        '200':
+          description: List of the roles
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/{id}/reset':
+    x-swagger-router-controller: controller
+    put:
+      description: Update existing user password
+      operationId: UserResetPassword
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema:
+          $ref: '#/definitions/Userresetpassword'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/hb':
+    x-swagger-router-controller: controller
+    put:
+      description: Heart beat for UI
+      operationId: UserHB
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema:
+          type: 'object'  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error        
+  /usr/audit:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the audit logs of users
+      operationId: UserAudit
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of records per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: search
+        in: query
+        type: string
+        description: String to search across all field
+      responses:
+        '200':
+          description: audit of document
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /usr/audit/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of audit logs of usr
+      operationId: UserAuditCount
+      parameters:
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      responses:
+        '200':
+          description: count of audit logs
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/usr/app/{app}/create':
+    x-swagger-router-controller: controller
+    post:
+      description: Creates a user and add it to given groups
+      operationId: CreateUserAddToGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name   
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+          properties:
+            user:
+              type: "object"
+            groups:
+              type: "array"
+              items:
+                type: "string"
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /{usrType}/app/{app}/{groupId}/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of bot in app
+      operationId: UserInGroupCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: usrType
+        in: path
+        required: true
+        type: string
+        description: bot or usr     
+      - name: groupId
+        in: path
+        required: true
+        type: string
+        description: group Id against which we db will be querried   
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /{usrType}/app/{app}/{groupId}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User in the app
+      operationId: UserInGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried
+      - name: groupId
+        in: path
+        required: true
+        type: string
+        description: groupId against which we db will be querried
+      - name: usrType
+        in: path
+        required: true
+        type: string
+        description: bot or usr     
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  '/usr/{usrId}/addToGroups':
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to group list
+      operationId: UserAddToGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            groups:
+              type: "array"
+              items:
+                type: "string"
+      - name: usrId
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  '/usr/{usrId}/removeFromGroups':
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to group list
+      operationId: UserRemoveFromGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            groups:
+              type: "array"
+              items: 
+                type: "string"
+      - name: usrId
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                            
+  '/usr/{usrId}/addToApps':
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to App
+      operationId: UserAddToApps
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            apps:
+              type: "array"
+              items:
+                type: "string"
+      - name: usrId
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                 
+  '/usr/{username}/{app}/import':
+    x-swagger-router-controller: controller
+    put:
+      description: Import a user to App
+      operationId: UserImportToApp
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: username
+        in: path
+        type: string
+        required: true
+        description: username of the User to be updated
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error  
+        
+  /group:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of group
+      operationId: GroupList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new Group
+      operationId: GroupCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a Group
+        schema:
+          $ref: '#/definitions/Groupcreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/group/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of group
+      operationId: GroupShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update group
+      operationId: GroupUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a Roles
+        schema:
+          $ref: '#/definitions/Preferencescreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the Roles to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a group
+      operationId: GroupDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /{app}/group:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of group in the app
+      operationId: GroupInApp
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                
+  /{app}/group/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve count of Group in app
+      operationId: GroupInAppCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error                        
+  /preferences:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of preferences
+      operationId: PreferencesList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new Role
+      operationId: PreferencesCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a Role
+        schema:
+          $ref: '#/definitions/Preferencescreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /filter:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of preferences
+      operationId: FilterList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new Role
+      operationId: FilterCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a Role
+        schema:
+          $ref: '#/definitions/Filtercreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/filter/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of App
+      operationId: FilterShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update Roles
+      operationId: FilterUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a Roles
+        schema:
+          $ref: '#/definitions/Filtercreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the Roles to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a Role
+      operationId: FilterDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /group/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a count of group
+      operationId: GroupCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error        
+  '/preferences/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of App
+      operationId: PreferencesShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update Roles
+      operationId: PreferencesUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a Roles
+        schema:
+          $ref: '#/definitions/Preferencescreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the Roles to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a Role
+      operationId: PreferencesDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /preferences/audit:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the audit logs of preferences
+      operationId: PreferencesAudit
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of records per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: search
+        in: query
+        type: string
+        description: String to search across all field
+      responses:
+        '200':
+          description: audit of document
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /preferences/audit/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of audit logs of preferences
+      operationId: PreferencesAuditCount
+      parameters:
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      responses:
+        '200':
+          description: count of audit logs
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /login:
+    x-swagger-router-controller: controller
+    post:
+      description: User login
+      operationId: UserLocalLogin
+      parameters:
+      - name: data
+        in: body
+        description: Payload to create a User
+        schema:
+          $ref: '#/definitions/UserLocalLogin'
+      responses:
+        '200':
+          description: Successfully logged in
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error 
+  /ldap/login:
+    x-swagger-router-controller: controller
+    post:
+      description: User login
+      operationId: UserLdapLogin
+      parameters:
+      - name: data
+        in: body
+        description: Payload to create a User
+        schema:
+          $ref: '#/definitions/UserLocalLogin'
+      responses:
+        '200':
+          description: Successfully logged in
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error        
+  /azure/login:
+    x-swagger-router-controller: controller
+    get:
+      description: User login
+      operationId: UserAzureLogin
+      responses:
+        '302':
+          description: Redirecting to azure
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error 
+  /azure/userFetch:
+    x-swagger-router-controller: controller
+    get:
+      description: User login
+      operationId: AzureUserFetch
+      responses:
+        '302':
+          description: Redirecting to azure
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error      
+  /logout:
+    x-swagger-router-controller: controller
+    delete:
+      description: User logout
+      operationId: UserLogout
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      responses:
+        '200':
+          description: Successfully logged in
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  # TO BE REMOVED AS DISCUSSED WITH JERRY
+  # /closeAllSessions:
+  #   x-swagger-router-controller: controller
+  #   delete:
+  #     description: Close all active session for current user using his c
+  #     operationId: UserCloseSessions
+  #     parameters:
+  #     - name: data
+  #       in: body
+  #       description: Payload username and password
+  #       schema:
+  #         type: 'object'
+  #     responses:
+  #       '200':
+  #         description: API successful
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
+  /usr/{id}/closeAllSessions:
+    x-swagger-router-controller: controller
+    delete:
+      description: Close all active session for a user
+      operationId: UserCloseSessionsForUser
+      parameters:
+      - name: data
+        in: body
+        description: Payload to create a User
+        schema:
+          type: 'object'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched    
+      responses:
+        '200':
+          description: API successful
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error                
+  /validate:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserValidateUserSession
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      responses:
+        '200':
+          description: Valid session
+        '500':
+          description: Internal server error
+  /check:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserCheckUserSession
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      responses:
+        '200':
+          description: Valid session
+        '500':
+          description: Internal server error
+  /extend:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserExtendUserSession
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      responses:
+        '200':
+          description: Valid session
+        '500':
+          description: Internal server error        
+  /refresh:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: UserRefreshUserSession
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: rToken
+        in: header
+        type: string
+        description: The JWT rToken for req. validation
+      responses:
+        '200':
+          description: Valid session
+        '500':
+          description: Internal server error
+  /config:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of config
+      operationId: ConfigList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the config
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/config/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of config
+      operationId: ConfigShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /app:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: AppList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new Domian
+      operationId: AppCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a App
+        schema:
+          $ref: '#/definitions/Appcreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/app/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of App
+      operationId: AppShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Create a new App
+      operationId: AppUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a Doamin
+        schema:
+          $ref: '#/definitions/Appcreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Deletes a App
+      operationId: AppDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /app/audit:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the audit logs of app
+      operationId: AppAudit
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of records per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: search
+        in: query
+        type: string
+        description: String to search across all field
+      responses:
+        '200':
+          description: audit of document
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /app/audit/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of audit logs of app
+      operationId: AppAuditCount
+      parameters:
+      - name: filter
+        in: query
+        type: string
+        description: Filter records based on certain fields
+      responses:
+        '200':
+          description: count of audit logs
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/app/{app}/removeUsers':
+    x-swagger-router-controller: controller
+    put:
+      description: Removes user from an app
+      operationId: AppRemoveUsers
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name  
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+          properties:
+            userIds:
+              type: "array"
+              items:
+                type: "string"          
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  '/app/{app}/removeBots':
+    x-swagger-router-controller: controller
+    put:
+      description: Removes bots from an app
+      operationId: AppRemoveBots
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name  
+      - name: data
+        in: body
+        description: Id of the Bots to be removed
+        schema: 
+          type: "object"
+          properties:
+            userIds:
+              type: "array"
+              items:
+                type: "string"          
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error         
+  '/app/{app}/addUsers':
+    x-swagger-router-controller: controller
+    put:
+      description: Add users to an app
+      operationId: AppAddUsers
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name  
+      - name: data
+        in: body
+        description: Id of the users to be added
+        schema: 
+          type: "object"
+          properties:
+            userIds:
+              type: "array"
+              items:
+                type: "string"          
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error         
+  '/app/ipwhitelisting':
+    x-swagger-router-controller: controller
+    get:
+      description: fetch app-wise ipwhitelisting
+      operationId: AppIPlist
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  /role:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of Roles
+      operationId: RolesList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    post:
+      description: Create a new role
+      operationId: RolesCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to create a role
+        schema:
+          $ref: '#/definitions/Rolescreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/role/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a Role
+      operationId: RolesShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update a Role
+      operationId: RolesUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a Doamin
+        schema:
+          $ref: '#/definitions/Rolescreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a Role
+      operationId: RoleDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/app/{app}/bookmark/count':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of bookmarks
+      operationId: BookmarkCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: app against which we db will be querried   
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  '/app/{app}/bookmark':
+    x-swagger-router-controller: controller
+    post:
+      description: Create a new bookmark
+      operationId: BookmarkCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app of the User to be delete
+      - name: data
+        in: body
+        description: Payload to create a bookmark
+        schema:
+          $ref: '#/definitions/BookmarkCreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    get:
+      description: list of bookmark
+      operationId: BookmarkList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: app against which we db will be querried  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/app/{app}/bookmark/bulkDelete':
+    x-swagger-router-controller: controller
+    delete:
+      description: Delete many bookmark
+      operationId: BookmarkBulkDelete
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app of the bookmark to update
+      - name: id
+        in: query
+        type: string
+        required: true
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/app/{app}/bookmark/{id}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of bookmark
+      operationId: BookmarkShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app of the User to be delete
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update bookmark
+      operationId: BookmarkUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app of the bookmark to update
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: data
+        in: body
+        description: Payload to update a bookmark
+        schema:
+          $ref: '#/definitions/BookmarkCreate'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server 
+    delete:
+      description: Delete a bookmark
+      operationId: BookmarkDelete
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app of the bookmark to update
+      - name: id
+        in: path
+        type: string
+        required: true
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/role/updateDefinition/{id}':
+    x-swagger-router-controller: controller
+    put:
+      description: Update a definition in a role
+      operationId: RolesDefinitionUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a definition
+        schema:
+          $ref: '#/definitions/Rolescreate'
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /role/name/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a name from Role id
+      operationId: RolesNameShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: entity
+        in: query
+        type: string
+        description: entity of role
+      - name: app
+        in: query
+        type: string
+        description: entity of role
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/service/{id}':
+    x-swagger-router-controller: controller
+    post:
+      description: Create everything related to service
+      operationId: ServiceCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be created
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete everything related to service
+      operationId: ServiceDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the service to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                       
+  '/library/{id}':
+    x-swagger-router-controller: controller
+    post:
+      description: Create everything related to library
+      operationId: LibraryCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be created
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete everything related to library
+      operationId: LibraryDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the library to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error   
+  '/partner/{id}':
+    x-swagger-router-controller: controller
+    post:
+      description: Create everything related to partner
+      operationId: PartnerCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be created
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete everything related to partner
+      operationId: PartnerDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the service to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  '/flow/{id}':
+    x-swagger-router-controller: controller
+    delete:
+      description: Delete everything related to flow
+      operationId: FlowDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the service to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error   
+  '/nanoservice/{id}':
+    x-swagger-router-controller: controller
+    post:
+      description: Create everything related to partner
+      operationId: NSCreate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be created
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete everything related to nanoservice
+      operationId: NSDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the service to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error  
+  '/dataformat/{id}':
+    x-swagger-router-controller: controller
+    delete:
+      description: Delete everything related to nanoservice
+      operationId: DFDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the service to be delete
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                                                              
+  '/approvers':
+    x-swagger-router-controller: controller
+    get:
+      description: get list of approvers for an entity
+      operationId: ApproversList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: entity
+        in: query
+        type: string
+        required: true
+        description: entity id
+      - name: app
+        in: query
+        type: string
+        required: true
+        description: app id
+      responses:
+        '200':
+          description: List of the approvers
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /{auth}/search:
+    x-swagger-router-controller: controller
+    post:
+      description: Search users in ldap
+      operationId: LdapSearchUsers
+      parameters:
+      - name: auth
+        in: path
+        type: string
+        required: true
+        description: auth type
+      - name: data
+        in: body
+        description: Payload connection
+        schema:
+          $ref: '#/definitions/ldap'
+      responses:
+        '200':
+          description: connection successful
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /health/live:
+    x-swagger-router-controller: controller
+    get:
+      description: health 
+      operationId: health
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req.validation
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error   
+  /health/ready:
+    x-swagger-router-controller: controller
+    get:
+      description: readiness 
+      operationId: readiness
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for req.validation
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No records to list with the given parameter set.
+        '500':
+          description: Internal server error       
+  /{auth}:
+    x-swagger-router-controller: controller
+    post:
+      description: Switch connection to auth
+      operationId: LdapSaveConnection
+      parameters:
+      - name: auth
+        in: path
+        type: string
+        required: true
+        description: auth type
+      - name: data
+        in: body
+        description: Payload connection
+        schema:
+          $ref: '#/definitions/ldap'
+      responses:
+        '200':
+          description: connection successful
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /{auth}/import:
+    x-swagger-router-controller: controller
+    post:
+      description: Import LDAP users to local
+      operationId: LdapUserImport
+      parameters:
+      - name: auth
+        in: path
+        type: string
+        required: true
+        description: auth type
+      - name: data
+        in: body
+        description: Payload to create a User
+        schema:
+          $ref: '#/definitions/ldapUserImport'
+      responses:
+        '200':
+          description: connection successful
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /azure/userFetch/callback:
+    x-swagger-router-controller: controller
+    get:
+      description: Test connection to ldap
+      operationId: AzureUserFetchCallback
+      parameters:
+      - name: code
+        in: query
+        type: string
+        description: code by azure ad
+      responses:
+        '200':
+          description: User detail in LDAP
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /azure/login/callback:
+    x-swagger-router-controller: controller
+    get:
+      description: Test connection to ldap
+      operationId: UserAzureLoginCallback
+      parameters:
+      - name: code
+        in: query
+        type: string
+        description: code by azure ad
+      responses:
+        '200':
+          description: User detail in LDAP
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error                
+  '/authType/{userName}':
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve authType of a User
+      operationId: authType
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: userName
+        in: path
+        type: string
+        required: true
+        description: UserName of the object to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  /{auth}/test:
+    x-swagger-router-controller: controller
+    post:
+      description: Test connection to ldap
+      operationId: LdapTestMapping
+      parameters:
+      - name: auth
+        in: path
+        type: string
+        required: true
+        description: auth type
+      - name: data
+        in: body
+        description: Payload to connection
+        schema:
+          $ref: '#/definitions/ldap'
+      responses:
+        '200':
+          description: User detail in LDAP
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error       
+  '/bot/botKey/{_id}':
+    x-swagger-router-controller: controller
+    post:
+      description: Create a new bot key
+      operationId: createBotKey
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for request validation
+      - name: _id
+        in: path
+        required: true
+        type: string
+        description: Id of the bot
+      - name: data
+        in: body
+        description: Payload to create a Bot
+        schema:
+          $ref: '#/definitions/Bots'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update the bot key
+      operationId: updateBotKey
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: _id
+        in: path
+        required: true
+        type: string
+        description: Id of the bot
+      - name: data
+        in: body
+        description: Payload to update a Bot
+        schema:
+          $ref: '#/definitions/Bots'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a bot key
+      operationId: deleteBotKey
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: _id
+        in: path
+        type: string
+        required: true
+        description: Id of the bot to be deleted
+      - name: data
+        in: body
+        description: Payload to update a Bot
+        schema:
+          $ref: '#/definitions/Bots'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/bot/botKey/session/{_id}':
+    x-swagger-router-controller: controller
+    delete:
+      description: End a new bot key
+      operationId: endBotKeySession
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for request validation
+      - name: _id
+        in: path
+        type: string
+        required: true
+        description: Id of the bot to end session
+      - name: data
+        in: body
+        required: true
+        description: Payload needed to end a Bot session
+        schema:
+          $ref: '#/definitions/Bots'
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  '/{userType}/{_id}/status/{userState}':
+    x-swagger-router-controller: controller
+    put:
+      description: End a new bot key
+      operationId: disableUser
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for request validation
+      - name: _id
+        in: path
+        type: string
+        required: true
+        description: userId to disable the user
+      - name: userType
+        in: path
+        type: string
+        required: true
+        description: bot or user
+      - name: userState
+        in: path
+        type: string
+        required: true
+        description: status of the user
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+definitions:
+  Usercreate:
+    required:
+    - username
+    - password
+    - roles
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+      isActive:
+        type: boolean
+        default: true
+      basicDetails:
+        properties:
+          name: { type: [string, "null"] }
+          alternateEmail: { type: [string, "null"] }
+          phone: { type: [string, "null"] }
+      roles:
+        type: [array, "null"]
+        items:
+          type: object
+      description:
+        type: [string, "null"]
+      enableSessionRefresh:
+        type: boolean
+  Userupdate:
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+      isActive:
+        type: boolean
+        default: true
+      basicDetails:
+        properties:
+          name: { type: [string, "null"] }
+          alternateEmail: { type: [string, "null"] }
+          phone: { type: [string, "null"] }
+      accessControl:
+        properties:
+          accessLevel: { type: [string, "null"] }
+          app: { type: [array, "null"] }
+      roles:
+        type: [array, "null"]
+        items:
+          type: object
+      description:
+        type: [string, "null"]
+      enableSessionRefresh:
+        type: [boolean, "null"]
+  Userupdatepassword:
+    required:
+    - oldpassword
+    - newpassword
+    properties:
+      oldpassword:
+        type: string
+      newpassword:
+        type: string
+  Userresetpassword:
+    required:
+    - password
+    - cpassword
+    properties:
+      password:
+        type: string
+      cpassword:
+        type: string
+  UserLocalLogin:
+    required:
+    - username
+    - password
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+  Appcreate:
+    properties:
+      type:
+        type: string
+        enum:
+        - Management
+        - Distribution
+  Preferencescreate:
+    properties:
+      userId:
+        type: string
+      type:
+        type: string
+      key:
+        type: string
+      value:
+        type: string
+  Filtercreate:
+    properties:
+      name:
+        type: string
+      private:
+        type: boolean
+      serviceId:
+        type: string
+      value:
+        type: string
+      app:
+        type: string
+      createdBy:
+        type: string
+      type:
+        type: string
+  BulkAddUserValidate:
+    required:
+    - fileName
+    - headerMapping
+    properties:
+      fileId:
+        type: string
+      fileName:
+        type: string
+      headerMapping:
+        type: object
+      fileHeaders:
+        type: boolean
+  BulkAddUserCreate:
+    required:
+    - fileName
+    - conflictSerialNo
+    - fileId
+    properties:
+      conflictSerialNo:
+        type: [array, "null"]
+        items:
+          type: integer
+      fileName:
+        type: string
+      fileId:
+        type: string
+  BookmarkCreate:
+    required:
+      - name
+      - url
+      - options
+      - app
+      - createdBy
+    properties:
+      name:
+        type: string
+      url:
+        type: string
+      options:
+        type: string
+        enum:
+          - FRAME
+          - NEW_TAB
+      app:
+        type: string
+      createdBy:
+        type: string
+  Groupcreate:
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      app:
+        type: string
+      users:
+        type: array
+        items:
+          type: string
+      roles:
+        type: [array, "null"]
+        items:
+          type: object        
+  Rolescreate:
+    required:
+    - entity
+    - app
+    properties:
+      description:
+        type: string
+      app:
+        type: string
+      entity:
+        type: string
+      entityName:
+        type: string
+      fields:
+        type: [string, 'null']
+  azureCode:
+    type: object      
+  ldap:
+    properties:
+      url:
+        type: [string, 'null']
+      bindDN:
+        type: [string, 'null']
+      bindPassword:
+        type: [string, 'null']
+      baseDN:
+        type: [string, 'null']
+      baseFilter:
+        type: [string, 'null']
+      mapping:
+        type: [object, 'null']
+      admin:
+        type: [string, 'null']
+      searchText:
+        type: [string, 'null']
+      user:
+        type: [object, 'null']
+      clientId:
+        type: [string, 'null']
+      clientSecret:
+        type: [string, 'null']
+      tenant:
+        type: [string, 'null']  
+  ldapUserImport:
+    required:
+    - username
+    - roles
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+      isActive:
+        type: boolean
+        default: true
+      basicDetails:
+        properties:
+          name: { type: [string, "null"] }
+          alternateEmail: { type: [string, "null"] }
+          phone: { type: [string, "null"] }
+      roles:
+        type: [array, "null"]
+        items:
+          type: object
+      description:
+        type: [string, "null"]
+      enableSessionRefresh:
+        type: boolean
+  Bots:
+    properties:
+      isActive:
+        type: boolean
+        default: true
+      keyId:
+        type: string
+      expires:
+        type: number
+      label:
+        type: string
+      botName:
+        type: string
+      desc:
+        type: string

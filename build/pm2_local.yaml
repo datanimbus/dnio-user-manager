@@ -1,0 +1,34 @@
+apps:
+- name: 03-user
+  script: ./app.js
+  max_restarts: 5
+  watch: true
+  env:
+    MONGO_AUTHOR_URL: mongodb://root:itworks%40123123123@localhost:27017
+    MONGO_APPCENTER_URL: mongodb://root:itworks%40123123123@localhost:27017
+    MONGO_LOGS_URL: mongodb://root:itworks%40123123123@localhost:27017
+    MONGO_APPCENTER_BASE_URL: mongodb://root:itworks%40123123123@localhost:27017
+    MONGO_AUTHOR_DBNAME: odpConfig
+    MONGO_LOGS_DBNAME: odpLogs
+    MONGO_RECONN_TRIES: 1000
+    MONGO_RECONN_TIME: 21600
+    ODP_NAMESPACE: odp
+    MODE: dev
+    LOG_LEVEL: debug
+    ODP_NAMESPACE: odp
+    DIRECTORY_CONNECTION_TIMEOUT: 10000
+    DIRECTORY_RECORD_FETCH_TIME_LIMIT: 20
+    RBAC_USER_TOKEN_DURATION: 60
+    RBAC_USER_TOKEN_REFRESH: true
+    RBAC_USER_CLOSE_WINDOW_TO_LOGOUT: false
+    RBAC_USER_TO_SINGLE_SESSION: false
+    RBAC_USER_RELOGIN_ACTION: allow
+    RBAC_HB_INTERVAL: 60
+    RBAC_BOT_TOKEN_DURATION: 60
+    BOOKMARK_OPEN_TAB: true
+    FQDN: 'localhost'
+    AZURE_B2C_TENANT: 'capiotb2codp.onmicrosoft.com'
+    AZURE_CLIENTID: '57ceab52-f7b8-4de4-a3ad-25dad057c497'
+    AZURE_CLIENT_SECRET: '-pzzClg_8m1-A.FtGhqJ9Oo70_fpLlMH5s'
+    RBAC_USER_AUTH_MODES: 'local,azure'
+    AZURE_AD_USER_ATTRIBUTE: 'mail'

@@ -3083,29 +3083,29 @@ paths:
           description: No records to list with the given parameter set.
         '500':
           description: Internal server error       
-  /{auth}:
-    x-swagger-router-controller: controller
-    post:
-      description: Switch connection to auth
-      operationId: LdapSaveConnection
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload connection
-        schema:
-          $ref: '#/definitions/ldap'
-      responses:
-        '200':
-          description: connection successful
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
+  # /{auth}:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Switch connection to auth
+  #     operationId: LdapSaveConnection
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload connection
+  #       schema:
+  #         $ref: '#/definitions/ldap'
+  #     responses:
+  #       '200':
+  #         description: connection successful
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
   /{auth}/import:
     x-swagger-router-controller: controller
     post:
@@ -3187,29 +3187,29 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error 
-  /{auth}/test:
-    x-swagger-router-controller: controller
-    post:
-      description: Test connection to ldap
-      operationId: LdapTestMapping
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload to connection
-        schema:
-          $ref: '#/definitions/ldap'
-      responses:
-        '200':
-          description: User detail in LDAP
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error       
+  # /{auth}/test:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Test connection to ldap
+  #     operationId: LdapTestMapping
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload to connection
+  #       schema:
+  #         $ref: '#/definitions/ldap'
+  #     responses:
+  #       '200':
+  #         description: User detail in LDAP
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error       
   '/bot/botKey/{_id}':
     x-swagger-router-controller: controller
     post:

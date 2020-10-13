@@ -93,10 +93,10 @@ exports.ConfigList = ConfigController.index;
 exports.ConfigShow = ConfigController.show;
 
 exports.LdapTestConnection = LdapController.testConnection;
-exports.LdapTestMapping = LdapController.testAuth;
+// exports.LdapTestMapping = LdapController.testAuth;
 exports.LdapSearchUsers = LdapController.searchUsers;
-exports.LdapSaveConnection = LdapController.saveConnection;
-exports.AzureCode = LdapController.authorizationRequestCallback;
+// exports.LdapSaveConnection = LdapController.saveConnection;
+// exports.AzureCode = LdapController.authorizationRequestCallback;
 
 exports.AppCreate = AppController.create;
 exports.AppList = AppController.index;

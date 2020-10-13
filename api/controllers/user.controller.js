@@ -28,7 +28,6 @@ const algorithm = 'aes256';
 const appController = require('./app.controller');
 const passport = require('passport');
 
-let ldapUtil = require('../helpers/util/ldap.util');
 var options = {
 	logger: logger,
 	collectionName: 'userMgmt.users'
@@ -175,68 +174,69 @@ schema.pre('remove', function (next) {
 	next();
 });
 
-schema.methods.validatePassword = function (password) {
-	let self = this;
-	if (self.auth && (self.auth.isLdap || self.auth.authType === 'ldap')) {
-		logger.debug(`Checking ${self._id} against LDAP`);
-		return mongoose.model('config').findOne({
-			'configType': 'auth',
-			'auth': {
-				'$exists': true
-			},
-			'auth.mode': 'ldap'
-		})
-			.then(_cf => {
-				if (_cf && _cf.auth && _cf.auth.connectionDetails && _cf.auth.connectionDetails.url) {
-					return ldapUtil.connectLDAP(_cf.auth.connectionDetails.url, self.auth.dn, password);
-				} else {
-					return false;
-				}
-			})
-			.then(client => {
-				if (client) {
-					client.unbind(function (err, data) {
-						logger.debug(data);
-						if (err) logger.error(err.message);
-					});
-					return true && self.isActive;
-				}
-				return false;
-			}, msg => {
-				if (msg) return false;
-			});
-	} else if (self.auth && self.auth.authType === 'azure') {
-		logger.debug(`Checking ${self._id} against Azure AD`);
-		if (!self.bot) return false;
-		let passMatch = (this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
-		if (!passMatch) return false;
-		return mongoose.model('config').findOne({
-			'configType': 'auth',
-			'auth.class': 'AD',
-			'auth.mode': 'azure',
-			'auth.enabled': true
-		})
-			.then(_d => {
-				if (!_d.auth.connectionDetails) return false;
-				let azureConfig = {
-					tenant: _d.auth.connectionDetails.tenant,
-					clientId: self._id,
-					clientSecret: password,
-				};
-				return azureAdUtil.validateAzureCredentials(azureConfig);
-			})
-			.then(() => true, () => false);
-	}
-	if (self.bot) {
-		logger.debug(`${self._id} is a bot. Checking key`);
-		let matchedKeyObj = self.botKeys.find(_k => {
-			return _k.keyValue == crypto.createHash('md5').update(password + this.salt).digest('hex') && _k.isActive;
-		});
-		return Promise.resolve(matchedKeyObj ? matchedKeyObj._id : null);
-	}
-	logger.debug(`Checking ${self._id} is an local user`);
-	return Promise.resolve(this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
-};
+// TBDL
+// schema.methods.validatePassword = function (password) {
+// 	let self = this;
+// 	if (self.auth && (self.auth.isLdap || self.auth.authType === 'ldap')) {
+// 		logger.debug(`Checking ${self._id} against LDAP`);
+// 		return mongoose.model('config').findOne({
+// 			'configType': 'auth',
+// 			'auth': {
+// 				'$exists': true
+// 			},
+// 			'auth.mode': 'ldap'
+// 		})
+// 			.then(_cf => {
+// 				if (_cf && _cf.auth && _cf.auth.connectionDetails && _cf.auth.connectionDetails.url) {
+// 					return ldapUtil.connectLDAP(_cf.auth.connectionDetails.url, self.auth.dn, password);
+// 				} else {
+// 					return false;
+// 				}
+// 			})
+// 			.then(client => {
+// 				if (client) {
+// 					client.unbind(function (err, data) {
+// 						logger.debug(data);
+// 						if (err) logger.error(err.message);
+// 					});
+// 					return true && self.isActive;
+// 				}
+// 				return false;
+// 			}, msg => {
+// 				if (msg) return false;
+// 			});
+// 	} else if (self.auth && self.auth.authType === 'azure') {
+// 		logger.debug(`Checking ${self._id} against Azure AD`);
+// 		if (!self.bot) return false;
+// 		let passMatch = (this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
+// 		if (!passMatch) return false;
+// 		return mongoose.model('config').findOne({
+// 			'configType': 'auth',
+// 			'auth.class': 'AD',
+// 			'auth.mode': 'azure',
+// 			'auth.enabled': true
+// 		})
+// 			.then(_d => {
+// 				if (!_d.auth.connectionDetails) return false;
+// 				let azureConfig = {
+// 					tenant: _d.auth.connectionDetails.tenant,
+// 					clientId: self._id,
+// 					clientSecret: password,
+// 				};
+// 				return azureAdUtil.validateAzureCredentials(azureConfig);
+// 			})
+// 			.then(() => true, () => false);
+// 	}
+// 	if (self.bot) {
+// 		logger.debug(`${self._id} is a bot. Checking key`);
+// 		let matchedKeyObj = self.botKeys.find(_k => {
+// 			return _k.keyValue == crypto.createHash('md5').update(password + this.salt).digest('hex') && _k.isActive;
+// 		});
+// 		return Promise.resolve(matchedKeyObj ? matchedKeyObj._id : null);
+// 	}
+// 	logger.debug(`Checking ${self._id} is an local user`);
+// 	return Promise.resolve(this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
+// };
 
 schema.post('validate', function (error, doc, next) {
 	if (error.errors && error.errors._id) {
@@ -349,7 +349,7 @@ schema.pre('save', function (next) {
 schema.pre('save', utils.counter.getIdGenerator('USR', 'User', null, null, 1000));
 
 schema.pre('save', function (next) {
-	if (this.auth && !this.bot && (this.auth.isLdap || (this.auth.authType === 'azure') || this.auth.authType === 'ldap')) return next();
+	// if (this.auth && !this.bot && (this.auth.isLdap || (this.auth.authType === 'azure') || this.auth.authType === 'ldap')) return next();
 	var self = this;
 	if (!self.salt) {
 		crudder.model.findOne({
@@ -864,7 +864,7 @@ function updatePassword(request, response) {
 						message: 'Cannot update user password. Contact your AD admin'
 					});
 				}
-				return doc.validatePassword(credentials.oldpassword);
+				return validatePassword(doc, credentials.oldpassword);
 			} else response.status(400).json({
 				message: 'Invalid Credentials'
 			});

@@ -67,17 +67,20 @@ e.validateAzureCredentials = function (azureConfig) {
 	let authorityUrl = authorityHostUrl + '/' + tenant;
 	let applicationId = azureConfig.clientId;
 	let clientSecret = azureConfig.clientSecret;
+	if(!tenant) return Promise.reject('Missing AZURE_B2C_TENANT.');
+	if(!applicationId) return Promise.reject('Missing AZURE_CLIENT_ID.');
+	if(!clientSecret) return Promise.reject('Missing AZURE_CLIENT_SECRET.');
 	let resource = '00000002-0000-0000-c000-000000000000'; // URI that identifies the resource for which the token is valid.
 	let context = new AuthenticationContext(authorityUrl);
 	return new Promise((resolve, reject) => {
 		logger.debug({ resource, applicationId, clientSecret });
 		context.acquireTokenWithClientCredentials(resource, applicationId, clientSecret, function (err, tokenResponse) {
 			if (err) {
-				logger.error(err.message);
-				reject('Invalid Credentials');
+				logger.error('Error in validateAzureCredentials :: ', err);
+				reject(err);
 			} else {
-				logger.debug(tokenResponse);
-				resolve();
+				logger.debug('Validated Azure Credentials.');
+				resolve(tokenResponse);
 			}
 		});
 	});

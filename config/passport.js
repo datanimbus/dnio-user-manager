@@ -8,7 +8,7 @@ var { validateLocalLogin, validateLdapLogin, validateAzureLogin, validateAzureUs
 module.exports = function (passport) {
 	passport.use(new LocalStrategy(validateLocalLogin));
 
-	passport.use(new LdapStrategy({ server: config.ldapServerDetails }, validateLdapLogin));
+	passport.use(new LdapStrategy({ server: config.ldapDetails.ldapServerDetails }, validateLdapLogin));
 
 	passport.use('AzureLogIn', new OIDCStrategy(config.azurePassportConfig('login'), validateAzureLogin));
 

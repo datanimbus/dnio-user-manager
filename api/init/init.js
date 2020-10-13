@@ -14,6 +14,8 @@ let defaultRoles = require('../../config/roles');
 let smRoles = defaultRoles.find(_r => _r.entity === 'SM');
 let gsRoles = defaultRoles.find(_r => _r.entity === 'GS');
 let _ = require('lodash');
+let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
+let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
 
 function createNSifNotExist(ns) {
@@ -992,6 +994,36 @@ function userMigration() {
 		});
 }
 
+function removeAuthMode(authMode, err) {
+	logger.error(`Removing auth mode ${authMode} due to error :: `, err);
+	config.RBAC_USER_AUTH_MODES = config.RBAC_USER_AUTH_MODES.filter(mode => mode != authMode);
+}
+
+function validateAuthModes() {
+	let authModes = config.RBAC_USER_AUTH_MODES;
+	logger.debug('validating auth modes :: ', authModes);
+	let validationArray = authModes.map(mode => {
+		if(mode == 'azure')
+			return validateAzureCredentials({
+				tenant: process.env.AZURE_B2C_TENANT,
+				clientId: process.env.AZURE_CLIENT_ID,
+				clientSecret: process.env.AZURE_CLIENT_SECRET
+			}).catch((err) => removeAuthMode('azure', err));
+		else if(mode == 'ldap')
+			return validateLdapCredentials(config.ldapDetails)
+				.catch((err) => removeAuthMode('ldap', err));
+		else if(mode == 'local') 
+			return Promise.resolve();
+		else {
+			logger.error('Unknow auth mode :: ', mode);
+			return Promise.reject(new Error('Unknown auth mode.'));
+		}
+	});
+	return Promise.all(validationArray)
+		.then(() => logger.info('Supported auth modes :: ', config.RBAC_USER_AUTH_MODES))
+		.catch(err => logger.error('Error in validateAuthModes :: ', err));
+}
+
 function init() {
 	return checkDependency()
 		.then(() => createNS())
@@ -1003,7 +1035,8 @@ function init() {
 		.then(() => fixGSRolesinNewRelease())
 		.then(() => fixUsersAttributeInNewRelease())
 		.then(() => fixGroupRolesinNewRelease())
-		.then(() => userMigration());
+		.then(() => userMigration())
+		.then(() => validateAuthModes());
 }
 
 module.exports = init;

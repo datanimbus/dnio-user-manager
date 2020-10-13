@@ -27,8 +27,3 @@ apps:
     RBAC_BOT_TOKEN_DURATION: 60
     BOOKMARK_OPEN_TAB: true
     FQDN: 'localhost'
-    AZURE_B2C_TENANT: 'capiotb2codp.onmicrosoft.com'
-    AZURE_CLIENTID: '57ceab52-f7b8-4de4-a3ad-25dad057c497'
-    AZURE_CLIENT_SECRET: '-pzzClg_8m1-A.FtGhqJ9Oo70_fpLlMH5s'
-    RBAC_USER_AUTH_MODES: 'local,azure'
-    AZURE_AD_USER_ATTRIBUTE: 'mail'

@@ -65,14 +65,14 @@ function ldapConfig() {
 function azurePassportConfig(type) {
 	return {
 		identityMetadata: 'https://login.microsoftonline.com/' + process.env.AZURE_B2C_TENANT + '/v2.0/.well-known/openid-configuration',
-		clientID: process.env.AZURE_CLIENTID,
+		clientID: process.env.AZURE_CLIENT_ID,
 		responseType: 'code',
 		responseMode: 'query',
 		redirectUrl: (isK8sEnv() ? 'https://' : 'http://') + process.env.FQDN + 
 			(type === 'login' ? '/api/a/rbac/azure/login/callback' : '/api/a/rbac/azure/userFetch/callback'),
-		allowHttpForRedirectUrl: true,
+		allowHttpForRedirectUrl: process.env.FQDN == 'localhost',
 		clientSecret: process.env.AZURE_CLIENT_SECRET,
-		validateIssuer: false,
+		validateIssuer: true,
 		issuer: null,
 		passReqToCallback: false,
 		scope: ['profile', 'email'],
@@ -81,7 +81,7 @@ function azurePassportConfig(type) {
 			{ 'key': '12345678901234567890123456789012', 'iv': '123456789012' },
 			{ 'key': 'abcdefghijklmnopqrstuvwxyzabcdef', 'iv': 'abcdefghijkl' }
 		],
-		loggingLevel: 'debug',
+		loggingLevel: process.env.LOG_LEVEL,
 		loggingNoPII: true,
 		nonceLifetime: null,
 		nonceMaxAmount: 5,
@@ -135,16 +135,24 @@ module.exports = {
 		if (proj) process.stdout.write(',' + JSON.stringify(proj) + ')\n');
 		else process.stdout.write(')\n');
 	},
-	ldapServerDetails: {
-		'url': process.env.LDAP_SERVER_URL,
-		'bindDN' : process.env.LDAP_BIND_DN,
-		'bindCredentials': process.env.LDAP_BIND_PASSWORD,
-		'searchBase' : process.env.LDAP_SEARCH_BASE,
-		'searchFilter': '(cn={{username}})',
+	ldapDetails: {
+		ldapServerDetails: {
+			'url': process.env.LDAP_SERVER_URL,
+			'bindDN' : process.env.LDAP_BIND_DN,
+			'bindCredentials': process.env.LDAP_BIND_PASSWORD,
+			'searchBase' : process.env.LDAP_BASE_DN,
+			'searchFilter': process.env.LDAP_USER_NAME_ATTRIBUTE ? `(${process.env.LDAP_USER_NAME_ATTRIBUTE}={{username}})` : '(cn={{username}})',
+		},
+		mapping: {
+			username: process.env.LDAP_USER_ID_ATTRIBUTE || 'cn',
+			name: process.env.LDAP_USER_NAME_ATTRIBUTE || 'cn',
+			email: process.env.LDAP_USER_EMAIL_ATTRIBUTE || 'mail'
+		},
+		baseFilter: process.env.LDAP_BASE_FILTER
 	},
 	azurePassportConfig: azurePassportConfig,
 	azureAdUserAttribute: process.env.AZURE_AD_USER_ATTRIBUTE || 'mail',
-	RBAC_USER_AUTH_MODES: process.env.RBAC_USER_AUTH_MODES ? (process.env.RBAC_USER_AUTH_MODES).split(',') : 'local',
+	RBAC_USER_AUTH_MODES: process.env.RBAC_USER_AUTH_MODES ? (process.env.RBAC_USER_AUTH_MODES).split(',') : ['local'],
 	RBAC_USER_TOKEN_DURATION: parseInt(process.env.RBAC_USER_TOKEN_DURATION || 30),
 	RBAC_USER_TOKEN_REFRESH: process.env.RBAC_USER_TOKEN_REFRESH ? parseBoolean(process.env.RBAC_USER_TOKEN_REFRESH) : true,
 	RBAC_USER_TO_SINGLE_SESSION: parseBoolean(process.env.RBAC_USER_TO_SINGLE_SESSION || false),

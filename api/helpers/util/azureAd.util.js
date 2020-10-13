@@ -1,5 +1,5 @@
-let request = require('request');
-let mongoose = require('mongoose');
+// let request = require('request');
+// let mongoose = require('mongoose');
 const crypto = require('crypto');
 let AuthenticationContext = require('adal-node').AuthenticationContext;
 const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
@@ -22,44 +22,44 @@ e.decrypt = function (text) {
 	return decrypted;
 };
 
-e.requestAccessCode = function (authCode, type) {
-	let fqdn = process.env.FQDN || 'localhost';
-	let protocol = envConfig.isK8sEnv() ? 'https' : 'http';
-	let redirectUri = `${protocol}://${fqdn}/api/a/rbac/callback/azure/${type}`;
-	return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure' })
-		.then(_conf => {
-			if (_conf) {
-				let options = {
-					url: `https://login.microsoftonline.com/${_conf.auth.connectionDetails.tenant}/oauth2/v2.0/token`,
-					method: 'POST',
-					form: {
-						'client_id': _conf.auth.connectionDetails.clientId,
-						'scope': 'user.read',
-						'code': authCode,
-						'redirect_uri': redirectUri,
-						'grant_type': 'authorization_code',
-						'client_secret': _conf.auth.connectionDetails.clientSecret
-					},
-					json: true
-				};
-				logger.debug(options);
-				return new Promise((resolve, reject) => {
-					request.post(options, function (err, res, body) {
-						if (err) reject(err);
-						else if (res.statusCode >= 200 && res.statusCode < 400) {
-							resolve(body.access_token);
-						} else {
-							logger.error('Error fetching Access Token');
-							logger.error(body);
-							reject(new Error(body.message));
-						}
-					});
-				});
-			} else {
-				throw new Error('AzureAD config not found');
-			}
-		});
-};
+// e.requestAccessCode = function (authCode, type) {
+// 	let fqdn = process.env.FQDN || 'localhost';
+// 	let protocol = envConfig.isK8sEnv() ? 'https' : 'http';
+// 	let redirectUri = `${protocol}://${fqdn}/api/a/rbac/callback/azure/${type}`;
+// 	return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure' })
+// 		.then(_conf => {
+// 			if (_conf) {
+// 				let options = {
+// 					url: `https://login.microsoftonline.com/${_conf.auth.connectionDetails.tenant}/oauth2/v2.0/token`,
+// 					method: 'POST',
+// 					form: {
+// 						'client_id': _conf.auth.connectionDetails.clientId,
+// 						'scope': 'user.read',
+// 						'code': authCode,
+// 						'redirect_uri': redirectUri,
+// 						'grant_type': 'authorization_code',
+// 						'client_secret': _conf.auth.connectionDetails.clientSecret
+// 					},
+// 					json: true
+// 				};
+// 				logger.debug(options);
+// 				return new Promise((resolve, reject) => {
+// 					request.post(options, function (err, res, body) {
+// 						if (err) reject(err);
+// 						else if (res.statusCode >= 200 && res.statusCode < 400) {
+// 							resolve(body.access_token);
+// 						} else {
+// 							logger.error('Error fetching Access Token');
+// 							logger.error(body);
+// 							reject(new Error(body.message));
+// 						}
+// 					});
+// 				});
+// 			} else {
+// 				throw new Error('AzureAD config not found');
+// 			}
+// 		});
+// };
 
 e.validateAzureCredentials = function (azureConfig) {
 	let authorityHostUrl = 'https://login.microsoftonline.com';

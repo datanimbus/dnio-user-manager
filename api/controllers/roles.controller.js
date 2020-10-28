@@ -168,16 +168,17 @@ function init() {
 const MongoType = ['String', 'Number', 'Date', 'Boolean', 'Array'];
 
 function createDefinition(schema, definition, idList, isNestedId) {
-	Object.keys(schema).forEach(key => {
+	schema.forEach(attribute => {
+		let key = attribute.key;
 		if (!(!isNestedId && key === '_id')) {
-			if (schema[key]['type'] && schema[key]['type'] == 'Object') {
+			if (attribute['type'] && attribute['type'] == 'Object') {
 				definition[key] = {};
-				createDefinition(schema[key]['definition'], definition[key], idList, true);
+				createDefinition(attribute['definition'], definition[key], idList, true);
 			} else {
-				if (schema[key]['type'] && MongoType.indexOf(schema[key]['type']) > -1) {
+				if (attribute['type'] && MongoType.indexOf(attribute['type']) > -1) {
 					definition[key] = {};
-					definition[key]['_t'] = schema[key]['type'];
-				} else if (schema[key]['type']) {
+					definition[key]['_t'] = attribute['type'];
+				} else if (attribute['type']) {
 					definition[key] = {};
 					definition[key]['_t'] = 'String';
 				}
@@ -286,7 +287,7 @@ function getUsrMgmtDefinition(serviceObj, idList) {
 
 	};
 	addPermissionObj(initFields, idList);
-	createDefinition(JSON.parse(serviceObj.definition), initFields, idList, false);
+	createDefinition(serviceObj.definition, initFields, idList, false);
 	usrMgmtDefinitionObj.fields = initFields;
 	return usrMgmtDefinitionObj;
 }
@@ -482,7 +483,7 @@ function fixRoles(req) {
 				'_id': { '_t': 'String' }
 			};
 			addPermissionObj(initFields, idList);
-			createDefinition(JSON.parse(definition), initFields, idList, false);
+			createDefinition(definition, initFields, idList, false);
 			let fields = req.body.fields ? req.body.fields : rolesObj.fields;
 			// console.log(JSON.stringify(initFields, null, 2));
 			let netPermission = mergePermission(initFields, JSON.parse(fields));

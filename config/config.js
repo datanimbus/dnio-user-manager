@@ -3,7 +3,7 @@ let debugDB = false;
 if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
 
 let logger = global.logger;
-let odpNS = process.env.ODP_NAMESPACE;
+let dataStackNS = process.env.DATA_STACK_NAMESPACE;
 
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s') {
 	odpUtils.kubeutil.check()
@@ -37,13 +37,13 @@ function parseBoolean(val) {
 
 function get(_service) {
 	if (isK8sEnv()) {
-		if (_service == 'ne') return `http://ne.${odpNS}`;
-		if (_service == 'sm') return `http://sm.${odpNS}`;
-		if (_service == 'pm') return `http://pm.${odpNS}`;
-		if (_service == 'user') return `http://user.${odpNS}`;
-		if (_service == 'gw') return `http://gw.${odpNS}`;
-		if (_service == 'sec') return `http://sec.${odpNS}`;
-		if (_service == 'pm') return `http://pm.${odpNS}`;
+		if (_service == 'ne') return `http://ne.${dataStackNS}`;
+		if (_service == 'sm') return `http://sm.${dataStackNS}`;
+		if (_service == 'pm') return `http://pm.${dataStackNS}`;
+		if (_service == 'user') return `http://user.${dataStackNS}`;
+		if (_service == 'gw') return `http://gw.${dataStackNS}`;
+		if (_service == 'sec') return `http://sec.${dataStackNS}`;
+		if (_service == 'pm') return `http://pm.${dataStackNS}`;
 	} else {
 		if (_service == 'ne') return 'http://localhost:10010';
 		if (_service == 'sm') return 'http://localhost:10003';
@@ -89,7 +89,7 @@ function azurePassportConfig(type) {
 	};
 }
 
-if (isK8sEnv() && !odpNS) throw new Error('ODP_NAMESPACE not found. Please check your configMap');
+if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
 
 module.exports = {
@@ -106,7 +106,7 @@ module.exports = {
 	isK8sEnv: isK8sEnv,
 	ldapConfig: ldapConfig(),
 	logQueueName: 'systemService',
-	odpNS: odpNS,
+	dataStackNS: dataStackNS,
 	mongoUrlAppcenter: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost',
 	NATSConfig: {
 		url: process.env.NATS_HOST || 'nats://127.0.0.1:4222',
@@ -153,11 +153,11 @@ module.exports = {
 	azurePassportConfig: azurePassportConfig,
 	azureAdUserAttribute: process.env.AZURE_AD_USER_ATTRIBUTE || 'mail',
 	RBAC_USER_AUTH_MODES: process.env.RBAC_USER_AUTH_MODES ? (process.env.RBAC_USER_AUTH_MODES).split(',') : ['local'],
-	RBAC_USER_TOKEN_DURATION: parseInt(process.env.RBAC_USER_TOKEN_DURATION || 30),
+	RBAC_USER_TOKEN_DURATION: parseInt(process.env.RBAC_USER_TOKEN_DURATION || 1800),
 	RBAC_USER_TOKEN_REFRESH: process.env.RBAC_USER_TOKEN_REFRESH ? parseBoolean(process.env.RBAC_USER_TOKEN_REFRESH) : true,
 	RBAC_USER_TO_SINGLE_SESSION: parseBoolean(process.env.RBAC_USER_TO_SINGLE_SESSION || false),
 	RBAC_USER_CLOSE_WINDOW_TO_LOGOUT: parseBoolean(process.env.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT || false),
-	RBAC_BOT_TOKEN_DURATION: parseInt(process.env.RBAC_BOT_TOKEN_DURATION || 30),
+	RBAC_BOT_TOKEN_DURATION: parseInt(process.env.RBAC_BOT_TOKEN_DURATION || 1800),
 	RBAC_HB_INTERVAL: parseInt(process.env.RBAC_HB_INTERVAL || 50),
 	RBAC_USER_RELOGIN_ACTION: process.env.RBAC_USER_RELOGIN_ACTION ? process.env.RBAC_USER_RELOGIN_ACTION.toLowerCase() : 'allow',
 	PRIVATE_FILTER: process.env.SAVE_FILTER_DEFAULT_MODE_PRIVATE ? parseBoolean(process.env.SAVE_FILTER_DEFAULT_MODE_PRIVATE) : true,

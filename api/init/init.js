@@ -256,13 +256,13 @@ function createSecurityKeys() {
 }
 
 function createNS() {
-	let odpNS = config.odpNS;
-	if (!(odpNS && config.isK8sEnv())) return Promise.resolve();
+	let dataStackNS = config.dataStackNS;
+	if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
 	logger.info('Creating namespace if not exist');
 	return mongoose.model('app').find({}).lean(true)
 		.then(apps => {
 			let promises = apps.map(doc => {
-				const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+				const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 				return createNSifNotExist(ns);
 			});
 			return Promise.all(promises);
@@ -333,13 +333,13 @@ function createNSrole() {
 }
 
 /*function initialize() {
-	let odpNS = config.odpNS;
-	if (!(odpNS && config.isK8sEnv())) return Promise.resolve();
+	let dataStackNS = config.dataStackNS;
+	if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
 	logger.info('Updating namespace');
 	return mongoose.model('app').find({}).lean(true)
 		.then(apps => {
 			let promises = apps.map(doc => {
-				const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+				const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 				return kubeutil.namespace.getNamespace(ns)
 					.then(data => {
 						if (data) {
@@ -509,7 +509,7 @@ function userMigrationAppcenter(batchSize, _document) {
 			let userList = Object.keys(userMapping);
 			let promises = appcenterData.map(obj => {
 				if (obj.migrated) return Promise.resolve();
-				let ns = (config.odpNS) ? config.odpNS : 'odp';
+				let ns = (config.dataStackNS) ? config.dataStackNS : 'odp';
 				let dbName = ns + '-' + obj.app;
 				logger.info('Appcenter dbName  -->  ', dbName);
 				return obj.relatedSchemas.reduce((acc, schemaObj) => {

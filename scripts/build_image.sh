@@ -45,14 +45,14 @@ if [ $CICD ]; then
     echo "odp:user :: CICI env found"
     echo "****************************************************"
     TAG=$TAG"_"$cDate
-    if [ ! -f $WORKSPACE/../ODP_NAMESPACE ]; then
+    if [ ! -f $WORKSPACE/../DATA_STACK_NAMESPACE ]; then
         echo "****************************************************"
-        echo "odp:user :: Please Create file ODP_NAMESPACE with the namespace at $WORKSPACE"
+        echo "odp:user :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
         echo "odp:user :: BUILD FAILED"
         echo "****************************************************"
         exit 0
     fi
-    ODP_NS=`cat $WORKSPACE/../ODP_NAMESPACE`
+    ODP_NS=`cat $WORKSPACE/../DATA_STACK_NAMESPACE`
 fi
 
 sh $WORKSPACE/scripts/prepare_yaml.sh $REL $2

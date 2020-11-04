@@ -52,7 +52,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 	var token = null;
 	let rToken = null;
 	let expireIn = document.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
-	expireIn = expireIn * 60;
+	// expireIn = expireIn * 60;
 	logger.debug(`Is BOT? [${document.bot ? true : false}]`);
 	logger.debug(`Token Expiry :: ${expireIn}`);
 
@@ -86,11 +86,11 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			delete resObj.__v;
 			resObj.serverTime = Date.now();
 			resObj.expiresIn = (exp && !isExtend) ? exp * 1000 : Date.now() + (expireIn * 1000);
-			resObj[_.camelCase('RBAC_USER_TOKEN_DURATION')] = envConfig.RBAC_USER_TOKEN_DURATION * 60;
+			resObj[_.camelCase('RBAC_USER_TOKEN_DURATION')] = envConfig.RBAC_USER_TOKEN_DURATION;
 			resObj[_.camelCase('RBAC_USER_TOKEN_REFRESH')] = envConfig.RBAC_USER_TOKEN_REFRESH;
 			resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = rbacUserToSingleSession;
 			resObj[_.camelCase('RBAC_USER_CLOSE_WINDOW_TO_LOGOUT')] = envConfig.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT;
-			resObj[_.camelCase('RBAC_BOT_TOKEN_DURATION')] = envConfig.RBAC_BOT_TOKEN_DURATION * 60;
+			resObj[_.camelCase('RBAC_BOT_TOKEN_DURATION')] = envConfig.RBAC_BOT_TOKEN_DURATION;
 			resObj[_.camelCase('RBAC_HB_INTERVAL')] = envConfig.RBAC_HB_INTERVAL;
 			resObj[_.camelCase('PRIVATE_FILTER')] = envConfig.PRIVATE_FILTER;
 			resObj[_.camelCase('GOOGLE_API_KEY')] = envConfig.GOOGLE_API_KEY;
@@ -1113,7 +1113,7 @@ function refreshToken(req, res) {
 						delete newRClaim.iat;
 						delete newRClaim.exp;
 						let expireIn = d.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
-						expireIn = expireIn * 60;
+						// expireIn = expireIn * 60;
 
 						newToken = jwt.sign(newClaim, jwtKey, {
 							expiresIn: expireIn

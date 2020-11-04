@@ -14,7 +14,7 @@ const appIdMDM = appInit.find(obj => obj.type === 'Management')._id;
 const rolesInit = require('../../config/roles');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
-const odpNS = config.odpNS;
+const dataStackNS = config.dataStackNS;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
@@ -118,7 +118,7 @@ schema.post('save', function (doc) {
 // To add SM role in new App.
 schema.post('save', function (doc) {
 	if (doc._wasNew) {
-		const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+		const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 		const appInitList = appInit.map(obj => obj._id);
 		if (appInitList.indexOf(doc._id) == -1) {
 			let rolesList = null;
@@ -205,7 +205,7 @@ schema.post('remove', function (doc) {
 
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {
-		const ns = odpNS + '-' + _doc._id.toLowerCase();
+		const ns = dataStackNS + '-' + _doc._id.toLowerCase();
 		kubeutil.namespace.deleteNamespace(ns)
 			.then(_ => {
 				logger.debug(_);
@@ -284,7 +284,7 @@ e.init = () => {
 			.then(_d => {
 				if (_d == 0) {
 					return app.reduce((_p, _c) => {
-						const ns = odpNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
+						const ns = dataStackNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
 						return _p.then(() => {
 							return crudder.model.create(_c)
 								.then(_d => {
@@ -439,7 +439,7 @@ e.customDestroy = (req, res) => {
 						});
 					})
 					.then(() => {
-						var dbName = `${process.env.ODP_NAMESPACE}` + '-' + appName;
+						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
 						return global.mongoConnection.db(dbName).dropDatabase();
 					});
 			}

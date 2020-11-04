@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 const utils = require('@appveen/utils');
 const log4js = utils.logger.getLogger;
-const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.ODP_NAMESPACE}][${process.env.HOSTNAME}]` : '[userManagement]';
+const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.DATA_STACK_NAMESPACE}][${process.env.HOSTNAME}]` : '[userManagement]';
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongo = require('mongodb').MongoClient;

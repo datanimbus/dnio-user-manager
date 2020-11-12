@@ -8,9 +8,12 @@ var { validateLocalLogin, validateLdapLogin, validateAzureLogin, validateAzureUs
 module.exports = function (passport) {
 	passport.use(new LocalStrategy(validateLocalLogin));
 
-	passport.use(new LdapStrategy({ server: config.ldapDetails.ldapServerDetails }, validateLdapLogin));
+	if (config.RBAC_USER_AUTH_MODES.includes('ldap')) {
+		passport.use(new LdapStrategy({ server: config.ldapDetails.ldapServerDetails }, validateLdapLogin));
+	}
 
-	passport.use('AzureLogIn', new OIDCStrategy(config.azurePassportConfig('login'), validateAzureLogin));
-
-	passport.use('AzureUserFetch', new OIDCStrategy(config.azurePassportConfig('userFetch'), validateAzureUserFetch));
+	if (config.RBAC_USER_AUTH_MODES.includes('azure')) {
+		passport.use('AzureLogIn', new OIDCStrategy(config.azurePassportConfig('login'), validateAzureLogin));
+		passport.use('AzureUserFetch', new OIDCStrategy(config.azurePassportConfig('userFetch'), validateAzureUserFetch));
+	}
 };

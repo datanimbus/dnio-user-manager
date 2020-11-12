@@ -86,10 +86,10 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
-if(conf.RBAC_USER_AUTH_MODES.includes('azure')) {
-	require('./config/passport')(passport);
-	app.use(passport.initialize());
-}
+
+require('./config/passport')(passport);
+app.use(passport.initialize());
+
 // app.use(fileUpload());
 
 let odpUtils = require('@appveen/odp-utils');

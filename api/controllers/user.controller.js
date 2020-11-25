@@ -636,6 +636,7 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 		return done(new Error('No oid/email found in profile.'), null);
 	}
 	try {
+		logger.trace('azure acces token ::', accessToken)
 		// search user in azure and get odp username
 		let azureFilter = `startswith(mail,'${profile._json.email}')`;
 		let searchResult = await azureAdUtil.searchUser(accessToken, azureFilter);
@@ -666,10 +667,10 @@ function azureLoginCallback(req, res) {
 			if (err) {
 				logger.error('error in azureLoginCallback ::: ', err);
 				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, err);
+				return sendAzureCallbackResponse(res, 500, { message: err.message });
 			} else if (!user) {
 				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, info);
+				return sendAzureCallbackResponse(res, 400, { meessage : info });
 			} else {
 				return handleSessionAndGenerateToken(req, res, user, null, true);
 			}
@@ -711,10 +712,10 @@ function azureUserFetchCallback(req, res) {
 			if (err) {
 				logger.error('error in azureUserFetchCallback ::: ', err);
 				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, err);
+				return sendAzureCallbackResponse(res, 500, { message: err.message });
 			} else if (!accessToken) {
 				logger.error('Something went wrong in azureUserFetchCallback:: ', info);
-				return sendAzureCallbackResponse(res, 401, info);
+				return sendAzureCallbackResponse(res, 401, { message: info });
 			} else {
 				let encryptedToken = azureAdUtil.encrypt(accessToken);
 				return sendAzureCallbackResponse(res, 200, {

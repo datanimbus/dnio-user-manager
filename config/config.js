@@ -127,7 +127,6 @@ module.exports = {
 	mongoAppcenterOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
 		reconnectInterval: process.env.MONGO_RECONN_TIME,
-		useUnifiedTopology: true,
 		useNewUrlParser: true
 	},
 	mongooseCustomLogger: (coll, op, doc, proj) => {

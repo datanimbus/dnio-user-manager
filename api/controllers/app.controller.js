@@ -566,6 +566,7 @@ e.sendRequest = (url) => {
 };
 
 e.customAppIndex = (_req, _res) => {
+	logger.debug(`customAppIndex() _req.headers.user :: ${_req.headers.user}`);
 	let user = {};
 	mongoose.model('user').findOne({ _id: _req.headers.user })
 		.select('isSuperAdmin accessControl.apps._id')

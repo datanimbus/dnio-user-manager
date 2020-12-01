@@ -1,17 +1,15 @@
-var mongoose = require('mongoose');
 const logger = global.logger;
 
 async function getMongoDbVersion() {
 	try {
-		let mongoDbVersion = (await mongoose.connection.db.admin().serverInfo()).version;
-		logger.info('Running mongoDb version - ', mongoDbVersion);
+		let mongoDbVersion = (await global.mongoConnection.db('test').admin().serverInfo()).version;
+		logger.info(`Appcenter MongoDB version - ${mongoDbVersion}`);
 		return mongoDbVersion;
-	} catch(err) {
-		logger.info('Failed to get mongoDb version', err);
-		return;
+	} catch (err) {
+		logger.error('Failed to get MongoDB version', err);
+		return '0.0.0';
 	}
 }
-
 module.exports = {
 	getMongoDbVersion: getMongoDbVersion
 };

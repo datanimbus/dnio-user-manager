@@ -636,7 +636,7 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 		return done(new Error('No oid/email found in profile.'), null);
 	}
 	try {
-		logger.trace('azure acces token ::', accessToken)
+		logger.trace('azure acces token ::', accessToken);
 		// search user in azure and get odp username
 		let azureFilter = `startswith(mail,'${profile._json.email}')`;
 		let searchResult = await azureAdUtil.searchUser(accessToken, azureFilter);

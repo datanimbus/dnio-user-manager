@@ -57,7 +57,7 @@ function get(_service) {
 
 function ldapConfig() {
 	return {
-		connectTimeout: parseInt(process.env.DIRECTORY_CONNECTION_TIMEOUT) || 10000,
+		connectTimeout: parseInt(process.env.DIRECTORY_CONNECTION_TIMEOUT_MILLI) || 10000,
 		recordFetchTimeLimit: parseInt(process.env.DIRECTORY_RECORD_FETCH_TIME_LIMIT) || 20
 	};
 }
@@ -75,7 +75,7 @@ function azurePassportConfig(type) {
 		validateIssuer: true,
 		issuer: null,
 		passReqToCallback: false,
-		scope: ['profile', 'email'],
+		scope: ['profile', 'email', 'user.read'],
 		useCookieInsteadOfSession: true,
 		cookieEncryptionKeys: [
 			{ 'key': '12345678901234567890123456789012', 'iv': '123456789012' },
@@ -109,24 +109,24 @@ module.exports = {
 	dataStackNS: dataStackNS,
 	mongoUrlAppcenter: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost',
 	NATSConfig: {
-		url: process.env.NATS_HOST || 'nats://127.0.0.1:4222',
-		user: process.env.NATS_USER || '',
-		pass: process.env.NATS_PASS || '',
-		// maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
-		// reconnectTimeWait: process.env.NATS_RECONN_TIMEWAIT || 500
-		maxReconnectAttempts: process.env.NATS_RECONN_ATTEMPTS || 500,
+		url: process.env.MESSAGING_HOST || 'nats://127.0.0.1:4222',
+		user: process.env.MESSAGING_USER || '',
+		pass: process.env.MESSAGING_PASS || '',
+		// maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
+		// reconnectTimeWait: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
+		maxReconnectAttempts: process.env.MESSAGING_RECONN_ATTEMPTS || 500,
 		connectTimeout: 2000,
-		stanMaxPingOut: process.env.NATS_RECONN_TIMEWAIT || 500
+		stanMaxPingOut: process.env.MESSAGING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME,
+		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'odpConfig'
 	},
 	mongoAppcenterOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME,
+		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		useUnifiedTopology: true,
 		useNewUrlParser: true
 	},

@@ -18,4 +18,3 @@ rules:
     - single
   semi:
     - error
-    - always

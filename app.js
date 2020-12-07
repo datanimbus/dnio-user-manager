@@ -23,6 +23,7 @@ global.logger = logger;
 // const authorDB = process.env.MONGO_AUTHOR_DBNAME || 'odpConfig';
 const conf = require('./config/config.js');
 var mongoUtil = require('./util/mongo.util');
+const globalCache = require('./util/cache');
 
 logger.info(`RBAC_USER_TO_SINGLE_SESSION :: ${conf.RBAC_USER_TO_SINGLE_SESSION}`);
 logger.info(`RBAC_USER_TOKEN_DURATION :: ${conf.RBAC_USER_TOKEN_DURATION}`);
@@ -78,6 +79,7 @@ mongo.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, 
 });
 
 cacheUtil.init();
+globalCache.init();
 
 mongoose.connection.on('connecting', () => logger.info(' *** Author DB :: Connecting'));
 mongoose.connection.on('disconnected', () => logger.error(' *** Author DB :: connection lost'));

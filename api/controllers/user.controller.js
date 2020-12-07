@@ -9,6 +9,7 @@ const _ = require('lodash');
 const odpUtils = require('@appveen/odp-utils');
 const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
+let globalCache = require('../../util/cache');
 var client = queueMgmt.client;
 const logger = global.logger;
 const utils = require('@appveen/utils');
@@ -35,6 +36,15 @@ var options = {
 
 function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
+}
+
+function getApps(_superAdmin, _id, _tokenHash) {
+	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
+	if (!_superAdmin) {
+		return mongoose.model('group').aggregate([{ '$match': { 'users': _id } }, { $group: { _id: '$app' } }])
+			.then(_apps => globalCache.setApp(`${_tokenHash}`, _apps));
+	}
+	return Promise.resolve();
 }
 
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
@@ -138,6 +148,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			}
 			return response.json(resObj);
 		})
+		// .then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token), md5(oldJwt), resObj.expiresIn, isExtend))
+		.then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token)))
 		.catch(err => {
 			logger.error('Error in generateToken :: ', err);
 			if (isHtml) {
@@ -960,46 +972,32 @@ function resetPassword(req, res) {
 	}
 }
 
-function getApps(_superAdmin, _id) {
-	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
-	if (_superAdmin) return mongoose.model('app').find({}, '_id');
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': _id
-		}
-	}, {
-		$group: {
-			_id: '$app'
-		}
-	}]);
-}
-
-function getRoles(_id) {
-	logger.debug(`getRoles(_id) :: ${_id}`);
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': _id
-		}
-	},
-	{
-		'$project': {
-			'roles': 1
-		}
-	}, {
-		'$unwind': {
-			'path': '$roles',
-			'preserveNullAndEmptyArrays': false
-		}
-	}, {
-		'$group': {
-			'_id': null,
-			'roles': {
-				'$addToSet': '$roles'
-			}
-		}
-	}
-	]);
-}
+// function getRoles(_id) {
+// 	logger.debug(`getRoles(_id) :: ${_id}`);
+// 	return mongoose.model('group').aggregate([{
+// 		'$match': {
+// 			'users': _id
+// 		}
+// 	},
+// 	{
+// 		'$project': {
+// 			'roles': 1
+// 		}
+// 	}, {
+// 		'$unwind': {
+// 			'path': '$roles',
+// 			'preserveNullAndEmptyArrays': false
+// 		}
+// 	}, {
+// 		'$group': {
+// 			'_id': null,
+// 			'roles': {
+// 				'$addToSet': '$roles'
+// 			}
+// 		}
+// 	}
+// 	]);
+// }
 
 function validateUserSession(req, res) {
 	logger.debug('Validate user session called!');
@@ -1024,25 +1022,26 @@ function validateUserSession(req, res) {
 				let d = jwt.verify(token, jwtKey);
 				if (d) {
 					let doc = {};
-					let roles = [];
 					logger.debug(`Finding user with username :: ${d._id}`);
 					return crudder.model.findOne({
 						'_id': d._id,
 						'isActive': true
 					})
 						.then(_doc => doc = _doc)
-						.then(() => getRoles(doc._id))
-						.then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
-						.then(() => getApps(doc.isSuperAdmin, doc._id))
-						.then(_apps => {
-							if (doc) {
-								doc = JSON.parse(JSON.stringify(doc));
-								doc['apps'] = _apps;
-								doc['roles'] = roles;
-								logger.debug(`Found user with username :: ${doc._id}`);
-								return res.json(doc);
-							} else throw 'invalid';
-						});
+						// .then(() => getRoles(doc._id))
+						// .then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
+						// .then(() => getApps(doc.isSuperAdmin, doc._id))
+						// .then(_apps => {
+						// 	if (doc) {
+						// 		doc = JSON.parse(JSON.stringify(doc));
+						// 		doc['apps'] = _apps;
+						// 		doc['roles'] = roles;
+						// 		logger.debug(`Found user with username :: ${doc._id}`);
+						// 		return res.json(doc);
+						// 	} else throw 'invalid';
+						// });
+						.then(() => res.json(doc))
+						.then(() => getApps(doc.isSuperAdmin, doc._id, tokenHash));
 				} else throw 'invalid';
 			} catch (err) {
 				logger.error(err);
@@ -1713,6 +1712,7 @@ function getRolesType(req, res) {
 
 function logout(req, res) {
 	let token = req.get('Authorization') ? req.get('Authorization').split('JWT ')[1] : null;
+	let tokenHash = md5(token);
 	userLog.logout(req, res)
 		.then(() => {
 			if (!token) return res.status(400).json({
@@ -1721,6 +1721,7 @@ function logout(req, res) {
 			res.status(200).json({
 				message: 'logged out successfully'
 			});
+			globalCache.unsetApp(tokenHash);
 			try {
 				jwt.verify(token, jwtKey);
 				return cacheUtil.blacklist(md5(token))
@@ -3060,6 +3061,9 @@ function readiness(req, res) {
 }
 
 function health(req, res) {
+	logger.trace(`mongoose.connection.readyState: ${mongoose.connection.readyState}`);
+	logger.trace(`client.nc.connected: ${client.nc.connected}`);
+	logger.trace(`cacheUtil.isConnected(): ${cacheUtil.isConnected()}`);
 	if (mongoose.connection.readyState === 1 && client && client.nc && client.nc.connected && cacheUtil.isConnected()) {
 		return res.status(200).json();
 	} else {

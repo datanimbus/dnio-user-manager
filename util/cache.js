@@ -2,8 +2,8 @@ const bluebird = require('bluebird');
 const redis = require('ioredis');
 bluebird.promisifyAll(redis);
 
-let host = process.env.REDIS_HOST;
-let port = process.env.REDIS_PORT;
+let host = process.env.CACHE_HOST;
+let port = process.env.CACHE_PORT;
 
 let client = null;
 

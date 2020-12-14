@@ -1255,7 +1255,7 @@ function customIndex(_req, _res) {
 
 function customUpdate(req, res) {
 	let isBot = req.body.bot;
-	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
+	let arr = ['username', 'password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
 	arr.forEach(_k => {
 		delete req.body[_k];
 	});
@@ -2284,16 +2284,14 @@ function customDestroy(req, res) {
 			return Promise.all(pr);
 		})
 		.then(data => {
-			let finalData = [];
+			let usedInApps = [];
 			data.forEach(doc => {
 				if (doc && doc.diff && doc.diff.length > 0) {
-					doc.diff.forEach(id => {
-						finalData.push(id);
-					});
+					usedInApps.push(doc.app);
 				}
 			});
-			if (finalData.length > 0) {
-				throw new Error('User is in use');
+			if (usedInApps.length > 0) {
+				throw new Error('User/s in use for ' + usedInApps + ' app/s.');
 			}
 		})
 		.then(() => {
@@ -2333,7 +2331,7 @@ function customDestroy(req, res) {
 		})
 		.then(() => odpUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
-			res.status(403).json({
+			res.status(400).json({
 				message: err.message
 			});
 		});

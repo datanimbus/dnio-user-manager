@@ -373,7 +373,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					logger.debug('Remove user from app');
 					logger.debug(_d);
 					if (usrIdArray.length > 0) {
-						res.status(500).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app });
+						res.status(500).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
@@ -517,6 +517,7 @@ e.validateUser = (req, usrIds, app, flag) => {
 		.then(() => {
 			resObj.newUser = newUsrId.map(_d => _d._id);
 			resObj.diff = resArray;
+			resObj.app = app;
 			return resObj;
 		});
 };

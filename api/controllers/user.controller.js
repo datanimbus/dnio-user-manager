@@ -320,6 +320,30 @@ schema.pre('validate', function (next) {
 	}
 });
 
+schema.pre('validate', function (next) {
+	if (this.auth && this.auth.authType === 'azure') return next();
+	if (this.auth && (this.auth.isLdap || this.auth.authType === 'ldap')) return next();
+	var nameRegex =/^[a-zA-Z0-9-_@#. ]*$/;
+	if (this.basicDetails && this.basicDetails.name &&  this.basicDetails.name.match(nameRegex)) {
+		next();
+	} else {
+		next(new Error('Name can contain alphanumeric and  _ , - , @ , # and . characters only'));
+	}
+});
+
+schema.pre('validate', function (next) {
+	if (this.auth && this.auth.authType === 'azure' && this.bot) {
+		var idRegex =/^[a-zA-Z0-9-_@#.]*$/;
+		if (this.username && this.username &&  this.username.match(idRegex)) {
+			next();
+		} else {
+			next(new Error('Client Id can contain alphanumeric and  _ , - , @ , # and . characters only'));
+		}
+	}else {
+		next();
+	}
+});
+
 schema.pre('save', function (next, req) {
 	let self = this;
 	this.wasNew = this.isNew;

@@ -110,6 +110,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('B2B_ENABLE_TIMEBOUND')] = envConfig.B2B_ENABLE_TIMEBOUND;
 			resObj[_.camelCase('B2B_ENABLE_TRUSTED_IP')] = envConfig.B2B_ENABLE_TRUSTED_IP;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
+			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
@@ -1936,7 +1937,7 @@ function createUserinGroups(req, res) {
 	// console.log(JSON.stringify(req.body));
 	let user = req.body.user;
 	if (user && user.bot) {
-		user._id = !user._id && user.bot ? cacheUtil.uuid() : user._id;
+		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;
 	}
 	if (!user.accessControl) {

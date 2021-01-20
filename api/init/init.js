@@ -481,7 +481,6 @@ function userMigrationAppcenter(batchSize, _document) {
 	let migrationDB = mongoose.connection.db.collection('migration');
 	//let migrationDBFilter = { $and: [{ 'release': '3.8' }, { 'module': 'USER' }, { 'allServices': false }, { 'services.0': { $exists: true, $gte: { $size: 1 } } }] };
 	return new Promise((resolve, reject) => {
-		logger.info('config.mongoUrlAppcenter --- ', config.mongoUrlAppcenter);
 		mongo.connect(config.mongoUrlAppcenter, {
 			db: config.mongoAppcenterOptions
 		}, (error, db) => {

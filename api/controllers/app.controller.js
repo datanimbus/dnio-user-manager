@@ -263,19 +263,48 @@ schema.post('save', function (doc) {
 			json: true,
 			body: {
 				agentIPWhitelisting: doc.agentIPWhitelisting
-			}	
+			}
 		};
 		request(options, function (err, res) {
 			if (err) {
 				logger.error(err.message);
 			} else if (!res) {
-				logger.error('Server is DOWN');
+				logger.error('PM is DOWN');
 			} else {
 				logger.debug('Request to update IP whitelist completed');
 			}
 		});
 	}
 });
+
+// Inform PM for new App creation
+schema.post('save', function (doc) {
+	if (doc._wasNew) {
+		var options = {
+			url: config.baseUrlPM + '/app',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'TxnId': doc._req ? doc._req.get('txnId') : null,
+				'User': doc._req ? doc._req.get('user') : null
+			},
+			json: true,
+			body: {
+				_id: doc._id
+			}
+		};
+		request(options, function (err, res) {
+			if (err) {
+				logger.error(err.message);
+			} else if (!res) {
+				logger.error('PM is DOWN');
+			} else {
+				logger.debug('Request to Inform PM completed');
+			}
+		});
+	}
+});
+
 
 e.init = () => {
 	let app = require('../../config/apps.js');
@@ -373,7 +402,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					logger.debug('Remove user from app');
 					logger.debug(_d);
 					if (usrIdArray.length > 0) {
-						res.status(500).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
+						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';

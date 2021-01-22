@@ -60,7 +60,10 @@ module.exports = [
 			{ id: 'PNDSSFS', name: 'No Access Data Services Fuzzy Search Setting', operations: [{ method: 'PUT' }, { method: 'GET' }] },
 			{ id: 'PVDSSPR', name: 'View Data Services Property Setting', operations: [{ method: 'GET' }] },
 			{ id: 'PMDSSPR', name: 'Manage Data Services Property Setting', operations: [{ method: 'PUT' }, { method: 'POST' }] },
-			{ id: 'PNDSSPR', name: 'No Access Data Services Property Setting', operations: [{ method: 'PUT' }, { method: 'GET' }] }
+			{ id: 'PNDSSPR', name: 'No Access Data Services Property Setting', operations: [{ method: 'PUT' }, { method: 'GET' }] },
+			{ id: 'PVDSSIS', name: 'View Data Services Insight Setting', operations: [{ method: 'GET' }] },
+			{ id: 'PMDSSIS', name: 'Manage Data Services Insight Setting', operations: [{ method: 'PUT' }, { method: 'POST' }] },
+			{ id: 'PNDSSIS', name: 'No Access Data Services Insight Setting', operations: [{ method: 'PUT' }, { method: 'GET' }] }
 
 		],
 		'default': 'R',
@@ -123,8 +126,10 @@ module.exports = [
 					'PNDSSPR': 'R',
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
-					'PNDSSPD': 'R'
-
+					'PNDSSPD': 'R',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'R'
 				}
 			},
 			'name': {
@@ -186,6 +191,9 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'N'
 				}
 			},
 			'description': {
@@ -247,6 +255,73 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
 					'PNDSSPD': 'R',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'R'
+				}
+			},
+			'disableInsights': {
+				'_t': 'String',
+				'_p': {
+					'PMDSD': 'N',
+					'PMDSE': 'N',
+					'PMDSR': 'N',
+					'PVDSD': 'N',
+					'PVDSE': 'N',
+					'PVDSR': 'N',
+					'PVDSA': 'N',
+					////////////
+					'PNDSB': 'N',
+					'PVDSB': 'N',
+					'PMDSBC': 'N',
+					'PMDSBU': 'N',
+					'PMDSBD': 'N',
+					'PMDSPD': 'N',
+					'PMDSPS': 'N',
+					'PNDSPD': 'N',
+					'PNDSPS': 'N',
+					'PVDSIDPR': 'N',
+					'PMDSIDPR': 'N',
+					'PNDSIDPR': 'N',
+					'PVDSIDPO': 'N',
+					'PMDSIDPO': 'N',
+					'PNDSIDPO': 'N',
+					'PVDSIRSU': 'N',
+					'PMDSIRSU': 'N',
+					'PNDSIRSU': 'N',
+					'PVDSIRAP': 'N',
+					'PMDSIRAP': 'N',
+					'PNDSIRAP': 'N',
+					'PVDSIRRJ': 'N',
+					'PMDSIRRJ': 'N',
+					'PNDSIRRJ': 'N',
+					'PVDSIRDI': 'N',
+					'PMDSIRDI': 'N',
+					'PNDSIRDI': 'N',
+					'PVDSIRRW': 'N',
+					'PMDSIRRW': 'N',
+					'PNDSIRRW': 'N',
+					'PVDSSDH': 'N',
+					'PMDSSDH': 'N',
+					'PNDSSDH': 'N',
+					'PVDSSRE': 'N',
+					'PMDSSRE': 'N',
+					'PNDSSRE': 'N',
+					'PVDSSEP': 'N',
+					'PMDSSEP': 'N',
+					'PNDSSEP': 'N',
+					'PVDSSFS': 'N',
+					'PMDSSFS': 'N',
+					'PNDSSFS': 'N',
+					'PVDSSPR': 'N',
+					'PMDSSPR': 'N',
+					'PNDSSPR': 'N',
+					'PVDSSPD': 'N',
+					'PMDSSPD': 'N',
+					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'W',
+					'PNDSSIS': 'N'
 				}
 			},
 			'collectionName': {
@@ -308,6 +383,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'permanentDeleteData': {
@@ -368,7 +446,10 @@ module.exports = [
 					'PNDSSPR': 'N',
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'W',
-					'PNDSSPD': 'N'
+					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'app': {
@@ -430,6 +511,9 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'W',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'W',
+					'PNDSSIS': 'N'
 				}
 			},
 			'api': {
@@ -491,6 +575,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'port': {
@@ -552,6 +639,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'wizard': {
@@ -613,6 +703,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'version': {
@@ -674,6 +767,9 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'N'
 				}
 			},
 			'instances': {
@@ -735,6 +831,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'versionValidity': {
@@ -796,70 +895,12 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'definition': {
-				'_t': 'String',
-				'_p': {
-					'PMDSD': 'W',
-					'PMDSE': 'R',
-					'PMDSR': 'R',
-					'PVDSD': 'R',
-					'PVDSE': 'R',
-					'PVDSR': 'R',
-					'PVDSA': 'N',
-					////////////
-					'PNDSB': 'N',
-					'PVDSB': 'N',
-					'PMDSBC': 'N',
-					'PMDSBU': 'N',
-					'PMDSBD': 'N',
-					'PMDSPD': 'N',
-					'PMDSPS': 'N',
-					'PNDSPD': 'N',
-					'PNDSPS': 'N',
-					'PVDSIDPR': 'N',
-					'PMDSIDPR': 'N',
-					'PNDSIDPR': 'N',
-					'PVDSIDPO': 'N',
-					'PMDSIDPO': 'N',
-					'PNDSIDPO': 'N',
-					'PVDSIRSU': 'N',
-					'PMDSIRSU': 'N',
-					'PNDSIRSU': 'N',
-					'PVDSIRAP': 'N',
-					'PMDSIRAP': 'N',
-					'PNDSIRAP': 'N',
-					'PVDSIRRJ': 'N',
-					'PMDSIRRJ': 'N',
-					'PNDSIRRJ': 'N',
-					'PVDSIRDI': 'N',
-					'PMDSIRDI': 'N',
-					'PNDSIRDI': 'N',
-					'PVDSIRRW': 'N',
-					'PMDSIRRW': 'N',
-					'PNDSIRRW': 'N',
-					'PVDSSDH': 'N',
-					'PMDSSDH': 'N',
-					'PNDSSDH': 'N',
-					'PVDSSRE': 'N',
-					'PMDSSRE': 'N',
-					'PNDSSRE': 'N',
-					'PVDSSEP': 'N',
-					'PMDSSEP': 'N',
-					'PNDSSEP': 'N',
-					'PVDSSFS': 'N',
-					'PMDSSFS': 'N',
-					'PNDSSFS': 'N',
-					'PVDSSPR': 'N',
-					'PMDSSPR': 'N',
-					'PNDSSPR': 'N',
-					'PVDSSPD': 'N',
-					'PMDSSPD': 'N',
-					'PNDSSPD': 'N',
-				}
-			},
-			'attributeList': {
 				'_t': 'Array',
 				'_p': {
 					'PMDSD': 'W',
@@ -918,6 +959,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'status': {
@@ -979,6 +1023,9 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'N'
 				}
 			},
 			'internalVersion': {
@@ -1040,6 +1087,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'comment': {
@@ -1101,6 +1151,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'relatedSchemas': {
@@ -1162,6 +1215,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 
 			},
@@ -1224,6 +1280,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'preHooks': {
@@ -1285,6 +1344,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'workflowHooks': {
@@ -1348,6 +1410,9 @@ module.exports = [
 							'PVDSSPD': 'N',
 							'PMDSSPD': 'N',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'N',
+							'PMDSSIS': 'N',
+							'PNDSSIS': 'N'
 						}
 					},
 					'approve': {
@@ -1409,6 +1474,9 @@ module.exports = [
 							'PVDSSPD': 'N',
 							'PMDSSPD': 'N',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'N',
+							'PMDSSIS': 'N',
+							'PNDSSIS': 'N'
 						}
 					},
 					'reject': {
@@ -1470,6 +1538,9 @@ module.exports = [
 							'PVDSSPD': 'N',
 							'PMDSSPD': 'N',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'N',
+							'PMDSSIS': 'N',
+							'PNDSSIS': 'N'
 						}
 					},
 					'discard': {
@@ -1528,6 +1599,9 @@ module.exports = [
 							'PVDSSPR': 'N',
 							'PMDSSPR': 'N',
 							'PNDSSPR': 'N',
+							'PVDSSIS': 'N',
+							'PMDSSIS': 'N',
+							'PNDSSIS': 'N'
 						}
 					},
 					'rework': {
@@ -1589,6 +1663,9 @@ module.exports = [
 							'PVDSSPD': 'N',
 							'PMDSSPD': 'N',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'N',
+							'PMDSSIS': 'N',
+							'PNDSSIS': 'N'
 						}
 					}
 				}
@@ -1652,6 +1729,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'headers': {
@@ -1713,6 +1793,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'attributeCount': {
@@ -1773,7 +1856,10 @@ module.exports = [
 					'PNDSSPR': 'N',
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
-					'PNDSSPD': 'N'
+					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'N'
 
 				}
 			},
@@ -1836,6 +1922,9 @@ module.exports = [
 					'PVDSSPD': 'R',
 					'PMDSSPD': 'R',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'R',
+					'PMDSSIS': 'R',
+					'PNDSSIS': 'N'
 				}
 			},
 			'_metadata': {
@@ -1898,6 +1987,9 @@ module.exports = [
 						'PVDSSPD': 'R',
 						'PMDSSPD': 'R',
 						'PNDSSPD': 'N',
+						'PVDSSIS': 'R',
+						'PMDSSIS': 'R',
+						'PNDSSIS': 'N'
 					}
 				},
 				'createdAt': {
@@ -1959,6 +2051,73 @@ module.exports = [
 						'PVDSSPD': 'R',
 						'PMDSSPD': 'R',
 						'PNDSSPD': 'N',
+						'PVDSSIS': 'R',
+						'PMDSSIS': 'R',
+						'PNDSSIS': 'N'
+					}
+				},
+				'lastUpdatedBy': {
+					'_t': 'Date',
+					'_p': {
+						'PMDSD': 'R',
+						'PMDSE': 'R',
+						'PMDSR': 'R',
+						'PVDSD': 'R',
+						'PVDSE': 'R',
+						'PVDSR': 'R',
+						'PVDSA': 'R',
+						////////////
+						'PNDSB': 'N',
+						'PVDSB': 'R',
+						'PMDSBC': 'R',
+						'PMDSBU': 'R',
+						'PMDSBD': 'R',
+						'PMDSPD': 'R',
+						'PMDSPS': 'R',
+						'PNDSPD': 'N',
+						'PNDSPS': 'N',
+						'PVDSIDPR': 'R',
+						'PMDSIDPR': 'R',
+						'PNDSIDPR': 'N',
+						'PVDSIDPO': 'R',
+						'PMDSIDPO': 'R',
+						'PNDSIDPO': 'N',
+						'PVDSIRSU': 'R',
+						'PMDSIRSU': 'R',
+						'PNDSIRSU': 'N',
+						'PVDSIRAP': 'R',
+						'PMDSIRAP': 'R',
+						'PNDSIRAP': 'N',
+						'PVDSIRRJ': 'R',
+						'PMDSIRRJ': 'R',
+						'PNDSIRRJ': 'N',
+						'PVDSIRDI': 'R',
+						'PMDSIRDI': 'R',
+						'PNDSIRDI': 'N',
+						'PVDSIRRW': 'R',
+						'PMDSIRRW': 'R',
+						'PNDSIRRW': 'N',
+						'PVDSSDH': 'R',
+						'PMDSSDH': 'R',
+						'PNDSSDH': 'N',
+						'PVDSSRE': 'R',
+						'PMDSSRE': 'R',
+						'PNDSSRE': 'N',
+						'PVDSSEP': 'R',
+						'PMDSSEP': 'R',
+						'PNDSSEP': 'N',
+						'PVDSSFS': 'R',
+						'PMDSSFS': 'R',
+						'PNDSSFS': 'N',
+						'PVDSSPR': 'R',
+						'PMDSSPR': 'R',
+						'PNDSSPR': 'N',
+						'PVDSSPD': 'R',
+						'PMDSSPD': 'R',
+						'PNDSSPD': 'N',
+						'PVDSSIS': 'R',
+						'PMDSSIS': 'R',
+						'PNDSSIS': 'N'
 					}
 				},
 				'version': {
@@ -2021,6 +2180,9 @@ module.exports = [
 							'PVDSSPD': 'R',
 							'PMDSSPD': 'R',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'R',
+							'PMDSSIS': 'R',
+							'PNDSSIS': 'N'
 						}
 					},
 					'document': {
@@ -2082,6 +2244,9 @@ module.exports = [
 							'PVDSSPD': 'R',
 							'PMDSSPD': 'R',
 							'PNDSSPD': 'N',
+							'PVDSSIS': 'R',
+							'PMDSSIS': 'R',
+							'PNDSSIS': 'N'
 						}
 					}
 				}
@@ -2145,6 +2310,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			},
 			'enableSearchIndex': {
@@ -2206,6 +2374,9 @@ module.exports = [
 					'PVDSSPD': 'N',
 					'PMDSSPD': 'N',
 					'PNDSSPD': 'N',
+					'PVDSSIS': 'N',
+					'PMDSSIS': 'N',
+					'PNDSSIS': 'N'
 				}
 			}
 		}

@@ -85,18 +85,18 @@ exports.UserInGroup = UserController.UserInGroup;
 exports.UserInGroupCount = UserController.UserInGroupCount;
 exports.distinctUserAttribute = UserController.distinctUserAttribute;
 exports.BotInAppCount = UserController.botInAppCount;
-exports.UserChangeADAttribute = UserController.fixAllADUsers;
-exports.UserADFix = UserController.fixSingleADUsers;
-exports.UserADEmailFix = UserController.refreshADEmail;
+// exports.UserChangeADAttribute = UserController.fixAllADUsers;
+// exports.UserADFix = UserController.fixSingleADUsers;
+// exports.UserADEmailFix = UserController.refreshADEmail;
 
 exports.ConfigList = ConfigController.index;
 exports.ConfigShow = ConfigController.show;
 
 exports.LdapTestConnection = LdapController.testConnection;
-exports.LdapTestMapping = LdapController.testAuth;
+// exports.LdapTestMapping = LdapController.testAuth;
 exports.LdapSearchUsers = LdapController.searchUsers;
-exports.LdapSaveConnection = LdapController.saveConnection;
-exports.AzureCode = LdapController.authorizationRequestCallback;
+// exports.LdapSaveConnection = LdapController.saveConnection;
+// exports.AzureCode = LdapController.authorizationRequestCallback;
 
 exports.AppCreate = AppController.create;
 exports.AppList = AppController.index;

@@ -9,6 +9,7 @@ const _ = require('lodash');
 const odpUtils = require('@appveen/odp-utils');
 const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
+let globalCache = require('../../util/cache');
 var client = queueMgmt.client;
 const logger = global.logger;
 const utils = require('@appveen/utils');
@@ -17,18 +18,17 @@ const jwtKey = envConfig.secret;
 const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
 const azureAdUtil = require('../helpers/util/azureAd.util');
-const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
+// const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
 const cacheUtil = utils.cache;
 const XLSX = require('xlsx');
 const fs = require('fs');
 const getSheetDataFromGridFS = require('../helpers/util/bulkAddUser').getSheetDataFromGridFS;
 const getSheetData = require('../helpers/util/bulkAddUser').getSheetData;
 const substituteMappingSheetToSchema = require('../helpers/util/bulkAddUser').substituteMappingSheetToSchema;
-const algorithm = 'aes256';
+// const algorithm = 'aes256';
 const appController = require('./app.controller');
 const passport = require('passport');
 
-let ldapUtil = require('../helpers/util/ldap.util');
 var options = {
 	logger: logger,
 	collectionName: 'userMgmt.users'
@@ -36,6 +36,15 @@ var options = {
 
 function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
+}
+
+function getApps(_superAdmin, _id, _tokenHash) {
+	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
+	if (!_superAdmin) {
+		return mongoose.model('group').aggregate([{ '$match': { 'users': _id } }, { $group: { _id: '$app' } }])
+			.then(_apps => globalCache.setApp(`${_tokenHash}`, _apps));
+	}
+	return Promise.resolve();
 }
 
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
@@ -53,7 +62,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 	var token = null;
 	let rToken = null;
 	let expireIn = document.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
-	expireIn = expireIn * 60;
+	// expireIn = expireIn * 60;
 	logger.debug(`Is BOT? [${document.bot ? true : false}]`);
 	logger.debug(`Token Expiry :: ${expireIn}`);
 
@@ -87,11 +96,11 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			delete resObj.__v;
 			resObj.serverTime = Date.now();
 			resObj.expiresIn = (exp && !isExtend) ? exp * 1000 : Date.now() + (expireIn * 1000);
-			resObj[_.camelCase('RBAC_USER_TOKEN_DURATION')] = envConfig.RBAC_USER_TOKEN_DURATION * 60;
+			resObj[_.camelCase('RBAC_USER_TOKEN_DURATION')] = envConfig.RBAC_USER_TOKEN_DURATION;
 			resObj[_.camelCase('RBAC_USER_TOKEN_REFRESH')] = envConfig.RBAC_USER_TOKEN_REFRESH;
 			resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = rbacUserToSingleSession;
 			resObj[_.camelCase('RBAC_USER_CLOSE_WINDOW_TO_LOGOUT')] = envConfig.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT;
-			resObj[_.camelCase('RBAC_BOT_TOKEN_DURATION')] = envConfig.RBAC_BOT_TOKEN_DURATION * 60;
+			resObj[_.camelCase('RBAC_BOT_TOKEN_DURATION')] = envConfig.RBAC_BOT_TOKEN_DURATION;
 			resObj[_.camelCase('RBAC_HB_INTERVAL')] = envConfig.RBAC_HB_INTERVAL;
 			resObj[_.camelCase('PRIVATE_FILTER')] = envConfig.PRIVATE_FILTER;
 			resObj[_.camelCase('GOOGLE_API_KEY')] = envConfig.GOOGLE_API_KEY;
@@ -101,6 +110,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('B2B_ENABLE_TIMEBOUND')] = envConfig.B2B_ENABLE_TIMEBOUND;
 			resObj[_.camelCase('B2B_ENABLE_TRUSTED_IP')] = envConfig.B2B_ENABLE_TRUSTED_IP;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
+			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
@@ -139,6 +149,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			}
 			return response.json(resObj);
 		})
+		// .then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token), md5(oldJwt), resObj.expiresIn, isExtend))
+		.then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token)))
 		.catch(err => {
 			logger.error('Error in generateToken :: ', err);
 			if (isHtml) {
@@ -175,68 +187,69 @@ schema.pre('remove', function (next) {
 	next();
 });
 
-schema.methods.validatePassword = function (password) {
-	let self = this;
-	if (self.auth && (self.auth.isLdap || self.auth.authType === 'ldap')) {
-		logger.debug(`Checking ${self._id} against LDAP`);
-		return mongoose.model('config').findOne({
-			'configType': 'auth',
-			'auth': {
-				'$exists': true
-			},
-			'auth.mode': 'ldap'
-		})
-			.then(_cf => {
-				if (_cf && _cf.auth && _cf.auth.connectionDetails && _cf.auth.connectionDetails.url) {
-					return ldapUtil.connectLDAP(_cf.auth.connectionDetails.url, self.auth.dn, password);
-				} else {
-					return false;
-				}
-			})
-			.then(client => {
-				if (client) {
-					client.unbind(function (err, data) {
-						logger.debug(data);
-						if (err) logger.error(err.message);
-					});
-					return true && self.isActive;
-				}
-				return false;
-			}, msg => {
-				if (msg) return false;
-			});
-	} else if (self.auth && self.auth.authType === 'azure') {
-		logger.debug(`Checking ${self._id} against Azure AD`);
-		if (!self.bot) return false;
-		let passMatch = (this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
-		if (!passMatch) return false;
-		return mongoose.model('config').findOne({
-			'configType': 'auth',
-			'auth.class': 'AD',
-			'auth.mode': 'azure',
-			'auth.enabled': true
-		})
-			.then(_d => {
-				if (!_d.auth.connectionDetails) return false;
-				let azureConfig = {
-					tenant: _d.auth.connectionDetails.tenant,
-					clientId: self._id,
-					clientSecret: password,
-				};
-				return azureAdUtil.validateAzureCredentials(azureConfig);
-			})
-			.then(() => true, () => false);
-	}
-	if (self.bot) {
-		logger.debug(`${self._id} is a bot. Checking key`);
-		let matchedKeyObj = self.botKeys.find(_k => {
-			return _k.keyValue == crypto.createHash('md5').update(password + this.salt).digest('hex') && _k.isActive;
-		});
-		return Promise.resolve(matchedKeyObj ? matchedKeyObj._id : null);
-	}
-	logger.debug(`Checking ${self._id} is an local user`);
-	return Promise.resolve(this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
-};
+// TBDL
+// schema.methods.validatePassword = function (password) {
+// 	let self = this;
+// 	if (self.auth && (self.auth.isLdap || self.auth.authType === 'ldap')) {
+// 		logger.debug(`Checking ${self._id} against LDAP`);
+// 		return mongoose.model('config').findOne({
+// 			'configType': 'auth',
+// 			'auth': {
+// 				'$exists': true
+// 			},
+// 			'auth.mode': 'ldap'
+// 		})
+// 			.then(_cf => {
+// 				if (_cf && _cf.auth && _cf.auth.connectionDetails && _cf.auth.connectionDetails.url) {
+// 					return ldapUtil.connectLDAP(_cf.auth.connectionDetails.url, self.auth.dn, password);
+// 				} else {
+// 					return false;
+// 				}
+// 			})
+// 			.then(client => {
+// 				if (client) {
+// 					client.unbind(function (err, data) {
+// 						logger.debug(data);
+// 						if (err) logger.error(err.message);
+// 					});
+// 					return true && self.isActive;
+// 				}
+// 				return false;
+// 			}, msg => {
+// 				if (msg) return false;
+// 			});
+// 	} else if (self.auth && self.auth.authType === 'azure') {
+// 		logger.debug(`Checking ${self._id} against Azure AD`);
+// 		if (!self.bot) return false;
+// 		let passMatch = (this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
+// 		if (!passMatch) return false;
+// 		return mongoose.model('config').findOne({
+// 			'configType': 'auth',
+// 			'auth.class': 'AD',
+// 			'auth.mode': 'azure',
+// 			'auth.enabled': true
+// 		})
+// 			.then(_d => {
+// 				if (!_d.auth.connectionDetails) return false;
+// 				let azureConfig = {
+// 					tenant: _d.auth.connectionDetails.tenant,
+// 					clientId: self._id,
+// 					clientSecret: password,
+// 				};
+// 				return azureAdUtil.validateAzureCredentials(azureConfig);
+// 			})
+// 			.then(() => true, () => false);
+// 	}
+// 	if (self.bot) {
+// 		logger.debug(`${self._id} is a bot. Checking key`);
+// 		let matchedKeyObj = self.botKeys.find(_k => {
+// 			return _k.keyValue == crypto.createHash('md5').update(password + this.salt).digest('hex') && _k.isActive;
+// 		});
+// 		return Promise.resolve(matchedKeyObj ? matchedKeyObj._id : null);
+// 	}
+// 	logger.debug(`Checking ${self._id} is an local user`);
+// 	return Promise.resolve(this.password == crypto.createHash('md5').update(password + this.salt).digest('hex') && this.isActive);
+// };
 
 schema.post('validate', function (error, doc, next) {
 	if (error.errors && error.errors._id) {
@@ -308,6 +321,30 @@ schema.pre('validate', function (next) {
 	}
 });
 
+schema.pre('validate', function (next) {
+	if (this.auth && this.auth.authType === 'azure') return next();
+	if (this.auth && (this.auth.isLdap || this.auth.authType === 'ldap')) return next();
+	var nameRegex =/^[a-zA-Z0-9-_@#. ]*$/;
+	if (this.basicDetails && this.basicDetails.name &&  this.basicDetails.name.match(nameRegex)) {
+		next();
+	} else {
+		next(new Error('Name can contain alphanumeric and  _ , - , @ , # and . characters only'));
+	}
+});
+
+schema.pre('validate', function (next) {
+	if (this.auth && this.auth.authType === 'azure' && this.bot) {
+		var idRegex =/^[a-zA-Z0-9-_@#.]*$/;
+		if (this.username && this.username &&  this.username.match(idRegex)) {
+			next();
+		} else {
+			next(new Error('Client Id can contain alphanumeric and  _ , - , @ , # and . characters only'));
+		}
+	}else {
+		next();
+	}
+});
+
 schema.pre('save', function (next, req) {
 	let self = this;
 	this.wasNew = this.isNew;
@@ -349,7 +386,7 @@ schema.pre('save', function (next) {
 schema.pre('save', utils.counter.getIdGenerator('USR', 'User', null, null, 1000));
 
 schema.pre('save', function (next) {
-	if (this.auth && !this.bot && (this.auth.isLdap || (this.auth.authType === 'azure') || this.auth.authType === 'ldap')) return next();
+	// if (this.auth && !this.bot && (this.auth.isLdap || (this.auth.authType === 'azure') || this.auth.authType === 'ldap')) return next();
 	var self = this;
 	if (!self.salt) {
 		crudder.model.findOne({
@@ -636,6 +673,7 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 		return done(new Error('No oid/email found in profile.'), null);
 	}
 	try {
+		logger.trace('azure acces token ::', accessToken);
 		// search user in azure and get odp username
 		let azureFilter = `startswith(mail,'${profile._json.email}')`;
 		let searchResult = await azureAdUtil.searchUser(accessToken, azureFilter);
@@ -666,10 +704,10 @@ function azureLoginCallback(req, res) {
 			if (err) {
 				logger.error('error in azureLoginCallback ::: ', err);
 				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, err);
+				return sendAzureCallbackResponse(res, 500, { message: err.message });
 			} else if (!user) {
 				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, info);
+				return sendAzureCallbackResponse(res, 400, { meessage : info });
 			} else {
 				return handleSessionAndGenerateToken(req, res, user, null, true);
 			}
@@ -711,10 +749,10 @@ function azureUserFetchCallback(req, res) {
 			if (err) {
 				logger.error('error in azureUserFetchCallback ::: ', err);
 				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, err);
+				return sendAzureCallbackResponse(res, 500, { message: err.message });
 			} else if (!accessToken) {
 				logger.error('Something went wrong in azureUserFetchCallback:: ', info);
-				return sendAzureCallbackResponse(res, 401, info);
+				return sendAzureCallbackResponse(res, 401, { message: info });
 			} else {
 				let encryptedToken = azureAdUtil.encrypt(accessToken);
 				return sendAzureCallbackResponse(res, 200, {
@@ -864,7 +902,7 @@ function updatePassword(request, response) {
 						message: 'Cannot update user password. Contact your AD admin'
 					});
 				}
-				return doc.validatePassword(credentials.oldpassword);
+				return validatePassword(doc, credentials.oldpassword);
 			} else response.status(400).json({
 				message: 'Invalid Credentials'
 			});
@@ -959,46 +997,32 @@ function resetPassword(req, res) {
 	}
 }
 
-function getApps(_superAdmin, _id) {
-	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
-	if (_superAdmin) return mongoose.model('app').find({}, '_id');
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': _id
-		}
-	}, {
-		$group: {
-			_id: '$app'
-		}
-	}]);
-}
-
-function getRoles(_id) {
-	logger.debug(`getRoles(_id) :: ${_id}`);
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': _id
-		}
-	},
-	{
-		'$project': {
-			'roles': 1
-		}
-	}, {
-		'$unwind': {
-			'path': '$roles',
-			'preserveNullAndEmptyArrays': false
-		}
-	}, {
-		'$group': {
-			'_id': null,
-			'roles': {
-				'$addToSet': '$roles'
-			}
-		}
-	}
-	]);
-}
+// function getRoles(_id) {
+// 	logger.debug(`getRoles(_id) :: ${_id}`);
+// 	return mongoose.model('group').aggregate([{
+// 		'$match': {
+// 			'users': _id
+// 		}
+// 	},
+// 	{
+// 		'$project': {
+// 			'roles': 1
+// 		}
+// 	}, {
+// 		'$unwind': {
+// 			'path': '$roles',
+// 			'preserveNullAndEmptyArrays': false
+// 		}
+// 	}, {
+// 		'$group': {
+// 			'_id': null,
+// 			'roles': {
+// 				'$addToSet': '$roles'
+// 			}
+// 		}
+// 	}
+// 	]);
+// }
 
 function validateUserSession(req, res) {
 	logger.debug('Validate user session called!');
@@ -1023,25 +1047,26 @@ function validateUserSession(req, res) {
 				let d = jwt.verify(token, jwtKey);
 				if (d) {
 					let doc = {};
-					let roles = [];
 					logger.debug(`Finding user with username :: ${d._id}`);
 					return crudder.model.findOne({
 						'_id': d._id,
 						'isActive': true
 					})
 						.then(_doc => doc = _doc)
-						.then(() => getRoles(doc._id))
-						.then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
-						.then(() => getApps(doc.isSuperAdmin, doc._id))
-						.then(_apps => {
-							if (doc) {
-								doc = JSON.parse(JSON.stringify(doc));
-								doc['apps'] = _apps;
-								doc['roles'] = roles;
-								logger.debug(`Found user with username :: ${doc._id}`);
-								return res.json(doc);
-							} else throw 'invalid';
-						});
+						// .then(() => getRoles(doc._id))
+						// .then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
+						// .then(() => getApps(doc.isSuperAdmin, doc._id))
+						// .then(_apps => {
+						// 	if (doc) {
+						// 		doc = JSON.parse(JSON.stringify(doc));
+						// 		doc['apps'] = _apps;
+						// 		doc['roles'] = roles;
+						// 		logger.debug(`Found user with username :: ${doc._id}`);
+						// 		return res.json(doc);
+						// 	} else throw 'invalid';
+						// });
+						.then(() => res.json(doc))
+						.then(() => getApps(doc.isSuperAdmin, doc._id, tokenHash));
 				} else throw 'invalid';
 			} catch (err) {
 				logger.error(err);
@@ -1113,7 +1138,7 @@ function refreshToken(req, res) {
 						delete newRClaim.iat;
 						delete newRClaim.exp;
 						let expireIn = d.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
-						expireIn = expireIn * 60;
+						// expireIn = expireIn * 60;
 
 						newToken = jwt.sign(newClaim, jwtKey, {
 							expiresIn: expireIn
@@ -1255,7 +1280,7 @@ function customIndex(_req, _res) {
 
 function customUpdate(req, res) {
 	let isBot = req.body.bot;
-	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
+	let arr = ['username', 'password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
 	arr.forEach(_k => {
 		delete req.body[_k];
 	});
@@ -1712,6 +1737,7 @@ function getRolesType(req, res) {
 
 function logout(req, res) {
 	let token = req.get('Authorization') ? req.get('Authorization').split('JWT ')[1] : null;
+	let tokenHash = md5(token);
 	userLog.logout(req, res)
 		.then(() => {
 			if (!token) return res.status(400).json({
@@ -1720,6 +1746,7 @@ function logout(req, res) {
 			res.status(200).json({
 				message: 'logged out successfully'
 			});
+			globalCache.unsetApp(tokenHash);
 			try {
 				jwt.verify(token, jwtKey);
 				return cacheUtil.blacklist(md5(token))
@@ -1910,7 +1937,7 @@ function createUserinGroups(req, res) {
 	// console.log(JSON.stringify(req.body));
 	let user = req.body.user;
 	if (user && user.bot) {
-		user._id = !user._id && user.bot ? cacheUtil.uuid() : user._id;
+		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;
 	}
 	if (!user.accessControl) {
@@ -2282,16 +2309,14 @@ function customDestroy(req, res) {
 			return Promise.all(pr);
 		})
 		.then(data => {
-			let finalData = [];
+			let usedInApps = [];
 			data.forEach(doc => {
 				if (doc && doc.diff && doc.diff.length > 0) {
-					doc.diff.forEach(id => {
-						finalData.push(id);
-					});
+					usedInApps.push(doc.app);
 				}
 			});
-			if (finalData.length > 0) {
-				throw new Error('User is in use');
+			if (usedInApps.length > 0) {
+				throw new Error('User/s in use for ' + usedInApps + ' app/s.');
 			}
 		})
 		.then(() => {
@@ -2331,7 +2356,7 @@ function customDestroy(req, res) {
 		})
 		.then(() => odpUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
-			res.status(403).json({
+			res.status(400).json({
 				message: err.message
 			});
 		});
@@ -3059,6 +3084,9 @@ function readiness(req, res) {
 }
 
 function health(req, res) {
+	logger.trace(`mongoose.connection.readyState: ${mongoose.connection.readyState}`);
+	logger.trace(`client.nc.connected: ${client.nc.connected}`);
+	logger.trace(`cacheUtil.isConnected(): ${cacheUtil.isConnected()}`);
 	if (mongoose.connection.readyState === 1 && client && client.nc && client.nc.connected && cacheUtil.isConnected()) {
 		return res.status(200).json();
 	} else {
@@ -3066,375 +3094,378 @@ function health(req, res) {
 	}
 }
 
-function updateADUser(user, client, storedField, newField, req, isSingle) {
-	let filter = `${storedField} eq '${user._id}'`;
-	return new Promise((resolve, reject) => {
-		return client
-			.api('/users')
-			.filter(filter)
-			.get((err, result) => {
-				try {
-					if (err) {
-						logger.error(err);
-						let errMsg = 'User fetch API failed';
-						if (err.message) errMsg = err.message;
-						else {
-							try {
-								let errBody = JSON.parse(err.body);
-								errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
-							} catch (err) {
-								//do nothing
-							}
-						}
-						throw new Error(errMsg);
-					}
-					if (result.value) {
-						logger.debug(JSON.stringify({
-							searchUsersList: result.value,
-							user: user._id,
-							storedField
-						}));
-						if (result.value.length > 1) {
-							throw new Error('Found more than one user in AD.');
-						}
-						let adUser = result.value.filter(_r => _r[storedField] && _r[newField]).map(_r => {
-							return {
-								username: _r[newField],
-								'auth.adAttribute': newField
-							};
-						})[0];
-						if (!adUser) {
-							let errMsg = `${storedField} or ${newField} details not found for user.`;
-							throw new Error(errMsg);
-						}
-						user['username'] = adUser.username;
-						user.auth['adAttribute'] = newField;
-						user.markModified('auth.adAttribute');
-						if (isSingle) {
-							user.errorMessage = null;
-							user.isActive = true;
-						}
-						return user.save(req)
-							.then((_u) => resolve(_u));
-					} else {
-						throw new Error('User not found in AD');
-					}
-				} catch (err) {
-					if (isSingle) {
-						let errMsg = err.message;
-						user.errorMessage = errMsg;
-						if (!user.auth) user.auth = {};
-						user.auth.adAttribute = storedField;
-						user.isActive = false;
-						return user.save(req)
-							.then(() => reject(new Error(errMsg)));
-					}
-					reject(err);
 
-				}
-			});
-	});
-}
+// TBDL
+// function updateADUser(user, client, storedField, newField, req, isSingle) {
+// 	let filter = `${storedField} eq '${user._id}'`;
+// 	return new Promise((resolve, reject) => {
+// 		return client
+// 			.api('/users')
+// 			.filter(filter)
+// 			.get((err, result) => {
+// 				try {
+// 					if (err) {
+// 						logger.error(err);
+// 						let errMsg = 'User fetch API failed';
+// 						if (err.message) errMsg = err.message;
+// 						else {
+// 							try {
+// 								let errBody = JSON.parse(err.body);
+// 								errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
+// 							} catch (err) {
+// 								//do nothing
+// 							}
+// 						}
+// 						throw new Error(errMsg);
+// 					}
+// 					if (result.value) {
+// 						logger.debug(JSON.stringify({
+// 							searchUsersList: result.value,
+// 							user: user._id,
+// 							storedField
+// 						}));
+// 						if (result.value.length > 1) {
+// 							throw new Error('Found more than one user in AD.');
+// 						}
+// 						let adUser = result.value.filter(_r => _r[storedField] && _r[newField]).map(_r => {
+// 							return {
+// 								username: _r[newField],
+// 								'auth.adAttribute': newField
+// 							};
+// 						})[0];
+// 						if (!adUser) {
+// 							let errMsg = `${storedField} or ${newField} details not found for user.`;
+// 							throw new Error(errMsg);
+// 						}
+// 						user['username'] = adUser.username;
+// 						user.auth['adAttribute'] = newField;
+// 						user.markModified('auth.adAttribute');
+// 						if (isSingle) {
+// 							user.errorMessage = null;
+// 							user.isActive = true;
+// 						}
+// 						return user.save(req)
+// 							.then((_u) => resolve(_u));
+// 					} else {
+// 						throw new Error('User not found in AD');
+// 					}
+// 				} catch (err) {
+// 					if (isSingle) {
+// 						let errMsg = err.message;
+// 						user.errorMessage = errMsg;
+// 						if (!user.auth) user.auth = {};
+// 						user.auth.adAttribute = storedField;
+// 						user.isActive = false;
+// 						return user.save(req)
+// 							.then(() => reject(new Error(errMsg)));
+// 					}
+// 					reject(err);
 
-function fixSingleADUsers(req, res) {
-	let accToken = req.body.adToken;
-	let userId = req.body.userId;
-	if (!accToken) res.status(400).json({
-		message: 'AD token  or username attribute not found'
-	});
-	accToken = decrypt(accToken);
-	let client = MicrosoftGraph.Client.init({
-		authProvider: (done) => {
-			done(null, accToken);
-		}
-	});
-	let newAttr = null;
-	return mongoose.model('config').findOne({
-		'configType': 'auth',
-		'auth.class': 'AD',
-		'auth.mode': 'azure',
-		'auth.enabled': true
-	})
-		.then(_d => {
-			if (!_d) throw new Error('Config is not AzureAD.');
-			newAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
-			return crudder.model.findOne({
-				_id: userId
-			});
-		})
-		.then(_user => {
-			let configADAttr = _user.auth && _user.auth.adAttribute ? _user.auth.adAttribute : 'mail';
-			return updateADUser(_user, client, configADAttr, newAttr, req, true);
-		})
-		.then((_u) => {
-			logger.info('Users Updated ' + JSON.stringify(_u));
-			res.json({
-				message: 'Users Updated'
-			});
-		})
-		.catch(err => {
-			logger.error(err);
-			res.status(500).json({
-				message: err.message
-			});
-		});
-}
+// 				}
+// 			});
+// 	});
+// }
 
-function decrypt(text) {
-	const decipher = crypto.createDecipher(algorithm, envConfig.adSecret);
-	const decrypted = decipher.update(text, 'hex', 'utf8') + decipher.final('utf8');
-	return decrypted;
-}
+// function fixSingleADUsers(req, res) {
+// 	let accToken = req.body.adToken;
+// 	let userId = req.body.userId;
+// 	if (!accToken) res.status(400).json({
+// 		message: 'AD token  or username attribute not found'
+// 	});
+// 	accToken = decrypt(accToken);
+// 	let client = MicrosoftGraph.Client.init({
+// 		authProvider: (done) => {
+// 			done(null, accToken);
+// 		}
+// 	});
+// 	let newAttr = null;
+// 	return mongoose.model('config').findOne({
+// 		'configType': 'auth',
+// 		'auth.class': 'AD',
+// 		'auth.mode': 'azure',
+// 		'auth.enabled': true
+// 	})
+// 		.then(_d => {
+// 			if (!_d) throw new Error('Config is not AzureAD.');
+// 			newAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
+// 			return crudder.model.findOne({
+// 				_id: userId
+// 			});
+// 		})
+// 		.then(_user => {
+// 			let configADAttr = _user.auth && _user.auth.adAttribute ? _user.auth.adAttribute : 'mail';
+// 			return updateADUser(_user, client, configADAttr, newAttr, req, true);
+// 		})
+// 		.then((_u) => {
+// 			logger.info('Users Updated ' + JSON.stringify(_u));
+// 			res.json({
+// 				message: 'Users Updated'
+// 			});
+// 		})
+// 		.catch(err => {
+// 			logger.error(err);
+// 			res.status(500).json({
+// 				message: err.message
+// 			});
+// 		});
+// }
 
-function fixUsersInBatches(_users, client, isSuperadminBatch, configADAttr, newAttr, req) {
-	const BATCH = 5;
-	let arr = [];
-	let totalBatches = _users.length / BATCH;
-	for (let i = 0; i < totalBatches; i++) {
-		arr.push(i);
-	}
-	let errorObj = [];
-	let count = 0;
-	let promise = arr.reduce((_p, curr, i) => {
-		return _p
-			.then(() => {
-				let docs = _users.slice(i * BATCH, (i + 1) * BATCH);
-				let updateUserPromise = docs.map(doc => updateADUser(doc, client, configADAttr, newAttr, req, false)
-					.catch(err => {
-						logger.error(err);
-						doc.errorMessage = err.message;
-						doc.auth['adAttribute'] = configADAttr;
-						doc.markModified('auth.adAttribute');
-						doc.isActive = false;
-						errorObj.push(doc);
-						return Promise.resolve();
-					}));
-				return Promise.all(updateUserPromise)
-					.then((_result) => {
-						logger.debug(JSON.stringify({
-							_result
-						}));
-						let updateADUser = _result.filter(_u => _u && _u.username);
-						count += updateADUser.length;
-						logger.info('Updated users in batch ' + (i + 1) + '  :: ' + updateADUser.length);
-					});
-			});
-	}, Promise.resolve());
-	return promise
-		.then(() => {
-			if (count === 0 && isSuperadminBatch) {
-				throw new Error('No superadmin user updated. Process failed');
-			}
-			if (isSuperadminBatch)
-				logger.info('SuperAdmin users updated :: ' + count);
-			else {
-				logger.info('Normal users updated :: ' + count);
-			}
-			let errPromise = errorObj.map(_user => {
-				return _user.save(req);
-			});
-			return Promise.all(errPromise);
-		})
-		.then(() => {
-			return count;
-		});
-}
+// function decrypt(text) {
+// 	const decipher = crypto.createDecipher(algorithm, envConfig.adSecret);
+// 	const decrypted = decipher.update(text, 'hex', 'utf8') + decipher.final('utf8');
+// 	return decrypted;
+// }
 
-function fixAllADUsers(req, res) {
-	let accToken = req.body.adToken;
-	let newAttr = req.body.adUserAttribute;
-	if (!accToken || !newAttr) res.status(400).json({
-		message: 'AD token  or username attribute not found'
-	});
-	let count = 0;
-	let configADAttr = null;
-	accToken = decrypt(accToken);
-	let client = MicrosoftGraph.Client.init({
-		authProvider: (done) => {
-			done(null, accToken);
-		}
-	});
-	return mongoose.model('config').findOne({
-		'configType': 'auth',
-		'auth.class': 'AD',
-		'auth.mode': 'azure',
-		'auth.enabled': true
-	})
-		.then(_d => {
-			if (!_d) throw new Error('Config is not AzureAD.');
-			configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
-			if (newAttr === configADAttr) throw new Error('New username attribute same as configured attribute.');
-			return crudder.model.find({
-				bot: false,
-				'auth.authType': 'azure',
-				isSuperAdmin: true
-			});
-		})
-		.then(_users => {
-			return fixUsersInBatches(_users, client, true, configADAttr, newAttr, req);
-		})
-		.then((_c) => {
-			count += _c;
-			return crudder.model.find({
-				bot: false,
-				'auth.authType': 'azure',
-				isSuperAdmin: false
-			});
-		})
-		.then(_users => {
-			return fixUsersInBatches(_users, client, false, configADAttr, newAttr, req);
-		})
-		.then((_c) => {
-			count += _c;
-			return mongoose.model('config').updateOne({
-				'configType': 'auth',
-				'auth.class': 'AD',
-				'auth.mode': 'azure',
-				'auth.enabled': true
-			}, {
-				'auth.connectionDetails.adUsernameAttribute': newAttr
-			});
-		})
-		.then(() => {
-			logger.debug('config updated');
-			res.json({
-				message: 'Users updated :: ' + count
-			});
-		})
-		.catch(err => {
-			logger.error(err);
-			res.status(500).json({
-				message: err.message
-			});
-		});
-}
+// function fixUsersInBatches(_users, client, isSuperadminBatch, configADAttr, newAttr, req) {
+// 	const BATCH = 5;
+// 	let arr = [];
+// 	let totalBatches = _users.length / BATCH;
+// 	for (let i = 0; i < totalBatches; i++) {
+// 		arr.push(i);
+// 	}
+// 	let errorObj = [];
+// 	let count = 0;
+// 	let promise = arr.reduce((_p, curr, i) => {
+// 		return _p
+// 			.then(() => {
+// 				let docs = _users.slice(i * BATCH, (i + 1) * BATCH);
+// 				let updateUserPromise = docs.map(doc => updateADUser(doc, client, configADAttr, newAttr, req, false)
+// 					.catch(err => {
+// 						logger.error(err);
+// 						doc.errorMessage = err.message;
+// 						doc.auth['adAttribute'] = configADAttr;
+// 						doc.markModified('auth.adAttribute');
+// 						doc.isActive = false;
+// 						errorObj.push(doc);
+// 						return Promise.resolve();
+// 					}));
+// 				return Promise.all(updateUserPromise)
+// 					.then((_result) => {
+// 						logger.debug(JSON.stringify({
+// 							_result
+// 						}));
+// 						let updateADUser = _result.filter(_u => _u && _u.username);
+// 						count += updateADUser.length;
+// 						logger.info('Updated users in batch ' + (i + 1) + '  :: ' + updateADUser.length);
+// 					});
+// 			});
+// 	}, Promise.resolve());
+// 	return promise
+// 		.then(() => {
+// 			if (count === 0 && isSuperadminBatch) {
+// 				throw new Error('No superadmin user updated. Process failed');
+// 			}
+// 			if (isSuperadminBatch)
+// 				logger.info('SuperAdmin users updated :: ' + count);
+// 			else {
+// 				logger.info('Normal users updated :: ' + count);
+// 			}
+// 			let errPromise = errorObj.map(_user => {
+// 				return _user.save(req);
+// 			});
+// 			return Promise.all(errPromise);
+// 		})
+// 		.then(() => {
+// 			return count;
+// 		});
+// }
 
-function updateADUserEmail(user, client, storedField, req) {
-	let filter = `${storedField} eq '${user.username}'`;
-	return new Promise((resolve, reject) => {
-		return client
-			.api('/users')
-			.filter(filter)
-			.get((err, result) => {
-				try {
-					if (err) {
-						logger.error(err);
-						let errMsg = 'User fetch API failed';
-						if (err.message) errMsg = err.message;
-						else {
-							try {
-								let errBody = JSON.parse(err.body);
-								errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
-							} catch (err) {
-								//do nothing
-							}
-						}
-						throw new Error(errMsg);
-					}
-					if (result.value) {
-						logger.debug(JSON.stringify({
-							searchUsersList: result.value,
-							user: user.username,
-							storedField
-						}));
-						if (result.value.length > 1) {
-							throw new Error('Found more than one user in AD.');
-						}
-						if (result.value.length === 0) {
-							throw new Error('AD user not found');
-						}
-						if (user.basicDetails) user.basicDetails['alternateEmail'] = result.value[0].mail;
-						user.markModified('alternateEmail');
-						return user.save(req)
-							.then((_u) => resolve(_u));
-					} else {
-						throw new Error('User not found in AD');
-					}
-				} catch (err) {
-					reject(err);
-				}
-			});
-	});
-}
+// function fixAllADUsers(req, res) {
+// 	let accToken = req.body.adToken;
+// 	let newAttr = req.body.adUserAttribute;
+// 	if (!accToken || !newAttr) res.status(400).json({
+// 		message: 'AD token  or username attribute not found'
+// 	});
+// 	let count = 0;
+// 	let configADAttr = null;
+// 	accToken = decrypt(accToken);
+// 	let client = MicrosoftGraph.Client.init({
+// 		authProvider: (done) => {
+// 			done(null, accToken);
+// 		}
+// 	});
+// 	return mongoose.model('config').findOne({
+// 		'configType': 'auth',
+// 		'auth.class': 'AD',
+// 		'auth.mode': 'azure',
+// 		'auth.enabled': true
+// 	})
+// 		.then(_d => {
+// 			if (!_d) throw new Error('Config is not AzureAD.');
+// 			configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
+// 			if (newAttr === configADAttr) throw new Error('New username attribute same as configured attribute.');
+// 			return crudder.model.find({
+// 				bot: false,
+// 				'auth.authType': 'azure',
+// 				isSuperAdmin: true
+// 			});
+// 		})
+// 		.then(_users => {
+// 			return fixUsersInBatches(_users, client, true, configADAttr, newAttr, req);
+// 		})
+// 		.then((_c) => {
+// 			count += _c;
+// 			return crudder.model.find({
+// 				bot: false,
+// 				'auth.authType': 'azure',
+// 				isSuperAdmin: false
+// 			});
+// 		})
+// 		.then(_users => {
+// 			return fixUsersInBatches(_users, client, false, configADAttr, newAttr, req);
+// 		})
+// 		.then((_c) => {
+// 			count += _c;
+// 			return mongoose.model('config').updateOne({
+// 				'configType': 'auth',
+// 				'auth.class': 'AD',
+// 				'auth.mode': 'azure',
+// 				'auth.enabled': true
+// 			}, {
+// 				'auth.connectionDetails.adUsernameAttribute': newAttr
+// 			});
+// 		})
+// 		.then(() => {
+// 			logger.debug('config updated');
+// 			res.json({
+// 				message: 'Users updated :: ' + count
+// 			});
+// 		})
+// 		.catch(err => {
+// 			logger.error(err);
+// 			res.status(500).json({
+// 				message: err.message
+// 			});
+// 		});
+// }
 
-function fixUsersEmailInBatches(_users, client, configADAttr, req) {
-	const BATCH = 5;
-	let arr = [];
-	let totalBatches = _users.length / BATCH;
-	for (let i = 0; i < totalBatches; i++) {
-		arr.push(i);
-	}
-	let count = 0;
-	let promise = arr.reduce((_p, curr, i) => {
-		return _p
-			.then(() => {
-				let docs = _users.slice(i * BATCH, (i + 1) * BATCH);
-				let updateUserPromise = docs.map(doc => updateADUserEmail(doc, client, configADAttr, req)
-					.catch(err => {
-						logger.error('User update failed ' + doc.username);
-						logger.error(err);
-						return Promise.resolve();
-					}));
-				return Promise.all(updateUserPromise)
-					.then((_result) => {
-						logger.debug(JSON.stringify({
-							_result
-						}));
-						let updateADUser = _result.filter(_u => _u && _u.username);
-						count += updateADUser.length;
-						logger.info('Updated users in batch ' + (i + 1) + '  :: ' + updateADUser.length);
-					});
-			});
-	}, Promise.resolve());
-	return promise
-		.then(() => {
-			return count;
-		});
-}
+// function updateADUserEmail(user, client, storedField, req) {
+// 	let filter = `${storedField} eq '${user.username}'`;
+// 	return new Promise((resolve, reject) => {
+// 		return client
+// 			.api('/users')
+// 			.filter(filter)
+// 			.get((err, result) => {
+// 				try {
+// 					if (err) {
+// 						logger.error(err);
+// 						let errMsg = 'User fetch API failed';
+// 						if (err.message) errMsg = err.message;
+// 						else {
+// 							try {
+// 								let errBody = JSON.parse(err.body);
+// 								errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
+// 							} catch (err) {
+// 								//do nothing
+// 							}
+// 						}
+// 						throw new Error(errMsg);
+// 					}
+// 					if (result.value) {
+// 						logger.debug(JSON.stringify({
+// 							searchUsersList: result.value,
+// 							user: user.username,
+// 							storedField
+// 						}));
+// 						if (result.value.length > 1) {
+// 							throw new Error('Found more than one user in AD.');
+// 						}
+// 						if (result.value.length === 0) {
+// 							throw new Error('AD user not found');
+// 						}
+// 						if (user.basicDetails) user.basicDetails['alternateEmail'] = result.value[0].mail;
+// 						user.markModified('alternateEmail');
+// 						return user.save(req)
+// 							.then((_u) => resolve(_u));
+// 					} else {
+// 						throw new Error('User not found in AD');
+// 					}
+// 				} catch (err) {
+// 					reject(err);
+// 				}
+// 			});
+// 	});
+// }
 
-function refreshADEmail(req, res) {
-	let accToken = req.body.adToken;
-	if (!accToken) res.status(400).json({
-		message: 'AD token not found'
-	});
-	let count = 0;
-	accToken = decrypt(accToken);
-	let client = MicrosoftGraph.Client.init({
-		authProvider: (done) => {
-			done(null, accToken);
-		}
-	});
-	let configADAttr = null;
-	return mongoose.model('config').findOne({
-		'configType': 'auth',
-		'auth.class': 'AD',
-		'auth.mode': 'azure',
-		'auth.enabled': true
-	})
-		.then(_d => {
-			if (!_d) throw new Error('Config is not AzureAD.');
-			configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
-			return crudder.model.find({
-				bot: false,
-				'auth.authType': 'azure'
-			});
-		})
-		.then(_users => {
-			return fixUsersEmailInBatches(_users, client, configADAttr, req);
-		})
-		.then((_c) => {
-			count += _c;
-			res.json({
-				message: 'Users updated :: ' + count
-			});
-		})
-		.catch(err => {
-			logger.error(err);
-			res.status(500).json({
-				message: err.message
-			});
-		});
-}
+// function fixUsersEmailInBatches(_users, client, configADAttr, req) {
+// 	const BATCH = 5;
+// 	let arr = [];
+// 	let totalBatches = _users.length / BATCH;
+// 	for (let i = 0; i < totalBatches; i++) {
+// 		arr.push(i);
+// 	}
+// 	let count = 0;
+// 	let promise = arr.reduce((_p, curr, i) => {
+// 		return _p
+// 			.then(() => {
+// 				let docs = _users.slice(i * BATCH, (i + 1) * BATCH);
+// 				let updateUserPromise = docs.map(doc => updateADUserEmail(doc, client, configADAttr, req)
+// 					.catch(err => {
+// 						logger.error('User update failed ' + doc.username);
+// 						logger.error(err);
+// 						return Promise.resolve();
+// 					}));
+// 				return Promise.all(updateUserPromise)
+// 					.then((_result) => {
+// 						logger.debug(JSON.stringify({
+// 							_result
+// 						}));
+// 						let updateADUser = _result.filter(_u => _u && _u.username);
+// 						count += updateADUser.length;
+// 						logger.info('Updated users in batch ' + (i + 1) + '  :: ' + updateADUser.length);
+// 					});
+// 			});
+// 	}, Promise.resolve());
+// 	return promise
+// 		.then(() => {
+// 			return count;
+// 		});
+// }
+
+// TBDL
+// function refreshADEmail(req, res) {
+// 	let accToken = req.body.adToken;
+// 	if (!accToken) res.status(400).json({
+// 		message: 'AD token not found'
+// 	});
+// 	let count = 0;
+// 	accToken = decrypt(accToken);
+// 	let client = MicrosoftGraph.Client.init({
+// 		authProvider: (done) => {
+// 			done(null, accToken);
+// 		}
+// 	});
+// 	let configADAttr = null;
+// 	return mongoose.model('config').findOne({
+// 		'configType': 'auth',
+// 		'auth.class': 'AD',
+// 		'auth.mode': 'azure',
+// 		'auth.enabled': true
+// 	})
+// 		.then(_d => {
+// 			if (!_d) throw new Error('Config is not AzureAD.');
+// 			configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
+// 			return crudder.model.find({
+// 				bot: false,
+// 				'auth.authType': 'azure'
+// 			});
+// 		})
+// 		.then(_users => {
+// 			return fixUsersEmailInBatches(_users, client, configADAttr, req);
+// 		})
+// 		.then((_c) => {
+// 			count += _c;
+// 			res.json({
+// 				message: 'Users updated :: ' + count
+// 			});
+// 		})
+// 		.catch(err => {
+// 			logger.error(err);
+// 			res.status(500).json({
+// 				message: err.message
+// 			});
+// 		});
+// }
 
 function distinctUserAttribute(req, res) {
 	let app = req.swagger.params.app.value;
@@ -3536,9 +3567,9 @@ module.exports = {
 	bulkAddUserValidate: bulkAddUserValidate,
 	bulkAddUserCreate: bulkAddUserCreate,
 	bulkAddUserDownload: bulkAddUserDownload,
-	fixAllADUsers: fixAllADUsers,
-	fixSingleADUsers: fixSingleADUsers,
-	refreshADEmail: refreshADEmail,
+	// fixAllADUsers: fixAllADUsers,
+	// fixSingleADUsers: fixSingleADUsers,
+	// refreshADEmail: refreshADEmail,
 	distinctUserAttribute: distinctUserAttribute,
 	createBotKey: createBotKey,
 	deleteBotKey: deleteBotKey,

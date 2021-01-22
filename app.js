@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 const utils = require('@appveen/utils');
 const log4js = utils.logger.getLogger;
-const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.ODP_NAMESPACE}][${process.env.HOSTNAME}]` : '[userManagement]';
+const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.DATA_STACK_NAMESPACE}][${process.env.HOSTNAME}]` : '[userManagement]';
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongo = require('mongodb').MongoClient;
@@ -23,6 +23,7 @@ global.logger = logger;
 // const authorDB = process.env.MONGO_AUTHOR_DBNAME || 'odpConfig';
 const conf = require('./config/config.js');
 var mongoUtil = require('./util/mongo.util');
+const globalCache = require('./util/cache');
 
 logger.info(`RBAC_USER_TO_SINGLE_SESSION :: ${conf.RBAC_USER_TO_SINGLE_SESSION}`);
 logger.info(`RBAC_USER_TOKEN_DURATION :: ${conf.RBAC_USER_TOKEN_DURATION}`);
@@ -78,6 +79,7 @@ mongo.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, 
 });
 
 cacheUtil.init();
+globalCache.init();
 
 mongoose.connection.on('connecting', () => logger.info(' *** Author DB :: Connecting'));
 mongoose.connection.on('disconnected', () => logger.error(' *** Author DB :: connection lost'));
@@ -86,8 +88,10 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
+
 require('./config/passport')(passport);
 app.use(passport.initialize());
+
 // app.use(fileUpload());
 
 let odpUtils = require('@appveen/odp-utils');

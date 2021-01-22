@@ -14,6 +14,8 @@ let defaultRoles = require('../../config/roles');
 let smRoles = defaultRoles.find(_r => _r.entity === 'SM');
 let gsRoles = defaultRoles.find(_r => _r.entity === 'GS');
 let _ = require('lodash');
+let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
+let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
 
 function createNSifNotExist(ns) {
@@ -130,7 +132,7 @@ function fixPMRolesinNewRelease() {
 
 let roleIdList = [
 	'PNDS', 'PNDSD', 'PNDSE', 'PNDSR',
-	'PNL', 'PNDF', 'PNBM', 'PNA', 'PNPP', 'PNPH', 'PNPM', 'PNUB', 'PNGB', 'PNGADS', 'PNGAL', 'PNGADF', 'PNGAP', 'PNGANS', 'PNGAA', 'PNGAU', 'PNGAB', 'PNGABM', 'PNGAG', 'PNGCDS', 'PNGCI', 'PNGCBM', 'PNGMU', 'PNGMB', 'PVDSD', 'PVDSE', 'PVDSR', 'PVL', 'PVDF', 'PVBM', 'PVA', 'PVPP', 'PVPH', 'PVUB', 'PVBB', 'PVGB', 'PVGADS', 'PVGAL', 'PVGADF', 'PVAGP', 'PVGANS', 'PVGAA', 'PVGAU', 'PVGAB', 'PVGABM', 'PVGAG', 'PVGCDS', 'PVGCI', 'PVGCBM', 'PVGMU', 'PVGMB', 'PMDSD', 'PMDSE', 'PMDSR', 'PML', 'PMDF', 'PMBM', 'PMA', 'PMPP', 'PMPH', 'PMPM', 'PMUBC', 'PMUBCE', 'PMUBU', 'PMUBD', 'PMUA', 'PMUG', 'PMBBC', 'PMBBCE', 'PMBBU', 'PMBBD', 'PMBA', 'PMBG', 'PMGBC', 'PMGBU', 'PMGBD', 'PMGADS', 'PMGAL', 'PMGADF', 'PMAGP', 'PMGANS', 'PMGAA', 'PMGAU', 'PMGAB', 'PMGABM', 'PMGAG', 'PMGCDS', 'PMGCI', 'PMGCBM', 'PMGMUC', 'PMGMUD', 'PMGMBC', 'PMGMBD', 'PNDSB', 'PVDSB', 'PMDSBC', 'PMDSBU', 'PMDSBD', 'PMDSPD', 'PMDSPS', 'PNDSPD', 'PNDSPS', 'PVDSIDPR', 'PMDSIDPR', 'PNDSIDPR', 'PVDSIDPO', 'PMDSIDPO', 'PNDSIDPO', 'PVDSIRSU', 'PMDSIRSU', 'PNDSIRSU', 'PVDSIRAP', 'PMDSIRAP', 'PNDSIRAP', 'PVDSIRRJ', 'PMDSIRRJ', 'PNDSIRRJ', 'PVDSIRDI', 'PMDSIRDI', 'PNDSIRDI', 'PVDSIRRW', 'PMDSIRRW', 'PNDSIRRW', 'PVDSSDH', 'PMDSSDH', 'PNDSSDH', 'PVDSSRE', 'PMDSSRE', 'PNDSSRE', 'PVDSSEP', 'PMDSSEP', 'PNDSSEP', 'PVDSSFS', 'PMDSSFS', 'PNDSSFS', 'PVDSSPR', 'PMDSSPR', 'PNDSSPR', 'PVPB', 'PNPB', 'PMPBC', 'PMPBU', 'PMPBD', 'PNPFMB', 'PVPFMB', 'PMPFMBC', 'PMPFMBD', 'PMPFMBU', 'PNPFPD', 'PNPFPS', 'PMPFPD', 'PMPFPS', 'PNPP', 'PVPP', 'PMPPC', 'PMPPD', 'PNPH', 'PVDSAAP', 'PNDSAAP', 'PVDSASR', 'PNDSASR', 'PVDSAPO', 'PNDSAPO', 'PVDSAPR', 'PNDSAPR', 'PMDSSPD', 'PNDSSPD', 'PVDSSPD', 'PVNSB', 'PNNSB', 'PMNSBC', 'PMNSBU', 'PMNSBD', 'PMNSIO', 'PVNSIO', 'PNNSIO', 'PVNSURL', 'PMNSURL', 'PNNSURL', 'PVNSH', 'PMNSH', 'PNNSH', 'PMABC', 'PMABU', 'PVAB', 'PNAB', 'PVAPW', 'PMAPW', 'PMAEN', 'PMABD', 'PMADL', 'PNAPW', 'PNAEN', 'PNADL', 'PMAS', 'PNAS'];
+	'PNL', 'PNDF', 'PNBM', 'PNA', 'PNPP', 'PNPH', 'PNPM', 'PNUB', 'PNGB', 'PNGADS', 'PNGAL', 'PNGADF', 'PNGAP', 'PNGANS', 'PNGAA', 'PNGAU', 'PNGAB', 'PNGABM', 'PNGAG', 'PNGCDS', 'PNGCI', 'PNGCBM', 'PNGMU', 'PNGMB', 'PVDSD', 'PVDSE', 'PVDSR', 'PVL', 'PVDF', 'PVBM', 'PVA', 'PVPP', 'PVPH', 'PVUB', 'PVBB', 'PVGB', 'PVGADS', 'PVGAL', 'PVGADF', 'PVAGP', 'PVGANS', 'PVGAA', 'PVGAU', 'PVGAB', 'PVGABM', 'PVGAG', 'PVGCDS', 'PVGCI', 'PVGCBM', 'PVGMU', 'PVGMB', 'PMDSD', 'PMDSE', 'PMDSR', 'PML', 'PMDF', 'PMBM', 'PMA', 'PMPP', 'PMPH', 'PMPM', 'PMUBC', 'PMUBCE', 'PMUBU', 'PMUBD', 'PMUA', 'PMUG', 'PMBBC', 'PMBBCE', 'PMBBU', 'PMBBD', 'PMBA', 'PMBG', 'PMGBC', 'PMGBU', 'PMGBD', 'PMGADS', 'PMGAL', 'PMGADF', 'PMAGP', 'PMGANS', 'PMGAA', 'PMGAU', 'PMGAB', 'PMGABM', 'PMGAG', 'PMGCDS', 'PMGCI', 'PMGCBM', 'PMGMUC', 'PMGMUD', 'PMGMBC', 'PMGMBD', 'PNDSB', 'PVDSB', 'PMDSBC', 'PMDSBU', 'PMDSBD', 'PMDSPD', 'PMDSPS', 'PNDSPD', 'PNDSPS', 'PVDSIDPR', 'PMDSIDPR', 'PNDSIDPR', 'PVDSIDPO', 'PMDSIDPO', 'PNDSIDPO', 'PVDSIRSU', 'PMDSIRSU', 'PNDSIRSU', 'PVDSIRAP', 'PMDSIRAP', 'PNDSIRAP', 'PVDSIRRJ', 'PMDSIRRJ', 'PNDSIRRJ', 'PVDSIRDI', 'PMDSIRDI', 'PNDSIRDI', 'PVDSIRRW', 'PMDSIRRW', 'PNDSIRRW', 'PVDSSDH', 'PMDSSDH', 'PNDSSDH', 'PVDSSRE', 'PMDSSRE', 'PNDSSRE', 'PVDSSEP', 'PMDSSEP', 'PNDSSEP', 'PVDSSFS', 'PMDSSFS', 'PNDSSFS', 'PVDSSPR', 'PMDSSPR', 'PNDSSPR', 'PVPB', 'PNPB', 'PMPBC', 'PMPBU', 'PMPBD', 'PNPFMB', 'PVPFMB', 'PMPFMBC', 'PMPFMBD', 'PMPFMBU', 'PNPFPD', 'PNPFPS', 'PMPFPD', 'PMPFPS', 'PNPP', 'PVPP', 'PMPPC', 'PMPPD', 'PNPH', 'PVDSAAP', 'PNDSAAP', 'PVDSASR', 'PNDSASR', 'PVDSAPO', 'PNDSAPO', 'PVDSAPR', 'PNDSAPR', 'PMDSSPD', 'PNDSSPD', 'PVDSSPD', 'PVNSB', 'PNNSB', 'PMNSBC', 'PMNSBU', 'PMNSBD', 'PMNSIO', 'PVNSIO', 'PNNSIO', 'PVNSURL', 'PMNSURL', 'PNNSURL', 'PVNSH', 'PMNSH', 'PNNSH', 'PMABC', 'PMABU', 'PVAB', 'PNAB', 'PVAPW', 'PMAPW', 'PMAEN', 'PMABD', 'PMADL', 'PNAPW', 'PNAEN', 'PNADL', 'PMAS', 'PNAS', 'PNGAIS', 'PVGAIS', 'PMGAIS'];
 
 function fixGroupRolesinNewRelease() {
 	if (!release) return Promise.resolve();
@@ -254,13 +256,13 @@ function createSecurityKeys() {
 }
 
 function createNS() {
-	let odpNS = config.odpNS;
-	if (!(odpNS && config.isK8sEnv())) return Promise.resolve();
+	let dataStackNS = config.dataStackNS;
+	if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
 	logger.info('Creating namespace if not exist');
 	return mongoose.model('app').find({}).lean(true)
 		.then(apps => {
 			let promises = apps.map(doc => {
-				const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+				const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 				return createNSifNotExist(ns);
 			});
 			return Promise.all(promises);
@@ -331,13 +333,13 @@ function createNSrole() {
 }
 
 /*function initialize() {
-	let odpNS = config.odpNS;
-	if (!(odpNS && config.isK8sEnv())) return Promise.resolve();
+	let dataStackNS = config.dataStackNS;
+	if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
 	logger.info('Updating namespace');
 	return mongoose.model('app').find({}).lean(true)
 		.then(apps => {
 			let promises = apps.map(doc => {
-				const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+				const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 				return kubeutil.namespace.getNamespace(ns)
 					.then(data => {
 						if (data) {
@@ -479,7 +481,6 @@ function userMigrationAppcenter(batchSize, _document) {
 	let migrationDB = mongoose.connection.db.collection('migration');
 	//let migrationDBFilter = { $and: [{ 'release': '3.8' }, { 'module': 'USER' }, { 'allServices': false }, { 'services.0': { $exists: true, $gte: { $size: 1 } } }] };
 	return new Promise((resolve, reject) => {
-		logger.info('config.mongoUrlAppcenter --- ', config.mongoUrlAppcenter);
 		mongo.connect(config.mongoUrlAppcenter, {
 			db: config.mongoAppcenterOptions
 		}, (error, db) => {
@@ -507,7 +508,7 @@ function userMigrationAppcenter(batchSize, _document) {
 			let userList = Object.keys(userMapping);
 			let promises = appcenterData.map(obj => {
 				if (obj.migrated) return Promise.resolve();
-				let ns = (config.odpNS) ? config.odpNS : 'odp';
+				let ns = (config.dataStackNS) ? config.dataStackNS : 'odp';
 				let dbName = ns + '-' + obj.app;
 				logger.info('Appcenter dbName  -->  ', dbName);
 				return obj.relatedSchemas.reduce((acc, schemaObj) => {
@@ -992,6 +993,36 @@ function userMigration() {
 		});
 }
 
+function removeAuthMode(authMode, err) {
+	logger.error(`Removing auth mode ${authMode} due to error :: `, err);
+	config.RBAC_USER_AUTH_MODES = config.RBAC_USER_AUTH_MODES.filter(mode => mode != authMode);
+}
+
+function validateAuthModes() {
+	let authModes = config.RBAC_USER_AUTH_MODES;
+	logger.debug('validating auth modes :: ', authModes);
+	let validationArray = authModes.map(mode => {
+		if(mode == 'azure')
+			return validateAzureCredentials({
+				tenant: process.env.AZURE_B2C_TENANT,
+				clientId: process.env.AZURE_CLIENT_ID,
+				clientSecret: process.env.AZURE_CLIENT_SECRET
+			}).catch((err) => removeAuthMode('azure', err));
+		else if(mode == 'ldap')
+			return validateLdapCredentials(config.ldapDetails)
+				.catch((err) => removeAuthMode('ldap', err));
+		else if(mode == 'local') 
+			return Promise.resolve();
+		else {
+			logger.error('Unknow auth mode :: ', mode);
+			return Promise.reject(new Error('Unknown auth mode.'));
+		}
+	});
+	return Promise.all(validationArray)
+		.then(() => logger.info('Supported auth modes :: ', config.RBAC_USER_AUTH_MODES))
+		.catch(err => logger.error('Error in validateAuthModes :: ', err));
+}
+
 function init() {
 	return checkDependency()
 		.then(() => createNS())
@@ -1003,7 +1034,8 @@ function init() {
 		.then(() => fixGSRolesinNewRelease())
 		.then(() => fixUsersAttributeInNewRelease())
 		.then(() => fixGroupRolesinNewRelease())
-		.then(() => userMigration());
+		.then(() => userMigration())
+		.then(() => validateAuthModes());
 }
 
 module.exports = init;

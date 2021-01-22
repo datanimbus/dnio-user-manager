@@ -14,7 +14,7 @@ const appIdMDM = appInit.find(obj => obj.type === 'Management')._id;
 const rolesInit = require('../../config/roles');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
-const odpNS = config.odpNS;
+const dataStackNS = config.dataStackNS;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
@@ -118,7 +118,7 @@ schema.post('save', function (doc) {
 // To add SM role in new App.
 schema.post('save', function (doc) {
 	if (doc._wasNew) {
-		const ns = odpNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+		const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 		const appInitList = appInit.map(obj => obj._id);
 		if (appInitList.indexOf(doc._id) == -1) {
 			let rolesList = null;
@@ -205,7 +205,7 @@ schema.post('remove', function (doc) {
 
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {
-		const ns = odpNS + '-' + _doc._id.toLowerCase();
+		const ns = dataStackNS + '-' + _doc._id.toLowerCase();
 		kubeutil.namespace.deleteNamespace(ns)
 			.then(_ => {
 				logger.debug(_);
@@ -263,19 +263,48 @@ schema.post('save', function (doc) {
 			json: true,
 			body: {
 				agentIPWhitelisting: doc.agentIPWhitelisting
-			}	
+			}
 		};
 		request(options, function (err, res) {
 			if (err) {
 				logger.error(err.message);
 			} else if (!res) {
-				logger.error('Server is DOWN');
+				logger.error('PM is DOWN');
 			} else {
 				logger.debug('Request to update IP whitelist completed');
 			}
 		});
 	}
 });
+
+// Inform PM for new App creation
+schema.post('save', function (doc) {
+	if (doc._wasNew) {
+		var options = {
+			url: config.baseUrlPM + '/app',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'TxnId': doc._req ? doc._req.get('txnId') : null,
+				'User': doc._req ? doc._req.get('user') : null
+			},
+			json: true,
+			body: {
+				_id: doc._id
+			}
+		};
+		request(options, function (err, res) {
+			if (err) {
+				logger.error(err.message);
+			} else if (!res) {
+				logger.error('PM is DOWN');
+			} else {
+				logger.debug('Request to Inform PM completed');
+			}
+		});
+	}
+});
+
 
 e.init = () => {
 	let app = require('../../config/apps.js');
@@ -284,7 +313,7 @@ e.init = () => {
 			.then(_d => {
 				if (_d == 0) {
 					return app.reduce((_p, _c) => {
-						const ns = odpNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
+						const ns = dataStackNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
 						return _p.then(() => {
 							return crudder.model.create(_c)
 								.then(_d => {
@@ -373,7 +402,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					logger.debug('Remove user from app');
 					logger.debug(_d);
 					if (usrIdArray.length > 0) {
-						res.status(500).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app });
+						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
@@ -439,7 +468,7 @@ e.customDestroy = (req, res) => {
 						});
 					})
 					.then(() => {
-						var dbName = `${process.env.ODP_NAMESPACE}` + '-' + appName;
+						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
 						return global.mongoConnection.db(dbName).dropDatabase();
 					});
 			}
@@ -517,6 +546,7 @@ e.validateUser = (req, usrIds, app, flag) => {
 		.then(() => {
 			resObj.newUser = newUsrId.map(_d => _d._id);
 			resObj.diff = resArray;
+			resObj.app = app;
 			return resObj;
 		});
 };
@@ -566,6 +596,7 @@ e.sendRequest = (url) => {
 };
 
 e.customAppIndex = (_req, _res) => {
+	logger.debug(`customAppIndex() _req.headers.user :: ${_req.headers.user}`);
 	let user = {};
 	mongoose.model('user').findOne({ _id: _req.headers.user })
 		.select('isSuperAdmin accessControl.apps._id')

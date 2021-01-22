@@ -616,78 +616,78 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  '/usr/changeAdAttribute':
-    x-swagger-router-controller: controller
-    put:
-      description: Update AD config. Change AD username attribute
-      operationId: UserChangeADAttribute
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: data
-        in: body
-        description: Payload to update a User
-        schema:
-          type: object
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No results to list with the given parameter set.
-        '500':
-          description: Internal server error
-  '/usr/fixUser':
-    x-swagger-router-controller: controller
-    put:
-      description: Fix azure user if something fails.
-      operationId: UserADFix
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: data
-        in: body
-        description: Payload to update a User
-        schema:
-          type: object
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No results to list with the given parameter set.
-        '500':
-          description: Internal server error
-  '/usr/fixUserEmail':
-    x-swagger-router-controller: controller
-    put:
-      description: Fix azure user email.
-      operationId: UserADEmailFix
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: data
-        in: body
-        description: Payload to update a User
-        schema:
-          type: object
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No results to list with the given parameter set.
-        '500':
-          description: Internal server error        
+  # '/usr/changeAdAttribute':
+  #   x-swagger-router-controller: controller
+  #   put:
+  #     description: Update AD config. Change AD username attribute
+  #     operationId: UserChangeADAttribute
+  #     parameters:
+  #     - name: authorization
+  #       in: header
+  #       type: string
+  #       description: The JWT token for req. validation
+  #     - name: data
+  #       in: body
+  #       description: Payload to update a User
+  #       schema:
+  #         type: object
+  #     responses:
+  #       '200':
+  #         description: List of the entites
+  #       '400':
+  #         description: Bad parameters
+  #       '404':
+  #         description: No results to list with the given parameter set.
+  #       '500':
+  #         description: Internal server error
+  # '/usr/fixUser':
+  #   x-swagger-router-controller: controller
+  #   put:
+  #     description: Fix azure user if something fails.
+  #     operationId: UserADFix
+  #     parameters:
+  #     - name: authorization
+  #       in: header
+  #       type: string
+  #       description: The JWT token for req. validation
+  #     - name: data
+  #       in: body
+  #       description: Payload to update a User
+  #       schema:
+  #         type: object
+  #     responses:
+  #       '200':
+  #         description: List of the entites
+  #       '400':
+  #         description: Bad parameters
+  #       '404':
+  #         description: No results to list with the given parameter set.
+  #       '500':
+  #         description: Internal server error
+  # '/usr/fixUserEmail':
+  #   x-swagger-router-controller: controller
+  #   put:
+  #     description: Fix azure user email.
+  #     operationId: UserADEmailFix
+  #     parameters:
+  #     - name: authorization
+  #       in: header
+  #       type: string
+  #       description: The JWT token for req. validation
+  #     - name: data
+  #       in: body
+  #       description: Payload to update a User
+  #       schema:
+  #         type: object
+  #     responses:
+  #       '200':
+  #         description: List of the entites
+  #       '400':
+  #         description: Bad parameters
+  #       '404':
+  #         description: No results to list with the given parameter set.
+  #       '500':
+  #         description: Internal server error        
   '/usr/{userId}/appAdmin/{action}':
     x-swagger-router-controller: controller
     put:
@@ -3083,29 +3083,29 @@ paths:
           description: No records to list with the given parameter set.
         '500':
           description: Internal server error       
-  /{auth}:
-    x-swagger-router-controller: controller
-    post:
-      description: Switch connection to auth
-      operationId: LdapSaveConnection
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload connection
-        schema:
-          $ref: '#/definitions/ldap'
-      responses:
-        '200':
-          description: connection successful
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
+  # /{auth}:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Switch connection to auth
+  #     operationId: LdapSaveConnection
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload connection
+  #       schema:
+  #         $ref: '#/definitions/ldap'
+  #     responses:
+  #       '200':
+  #         description: connection successful
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
   /{auth}/import:
     x-swagger-router-controller: controller
     post:
@@ -3187,29 +3187,29 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error 
-  /{auth}/test:
-    x-swagger-router-controller: controller
-    post:
-      description: Test connection to ldap
-      operationId: LdapTestMapping
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload to connection
-        schema:
-          $ref: '#/definitions/ldap'
-      responses:
-        '200':
-          description: User detail in LDAP
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error       
+  # /{auth}/test:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Test connection to ldap
+  #     operationId: LdapTestMapping
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload to connection
+  #       schema:
+  #         $ref: '#/definitions/ldap'
+  #     responses:
+  #       '200':
+  #         description: User detail in LDAP
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error       
   '/bot/botKey/{_id}':
     x-swagger-router-controller: controller
     post:

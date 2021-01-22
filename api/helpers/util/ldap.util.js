@@ -73,4 +73,42 @@ e.searchLdap = function (client, base, filter, attributes, sizeLimit) {
 	});
 };
 
+e.validateLdapCredentials = function (config) {
+	let url = config.ldapServerDetails.url;
+	let bindDN = config.ldapServerDetails.bindDN;
+	let pwd = config.ldapServerDetails.bindCredentials;
+	let baseDN = config.ldapServerDetails.searchBase;
+	let mapping = config.mapping;
+	let filter = config.baseFilter;
+	if(!url) return Promise.reject('Missing LDAP_SERVER_URL.');
+	if(!bindDN) return Promise.reject('Missing LDAP_BIND_DN.');
+	if(!pwd) return Promise.reject('Missing LDAP_BIND_PASSWORD.');
+	if(!baseDN) return Promise.reject('Missing LDAP_BASE_DN.');
+	if(!filter) return Promise.reject('Missing LDAP_BASE_FILTER.');
+	let requiredMapping = ['name', 'username'];
+	if (requiredMapping.some(_k => !mapping[_k] || typeof mapping[_k] !== 'string' || mapping[_k].length == 0)) {
+		return Promise.reject('Both' + requiredMapping + ' are required.');
+	}
+	return e.connectLDAP(url, bindDN, pwd)
+		.then(client => {
+			let attributes = null;
+			if (mapping) {
+				attributes = Object.keys(mapping).map(_k => mapping[_k]);
+			}
+			return e.searchLdap(client, baseDN, filter, attributes, 1);
+		})
+		.then(users => {
+			if (users && users.length > 0) {
+				logger.debug('Validated LDAP Credentials.');
+				return Promise.resolve();
+			} else {
+				return Promise.reject('Invalid LDAP Mapping/Filter');
+			}
+		})
+		.catch(err => {
+			logger.error('Error in validateLdapCredentials :: ', err);
+			return Promise.reject(err);
+		});
+};
+
 module.exports = e;

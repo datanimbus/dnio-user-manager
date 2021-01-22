@@ -2,8 +2,8 @@
 set -e
 if [ -f $WORKSPACE/../TOGGLE ]; then
     echo "****************************************************"
-    echo "odp:user :: Toggle mode is on, terminating build"
-    echo "odp:user :: BUILD CANCLED"
+    echo "data.stack:user :: Toggle mode is on, terminating build"
+    echo "data.stack:user :: BUILD CANCLED"
     echo "****************************************************"
 	exit 0
 fi
@@ -13,8 +13,8 @@ cDate=`date +%Y.%m.%d.%H.%M` #Current date and time
 if [ -f $WORKSPACE/../CICD ]; then
     CICD=`cat $WORKSPACE/../CICD`
 fi
-if [ -f $WORKSPACE/../ODP_RELEASE ]; then
-    REL=`cat $WORKSPACE/../ODP_RELEASE`
+if [ -f $WORKSPACE/../DATA_STACK_RELEASE ]; then
+    REL=`cat $WORKSPACE/../DATA_STACK_RELEASE`
 fi
 if [ -f $WORKSPACE/../DOCKER_REGISTRY ]; then
     DOCKER_REG=`cat $WORKSPACE/../DOCKER_REGISTRY`
@@ -28,8 +28,8 @@ if [ $1 ]; then
 fi
 if [ ! $REL ]; then
     echo "****************************************************"
-    echo "odp:user :: Please Create file ODP_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
-    echo "odp:user :: BUILD FAILED"
+    echo "data.stack:user :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
+    echo "data.stack:user :: BUILD FAILED"
     echo "****************************************************"
     exit 0
 fi
@@ -42,76 +42,76 @@ if [ $3 ]; then
 fi
 if [ $CICD ]; then
     echo "****************************************************"
-    echo "odp:user :: CICI env found"
+    echo "data.stack:user :: CICI env found"
     echo "****************************************************"
     TAG=$TAG"_"$cDate
-    if [ ! -f $WORKSPACE/../ODP_NAMESPACE ]; then
+    if [ ! -f $WORKSPACE/../DATA_STACK_NAMESPACE ]; then
         echo "****************************************************"
-        echo "odp:user :: Please Create file ODP_NAMESPACE with the namespace at $WORKSPACE"
-        echo "odp:user :: BUILD FAILED"
+        echo "data.stack:user :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
+        echo "data.stack:user :: BUILD FAILED"
         echo "****************************************************"
         exit 0
     fi
-    ODP_NS=`cat $WORKSPACE/../ODP_NAMESPACE`
+    DATA_STACK_NS=`cat $WORKSPACE/../DATA_STACK_NAMESPACE`
 fi
 
 sh $WORKSPACE/scripts/prepare_yaml.sh $REL $2
 
 echo "****************************************************"
-echo "odp:user :: Using build :: "$TAG
+echo "data.stack:user :: Using build :: "$TAG
 echo "****************************************************"
 
 cd $WORKSPACE
 
 echo "****************************************************"
-echo "odp:user :: Adding IMAGE_TAG in Dockerfile :: "$TAG
+echo "data.stack:user :: Adding IMAGE_TAG in Dockerfile :: "$TAG
 echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if [ -f $WORKSPACE/../CLEAN_BUILD_USER ]; then
     echo "****************************************************"
-    echo "odp:user :: Doing a clean build"
+    echo "data.stack:user :: Doing a clean build"
     echo "****************************************************"
     
-    docker build --no-cache -t odp:user.$TAG .
+    docker build --no-cache -t data.stack:user.$TAG .
     rm $WORKSPACE/../CLEAN_BUILD_USER
 
     echo "****************************************************"
-    echo "odp:user :: Copying deployment files"
+    echo "data.stack:user :: Copying deployment files"
     echo "****************************************************"
 
     if [ $CICD ]; then
         sed -i.bak s#__docker_registry_server__#$DOCKER_REG# user.yaml
         sed -i.bak s/__release_tag__/"'$REL'"/ user.yaml
         sed -i.bak s#__release__#$TAG# user.yaml
-        sed -i.bak s#__namespace__#$ODP_NS# user.yaml
+        sed -i.bak s#__namespace__#$DATA_STACK_NS# user.yaml
         sed -i.bak '/imagePullSecrets/d' user.yaml
         sed -i.bak '/- name: regsecret/d' user.yaml
 
-        kubectl delete deploy user -n $ODP_NS || true # deleting old deployement
-        kubectl delete service user -n $ODP_NS || true # deleting old service
+        kubectl delete deploy user -n $DATA_STACK_NS || true # deleting old deployement
+        kubectl delete service user -n $DATA_STACK_NS || true # deleting old service
         #creating new deployment
         kubectl create -f user.yaml
     fi
 
 else
     echo "****************************************************"
-    echo "odp:user :: Doing a normal build"
+    echo "data.stack:user :: Doing a normal build"
     echo "****************************************************"
-	docker build -t odp:user.$TAG .
+	docker build -t data.stack:user.$TAG .
     if [ $CICD ]; then
-        kubectl set image deployment/user user=odp:user.$TAG -n $ODP_NS --record=true
+        kubectl set image deployment/user user=data.stack:user.$TAG -n $DATA_STACK_NS --record=true
     fi
 fi
 if [ $DOCKER_REG ]; then
     echo "****************************************************"
-    echo "odp:user :: Docker Registry found, pushing image"
+    echo "data.stack:user :: Docker Registry found, pushing image"
     echo "****************************************************"
 
-    docker tag odp:user.$TAG $DOCKER_REG/odp:user.$TAG
-    docker push $DOCKER_REG/odp:user.$TAG
+    docker tag data.stack:user.$TAG $DOCKER_REG/data.stack:user.$TAG
+    docker push $DOCKER_REG/data.stack:user.$TAG
 fi
 echo "****************************************************"
-echo "odp:user :: BUILD SUCCESS :: odp:user.$TAG"
+echo "data.stack:user :: BUILD SUCCESS :: data.stack:user.$TAG"
 echo "****************************************************"
 echo $TAG > $WORKSPACE/../LATEST_USER

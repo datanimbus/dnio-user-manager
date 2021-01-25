@@ -57,7 +57,7 @@ if (conf.debugDB) mongoose.set('debug', conf.mongooseCustomLogger);
 
 let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 
-mongoose.connect(mongoUrl, conf.mongoOptions, async(err) => {
+mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
 	if (err) {
 		logger.error(err);
 		process.exit(0);
@@ -66,7 +66,6 @@ mongoose.connect(mongoUrl, conf.mongoOptions, async(err) => {
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
-		global.mongoDbVersion = await mongoUtil.getMongoDbVersion();
 	}
 });
 
@@ -75,6 +74,7 @@ mongo.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, 
 	if (db) {
 		global.mongoConnection = db;
 		logger.info('Connected to Appcenter DB');
+		global.mongoDbVersion = await mongoUtil.getMongoDbVersion();
 	}
 });
 

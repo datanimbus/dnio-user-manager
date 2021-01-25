@@ -98,6 +98,9 @@ var definition = {
 			'adAttribute': {
 				'type': 'String'
 			}
+		},
+		'default': {
+			'authType': 'local'
 		}
 	},
 	'bot': {

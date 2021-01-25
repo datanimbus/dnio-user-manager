@@ -1867,6 +1867,7 @@ function authType(req, res) {
 				resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = envConfig.RBAC_USER_TO_SINGLE_SESSION;
 				resObj[_.camelCase('RBAC_USER_RELOGIN_ACTION')] = envConfig.RBAC_USER_RELOGIN_ACTION;
 				resObj['fqdn'] = process.env.FQDN;
+				resObj['validAuthTypes'] = envConfig['RBAC_USER_AUTH_MODES'];
 			}
 			if (!res.headersSent) {
 				res.json(resObj);

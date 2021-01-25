@@ -114,7 +114,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
-			if (resObj.auth && resObj.auth.isLdap) delete resObj.auth.dn;
+			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;
 			let id = resObj._id;
 			if (isExtend === true) {
 				return cacheUtil.refreshToken(_botKey ? `B:${id}` : `U:${id}`, md5(oldJwt), md5(token), uuid, resObj.expiresIn, rbacUserToSingleSession, envConfig.RBAC_HB_INTERVAL + 5, isExtend);
@@ -267,8 +267,7 @@ schema.pre('validate', function (next) {
 
 schema.pre('validate', function (next) {
 	logger.debug(this);
-	if (this.auth && this.auth.authType === 'azure') return next();
-	if (this.auth && this.auth.isLdap) return next();
+	if (this.auth && ['ldap', 'azure'].includes(this.auth.authType)) return next();
 	if (this.bot) return next();
 	// var useregex = /^[0-9a-z_.@]+$/;
 	var useregex = /^(([^<>()[\]\\/.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i;
@@ -292,7 +291,7 @@ schema.pre('validate', function (next) {
 });
 
 schema.pre('validate', function (next) {
-	if (this.auth && (this.auth.isLdap || (this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
+	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
 	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
 	if (((this._id && this.password && this.basicDetails.name) != null) && ((this.basicDetails.name.length && this._id.length) >= 1)) {
 		next();
@@ -303,7 +302,7 @@ schema.pre('validate', function (next) {
 
 
 schema.pre('validate', function (next) {
-	if (this.auth && (this.auth.isLdap || (this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
+	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
 	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
 	if ((this.password.length) >= 8) {
 		next();
@@ -322,8 +321,7 @@ schema.pre('validate', function (next) {
 });
 
 schema.pre('validate', function (next) {
-	if (this.auth && this.auth.authType === 'azure') return next();
-	if (this.auth && (this.auth.isLdap || this.auth.authType === 'ldap')) return next();
+	if (this.auth && ['azure', 'ldap'].includes(this.auth.authType)) return next();
 	var nameRegex =/^[a-zA-Z0-9-_@#. ]*$/;
 	if (this.basicDetails && this.basicDetails.name &&  this.basicDetails.name.match(nameRegex)) {
 		next();
@@ -897,7 +895,7 @@ function updatePassword(request, response) {
 		.then(doc => {
 			usrDoc = doc;
 			if (doc) {
-				if (doc.auth && (doc.auth.isLdap || doc.auth.authType === 'ldap' || (doc.auth.authType === 'azure' && !doc.bot))) {
+				if (doc.auth && (doc.auth.authType === 'ldap' || (doc.auth.authType === 'azure' && !doc.bot))) {
 					return response.status(400).json({
 						message: 'Cannot update user password. Contact your AD admin'
 					});
@@ -1851,7 +1849,7 @@ function authType(req, res) {
 			if (usr) {
 				usrObj = JSON.parse(JSON.stringify(usr));
 				authType = usr.auth && usr.auth.authType ? usr.auth.authType : 'local';
-				if (usr.auth && usr.auth.isLdap) authType = 'ldap';
+				// if (usr.auth && usr.auth.isLdap) authType = 'ldap';
 				resObj.authType = authType;
 				if (usrObj && !usrObj.bot) {
 					return cacheUtil.checkUser(`U:${usrObj._id}`);

@@ -85,10 +85,6 @@ var definition = {
 	},
 	'auth': {
 		'type': {
-			'isLdap': {
-				'type': 'Boolean',
-				'default': false
-			},
 			'dn': {
 				'type': 'String'
 			},

@@ -1,9 +1,9 @@
-'use strict';
+// 'use strict';
 
-const logger = global.logger;
-let ldapUtil = require('../helpers/util/ldap.util');
-let azureAdUtil = require('../helpers/util/azureAd.util');
-const envConfig = require('../../config/config');
+// const logger = global.logger;
+// let ldapUtil = require('../helpers/util/ldap.util');
+// let azureAdUtil = require('../helpers/util/azureAd.util');
+// const envConfig = require('../../config/config');
 
 // TBD
 
@@ -120,140 +120,140 @@ const envConfig = require('../../config/config');
 // 		});
 // }
 
-function getUsersFromAD(req, res) {
-	let filter = req.body.filter;
-	// let savedConfig = req.body.savedConfig ? req.body.savedConfig : false;
-	let accToken = req.body.adToken;
-	if (accToken) {
-		const decrypted = azureAdUtil.decrypt(accToken);
-		logger.debug({ decrypted });
-		// let client = MicrosoftGraph.Client.init({
-		// 	authProvider: (done) => {
-		// 		done(null, decrypted); //first parameter takes an error if you can't get an access token
-		// 	}
-		// });
-		// let filter = searchText && searchText.length > 0 ? `startswith(displayName, '${searchText}')` : '';
-		azureAdUtil.searchUser(decrypted, filter).then(usersList => {
-			if(usersList && usersList.length)
-				return res.json(usersList);
-			else
-				return res.status(400).json({ message: 'Users not found' });
-		}).catch(error => {
-			logger.error('Error in getUsersFromAD :: ', error);
-			return res.status(400).json({ message: error.message });
-		});
-		// return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure' })
-		// 	.then(_d => {
-		// 		if (!_d) throw new Error('Config is not AzureAD.');
-		// 		let configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
-		// 		return client
-		// 			.api('/users')
-		// 			.filter(filter)
-		// 			.get((err, result) => {
-		// 				if (err) {
-		// 					logger.error(err);
-		// 					let errMsg = 'User fetch API failed';
-		// 					if (err.message) errMsg = err.message;
-		// 					else {
-		// 						try {
-		// 							let errBody = JSON.parse(err.body);
-		// 							errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
-		// 						} catch (err) {
-		// 							//do nothing
-		// 						}
-		// 					}
-		// 					return res.status(401).json({ message: errMsg });
-		// 				}
-		// 				if (result.value) {
-		// 					logger.debug(JSON.stringify({ searchUsersList: result.value }));
-		// 					let usersList = result.value.filter(_r => _r[configADAttr]).map(_r => { return { username: _r[configADAttr], name: _r.displayName, email: _r.mail }; });
-		// 					res.json(usersList);
-		// 				} else {
-		// 					res.status(400).json({ message: 'Users not found' });
-		// 				}
-		// 			});
-		// 	});
-	} else {
-		return res.status(404).json({ message: 'adToken not found' });
-	}
-	/*
-	return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure', 'auth.enabled': savedConfig, 'auth.connectionDetails.accessToken': { $exists: true } })
-		.then(_conf => {
-			if (_conf) {
-				let client = MicrosoftGraph.Client.init({
-					authProvider: (done) => {
-						done(null, _conf.auth.connectionDetails.accessToken); //first parameter takes an error if you can't get an access token
-					}
-				});
-				let filter = searchText && searchText.length > 0 ? `startswith(displayName, '${searchText}')` : '';
-				return client
-					.api('/users')
-					.filter(filter)
-					.get((err, result) => {
-						if (err) {
-							logger.error(err);
-							return res.status(401).json({ message: err.message });
-						}
-						if (result.value) {
-							let usersList = result.value.filter(_r => _r.mail).map(_r => { return { username: _r.mail, name: _r.displayName }; });
-							res.json(usersList);
-						} else {
-							res.status(400).json({ message: 'Users not found' });
-						}
+// function getUsersFromAD(req, res) {
+// 	let filter = req.body.filter;
+// 	// let savedConfig = req.body.savedConfig ? req.body.savedConfig : false;
+// 	let accToken = req.body.adToken;
+// 	if (accToken) {
+// 		const decrypted = azureAdUtil.decrypt(accToken);
+// 		logger.debug({ decrypted });
+// 		// let client = MicrosoftGraph.Client.init({
+// 		// 	authProvider: (done) => {
+// 		// 		done(null, decrypted); //first parameter takes an error if you can't get an access token
+// 		// 	}
+// 		// });
+// 		// let filter = searchText && searchText.length > 0 ? `startswith(displayName, '${searchText}')` : '';
+// 		azureAdUtil.searchUser(decrypted, filter).then(usersList => {
+// 			if(usersList && usersList.length)
+// 				return res.json(usersList);
+// 			else
+// 				return res.status(400).json({ message: 'Users not found' });
+// 		}).catch(error => {
+// 			logger.error('Error in getUsersFromAD :: ', error);
+// 			return res.status(400).json({ message: error.message });
+// 		});
+// 		// return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure' })
+// 		// 	.then(_d => {
+// 		// 		if (!_d) throw new Error('Config is not AzureAD.');
+// 		// 		let configADAttr = _d && _d.auth && _d.auth.connectionDetails && _d.auth.connectionDetails && _d.auth.connectionDetails.adUsernameAttribute ? _d.auth.connectionDetails.adUsernameAttribute : 'mail';
+// 		// 		return client
+// 		// 			.api('/users')
+// 		// 			.filter(filter)
+// 		// 			.get((err, result) => {
+// 		// 				if (err) {
+// 		// 					logger.error(err);
+// 		// 					let errMsg = 'User fetch API failed';
+// 		// 					if (err.message) errMsg = err.message;
+// 		// 					else {
+// 		// 						try {
+// 		// 							let errBody = JSON.parse(err.body);
+// 		// 							errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
+// 		// 						} catch (err) {
+// 		// 							//do nothing
+// 		// 						}
+// 		// 					}
+// 		// 					return res.status(401).json({ message: errMsg });
+// 		// 				}
+// 		// 				if (result.value) {
+// 		// 					logger.debug(JSON.stringify({ searchUsersList: result.value }));
+// 		// 					let usersList = result.value.filter(_r => _r[configADAttr]).map(_r => { return { username: _r[configADAttr], name: _r.displayName, email: _r.mail }; });
+// 		// 					res.json(usersList);
+// 		// 				} else {
+// 		// 					res.status(400).json({ message: 'Users not found' });
+// 		// 				}
+// 		// 			});
+// 		// 	});
+// 	} else {
+// 		return res.status(404).json({ message: 'adToken not found' });
+// 	}
+// 	/*
+// 	return mongoose.model('config').findOne({ 'configType': 'auth', 'auth.class': 'AD', 'auth.mode': 'azure', 'auth.enabled': savedConfig, 'auth.connectionDetails.accessToken': { $exists: true } })
+// 		.then(_conf => {
+// 			if (_conf) {
+// 				let client = MicrosoftGraph.Client.init({
+// 					authProvider: (done) => {
+// 						done(null, _conf.auth.connectionDetails.accessToken); //first parameter takes an error if you can't get an access token
+// 					}
+// 				});
+// 				let filter = searchText && searchText.length > 0 ? `startswith(displayName, '${searchText}')` : '';
+// 				return client
+// 					.api('/users')
+// 					.filter(filter)
+// 					.get((err, result) => {
+// 						if (err) {
+// 							logger.error(err);
+// 							return res.status(401).json({ message: err.message });
+// 						}
+// 						if (result.value) {
+// 							let usersList = result.value.filter(_r => _r.mail).map(_r => { return { username: _r.mail, name: _r.displayName }; });
+// 							res.json(usersList);
+// 						} else {
+// 							res.status(400).json({ message: 'Users not found' });
+// 						}
 
-					});
-			} else {
-				res.status(404).json({ message: 'Azure AD config not found' });
-			}
-		})
-		.catch(err => {
-			res.status(500).json({ message: err.message });
-		});
-	*/
-}
+// 					});
+// 			} else {
+// 				res.status(404).json({ message: 'Azure AD config not found' });
+// 			}
+// 		})
+// 		.catch(err => {
+// 			res.status(500).json({ message: err.message });
+// 		});
+// 	*/
+// }
 
-function getUsersFromLDAP(req, res) {
-	let searchText = req.body.searchText;
-	let strictSearch = req.body.strict;
-	let ldapDetails = envConfig.ldapDetails;
-	let serverDetails = ldapDetails.ldapServerDetails;
-	let mapping = ldapDetails.mapping;
-	return ldapUtil.connectLDAP(serverDetails.url, serverDetails.bindDN, serverDetails.bindCredentials)
-		.then(client => {
-			let attributes = null;
-			if (mapping) {
-				attributes = Object.keys(mapping).map(_k => mapping[_k]);
-				attributes.push('dn');
-			}
-			let filter = '';
-			if (ldapDetails.baseFilter) {
-				filter = '&' + ldapDetails.baseFilter;
-			}
-			if (strictSearch) {
-				filter += `(${mapping['username']}=${searchText})`;
-			} else {
-				filter += `(|(${mapping['name']}=*${searchText}*)(${mapping['username']}=*${searchText}*))`;
-			}
-			return ldapUtil.searchLdap(client, serverDetails.searchBase, filter, attributes);
-		}, () => {
-			res.status(400).json({ message: 'Connection/Authentication failed' });
-		})
-		.then(users => {
-			if (users && users.length > 0) {
-				users = mapUsers(mapping, users);
-				res.json(users);
-			} else {
-				if (!res.headersSent)
-					res.status(400).json({ message: 'users not found' });
-			}
-		}, () => {
-			res.status(400).json({ message: 'User fetch failed' });
-		})
-		.catch(err => {
-			if (!res.headersSent)
-				res.status(500).json({ message: err.message });
-		});
-}
+// function getUsersFromLDAP(req, res) {
+// 	let searchText = req.body.searchText;
+// 	let strictSearch = req.body.strict;
+// 	let ldapDetails = envConfig.ldapDetails;
+// 	let serverDetails = ldapDetails.ldapServerDetails;
+// 	let mapping = ldapDetails.mapping;
+// 	return ldapUtil.connectLDAP(serverDetails.url, serverDetails.bindDN, serverDetails.bindCredentials)
+// 		.then(client => {
+// 			let attributes = null;
+// 			if (mapping) {
+// 				attributes = Object.keys(mapping).map(_k => mapping[_k]);
+// 				attributes.push('dn');
+// 			}
+// 			let filter = '';
+// 			if (ldapDetails.baseFilter) {
+// 				filter = '&' + ldapDetails.baseFilter;
+// 			}
+// 			if (strictSearch) {
+// 				filter += `(${mapping['username']}=${searchText})`;
+// 			} else {
+// 				filter += `(|(${mapping['name']}=*${searchText}*)(${mapping['username']}=*${searchText}*))`;
+// 			}
+// 			return ldapUtil.searchLdap(client, serverDetails.searchBase, filter, attributes);
+// 		}, () => {
+// 			res.status(400).json({ message: 'Connection/Authentication failed' });
+// 		})
+// 		.then(users => {
+// 			if (users && users.length > 0) {
+// 				users = mapUsers(mapping, users);
+// 				res.json(users);
+// 			} else {
+// 				if (!res.headersSent)
+// 					res.status(400).json({ message: 'users not found' });
+// 			}
+// 		}, () => {
+// 			res.status(400).json({ message: 'User fetch failed' });
+// 		})
+// 		.catch(err => {
+// 			if (!res.headersSent)
+// 				res.status(500).json({ message: err.message });
+// 		});
+// }
 
 // TBDL
 // function testMapping(req, res) {
@@ -325,36 +325,36 @@ function getUsersFromLDAP(req, res) {
 // 	}
 // }
 
-function mapUsers(mapping, users) {
-	let revMapping = {};
-	Object.keys(mapping).map(_k => {
-		revMapping[mapping[_k]] = _k;
-	});
-	let newUsers = users.map(_u => {
-		let newUser = {};
-		Object.keys(_u).forEach(_k => {
-			if (revMapping[_k]) {
-				newUser[revMapping[_k]] = _u[_k];
-			}
-		});
-		newUser['dn'] = _u['dn'];
-		return newUser;
-	});
-	return newUsers;
-}
+// function mapUsers(mapping, users) {
+// 	let revMapping = {};
+// 	Object.keys(mapping).map(_k => {
+// 		revMapping[mapping[_k]] = _k;
+// 	});
+// 	let newUsers = users.map(_u => {
+// 		let newUser = {};
+// 		Object.keys(_u).forEach(_k => {
+// 			if (revMapping[_k]) {
+// 				newUser[revMapping[_k]] = _u[_k];
+// 			}
+// 		});
+// 		newUser['dn'] = _u['dn'];
+// 		return newUser;
+// 	});
+// 	return newUsers;
+// }
 
-function searchUsers(req, res) {
-	let auth = req.swagger.params.auth.value;
-	if (auth === 'azure' && envConfig.RBAC_USER_AUTH_MODES.includes('azure')) {
-		return getUsersFromAD(req, res);
-	} else if((auth === 'ldap' && envConfig.RBAC_USER_AUTH_MODES.includes('ldap'))) {
-		return getUsersFromLDAP(req, res);
-	} else {
-		logger.debug('Authmodes :: ', envConfig.RBAC_USER_AUTH_MODES);
-		logger.error('Unknown auth mode for this api :: ', auth);
-		return res.status(400).json({ message: `Unknown auth mode ${auth} for this api.`});
-	}
-}
+// function searchUsers(req, res) {
+// 	let auth = req.swagger.params.auth.value;
+// 	if (auth === 'azure' && envConfig.RBAC_USER_AUTH_MODES.includes('azure')) {
+// 		return getUsersFromAD(req, res);
+// 	} else if((auth === 'ldap' && envConfig.RBAC_USER_AUTH_MODES.includes('ldap'))) {
+// 		return getUsersFromLDAP(req, res);
+// 	} else {
+// 		logger.debug('Authmodes :: ', envConfig.RBAC_USER_AUTH_MODES);
+// 		logger.error('Unknown auth mode for this api :: ', auth);
+// 		return res.status(400).json({ message: `Unknown auth mode ${auth} for this api.`});
+// 	}
+// }
 
 // function switchToLdap(req, res) {
 // 	let url = req.body.url;
@@ -597,10 +597,10 @@ function searchUsers(req, res) {
 // 		});
 // }
 
-module.exports = {
-	// testAuth: testAuth,
-	searchUsers: searchUsers,
-	// saveConnection: saveConnection,
-	// authorizationRequestCallback: authorizationRequestCallback,
-	// removeAzureConfig: removeAzureConfig
-};
+// module.exports = {
+// 	// testAuth: testAuth,
+// 	// searchUsers: searchUsers,
+// 	// saveConnection: saveConnection,
+// 	// authorizationRequestCallback: authorizationRequestCallback,
+// 	// removeAzureConfig: removeAzureConfig
+// };

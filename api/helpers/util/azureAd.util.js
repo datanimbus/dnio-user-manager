@@ -63,13 +63,13 @@ e.decrypt = function (text) {
 
 e.validateAzureCredentials = function (azureConfig) {
 	let authorityHostUrl = 'https://login.microsoftonline.com';
-	let tenant = azureConfig.tenant;
+	let tenant = azureConfig.b2cTenant;
 	let authorityUrl = authorityHostUrl + '/' + tenant;
 	let applicationId = azureConfig.clientId;
 	let clientSecret = azureConfig.clientSecret;
-	if(!tenant) return Promise.reject('Missing AZURE_B2C_TENANT.');
-	if(!applicationId) return Promise.reject('Missing AZURE_CLIENT_ID.');
-	if(!clientSecret) return Promise.reject('Missing AZURE_CLIENT_SECRET.');
+	if(!tenant) return Promise.reject('Missing AZURE.B2C_TENANT.');
+	if(!applicationId) return Promise.reject('Missing AZURE.CLIENT_ID.');
+	if(!clientSecret) return Promise.reject('Missing AZURE.CLIENT_SECRET.');
 	let resource = '00000002-0000-0000-c000-000000000000'; // URI that identifies the resource for which the token is valid.
 	let context = new AuthenticationContext(authorityUrl);
 	return new Promise((resolve, reject) => {
@@ -86,50 +86,76 @@ e.validateAzureCredentials = function (azureConfig) {
 	});
 };
 
-e.searchUser = function (accessToken, filter) {
-	return new Promise((resolve, reject) => {
-		let userAttribute = envConfig.azureAdUserAttribute;
-		logger.debug('AD user attribute name :: ', userAttribute);
+// e.searchUser = function (accessToken, filter) {
+// 	return new Promise((resolve, reject) => {
+// 		let userAttribute = envConfig.azureConfig.adUserAttribute;
+// 		logger.debug('AD user attribute name :: ', userAttribute);
+// 		let client = MicrosoftGraph.Client.init({
+// 			authProvider: (done) => {
+// 				done(null, accessToken); //first parameter takes an error if you can't get an access token
+// 			}
+// 		});
+// 		let userApi;
+// 		if(filter)
+// 			userApi = client.api('/users').filter(filter);
+// 		else
+// 			userApi = client.api('/users').top(2);
+// 		userApi.get((err, result) => {
+// 			if (err) {
+// 				let errMsg = 'Azure User Search API Failed';
+// 				logger.error('Azure User Search API Failed :: ', err);
+// 				if (err.message) errMsg = err.message;
+// 				else {
+// 					try {
+// 						let errBody = JSON.parse(err.body);
+// 						errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
+// 					} catch (err) {
+// 						logger.error('Error in parsing erorr');
+// 					}
+// 				}
+// 				reject(new Error(errMsg));
+// 			}
+// 			if (result.value) {
+// 				logger.debug('Azure user search result :: ', result.value);
+// 				let usersList = result.value.filter(_r => _r[userAttribute]).map(_r => {
+// 					return {
+// 						username: _r[userAttribute],
+// 						name: _r.displayName,
+// 						email: _r.mail
+// 					};
+// 				});
+// 				resolve(usersList);
+// 			} else {
+// 				logger.debug('No Users found with filter :: ', filter);
+// 				resolve([]);
+// 			}
+// 		});
+// 	});
+// };
+
+e.getADUserInfo = function (accessToken) {
+	let userAttribute = envConfig.azureConfig.adUserAttribute;
+	logger.debug('AD user attribute name :: ', userAttribute);
+	return new Promise(async (resolve, reject) => {
 		let client = MicrosoftGraph.Client.init({
 			authProvider: (done) => {
 				done(null, accessToken); //first parameter takes an error if you can't get an access token
 			}
 		});
-		let userApi;
-		if(filter)
-			userApi = client.api('/users').filter(filter);
-		else
-			userApi = client.api('/users').top(2);
-		userApi.get((err, result) => {
-			if (err) {
-				let errMsg = 'Azure User Search API Failed';
-				logger.error('Azure User Search API Failed :: ', err);
-				if (err.message) errMsg = err.message;
-				else {
-					try {
-						let errBody = JSON.parse(err.body);
-						errMsg = errBody.error && errBody.error.message ? errBody.error.message : errMsg;
-					} catch (err) {
-						logger.error('Error in parsing erorr');
-					}
-				}
-				reject(new Error(errMsg));
-			}
-			if (result.value) {
-				logger.debug('Azure user search result :: ', result.value);
-				let usersList = result.value.filter(_r => _r[userAttribute]).map(_r => {
-					return {
-						username: _r[userAttribute],
-						name: _r.displayName,
-						email: _r.mail
-					};
-				});
-				resolve(usersList);
-			} else {
-				logger.debug('No Users found with filter :: ', filter);
-				resolve([]);
-			}
-		});
+		try {
+			let userInfo = await client.api('/me').get();
+			logger.trace('Azure user info result :: ', userInfo);
+			resolve({
+				username: userInfo[userAttribute],
+				name: userInfo.displayName,
+				email: userInfo.mail,
+				phone: userInfo.mobilePhone 
+			});
+
+		} catch(error) {
+			logger.error('Azure User Info API Failed :: ', error);
+			reject(error);
+		}
 	});
 };
 

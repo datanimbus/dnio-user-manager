@@ -1804,18 +1804,18 @@ paths:
           description: Bad parameters
         '500':
           description: Internal server error 
-  /azure/userFetch:
-    x-swagger-router-controller: controller
-    get:
-      description: User login
-      operationId: AzureUserFetch
-      responses:
-        '302':
-          description: Redirecting to azure
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error      
+  # /azure/userFetch:
+  #   x-swagger-router-controller: controller
+  #   get:
+  #     description: User login
+  #     operationId: AzureUserFetch
+  #     responses:
+  #       '302':
+  #         description: Redirecting to azure
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error      
   /logout:
     x-swagger-router-controller: controller
     delete:
@@ -3022,29 +3022,29 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  /{auth}/search:
-    x-swagger-router-controller: controller
-    post:
-      description: Search users in ldap
-      operationId: LdapSearchUsers
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload connection
-        schema:
-          $ref: '#/definitions/ldap'
-      responses:
-        '200':
-          description: connection successful
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
+  # /{auth}/search:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Search users in ldap
+  #     operationId: LdapSearchUsers
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload connection
+  #       schema:
+  #         $ref: '#/definitions/ldap'
+  #     responses:
+  #       '200':
+  #         description: connection successful
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
   /health/live:
     x-swagger-router-controller: controller
     get:
@@ -3106,46 +3106,46 @@ paths:
   #         description: Bad parameters
   #       '500':
   #         description: Internal server error
-  /{auth}/import:
-    x-swagger-router-controller: controller
-    post:
-      description: Import LDAP users to local
-      operationId: LdapUserImport
-      parameters:
-      - name: auth
-        in: path
-        type: string
-        required: true
-        description: auth type
-      - name: data
-        in: body
-        description: Payload to create a User
-        schema:
-          $ref: '#/definitions/ldapUserImport'
-      responses:
-        '200':
-          description: connection successful
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
-  /azure/userFetch/callback:
-    x-swagger-router-controller: controller
-    get:
-      description: Test connection to ldap
-      operationId: AzureUserFetchCallback
-      parameters:
-      - name: code
-        in: query
-        type: string
-        description: code by azure ad
-      responses:
-        '200':
-          description: User detail in LDAP
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
+  # /{auth}/import:
+  #   x-swagger-router-controller: controller
+  #   post:
+  #     description: Import LDAP users to local
+  #     operationId: LdapUserImport
+  #     parameters:
+  #     - name: auth
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: auth type
+  #     - name: data
+  #       in: body
+  #       description: Payload to create a User
+  #       schema:
+  #         $ref: '#/definitions/ldapUserImport'
+  #     responses:
+  #       '200':
+  #         description: connection successful
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
+  # /azure/userFetch/callback:
+  #   x-swagger-router-controller: controller
+  #   get:
+  #     description: Test connection to ldap
+  #     operationId: AzureUserFetchCallback
+  #     parameters:
+  #     - name: code
+  #       in: query
+  #       type: string
+  #       description: code by azure ad
+  #     responses:
+  #       '200':
+  #         description: User detail in LDAP
+  #       '400':
+  #         description: Bad parameters
+  #       '500':
+  #         description: Internal server error
   /azure/login/callback:
     x-swagger-router-controller: controller
     get:
@@ -3361,8 +3361,8 @@ definitions:
   Usercreate:
     required:
     - username
-    - password
     - roles
+    - auth
     properties:
       username:
         type: string
@@ -3384,6 +3384,9 @@ definitions:
         type: [string, "null"]
       enableSessionRefresh:
         type: boolean
+      auth:
+        properties:
+          authType: {type: string}
   Userupdate:
     properties:
       username:
@@ -3577,31 +3580,31 @@ definitions:
         type: [string, 'null']
       tenant:
         type: [string, 'null']  
-  ldapUserImport:
-    required:
-    - username
-    - roles
-    properties:
-      username:
-        type: string
-      password:
-        type: string
-      isActive:
-        type: boolean
-        default: true
-      basicDetails:
-        properties:
-          name: { type: [string, "null"] }
-          alternateEmail: { type: [string, "null"] }
-          phone: { type: [string, "null"] }
-      roles:
-        type: [array, "null"]
-        items:
-          type: object
-      description:
-        type: [string, "null"]
-      enableSessionRefresh:
-        type: boolean
+  # ldapUserImport:
+  #   required:
+  #   - username
+  #   - roles
+  #   properties:
+  #     username:
+  #       type: string
+  #     password:
+  #       type: string
+  #     isActive:
+  #       type: boolean
+  #       default: true
+  #     basicDetails:
+  #       properties:
+  #         name: { type: [string, "null"] }
+  #         alternateEmail: { type: [string, "null"] }
+  #         phone: { type: [string, "null"] }
+  #     roles:
+  #       type: [array, "null"]
+  #       items:
+  #         type: object
+  #     description:
+  #       type: [string, "null"]
+  #     enableSessionRefresh:
+  #      type: boolean
   Bots:
     properties:
       isActive:

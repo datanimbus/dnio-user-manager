@@ -1003,11 +1003,7 @@ function validateAuthModes() {
 	logger.debug('validating auth modes :: ', authModes);
 	let validationArray = authModes.map(mode => {
 		if(mode == 'azure')
-			return validateAzureCredentials({
-				tenant: process.env.AZURE_B2C_TENANT,
-				clientId: process.env.AZURE_CLIENT_ID,
-				clientSecret: process.env.AZURE_CLIENT_SECRET
-			}).catch((err) => removeAuthMode('azure', err));
+			return validateAzureCredentials(config.azureConfig).catch((err) => removeAuthMode('azure', err));
 		else if(mode == 'ldap')
 			return validateLdapCredentials(config.ldapDetails)
 				.catch((err) => removeAuthMode('ldap', err));

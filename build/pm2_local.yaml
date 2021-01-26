@@ -22,18 +22,20 @@ apps:
     RBAC_USER_CLOSE_WINDOW_TO_LOGOUT: false
     RBAC_USER_TO_SINGLE_SESSION: false
     RBAC_USER_RELOGIN_ACTION: allow
+    RBAC_USER_AUTH_MODES: 'local,azure,ldap'
     RBAC_HB_INTERVAL: 60
     RBAC_BOT_TOKEN_DURATION: 1800
     BOOKMARK_OPEN_TAB: true
     FQDN: 'localhost'
-    AZURE_B2C_TENANT: 'capiotb2codp.onmicrosoft.com'
-    AZURE_CLIENT_ID: '57ceab52-f7b8-4de4-a3ad-25dad057c497'
-    AZURE_CLIENT_SECRET: '-pzzClg_8m1-A.FtGhqJ9Oo70_fpLlMH5s'
-    RBAC_USER_AUTH_MODES: 'local,azure,ldap'
-    AZURE_AD_USER_ATTRIBUTE: 'mail'
-    LDAP_SERVER_URL: 'ldap://dev.xcro.appveen.com:10389'
-    LDAP_BIND_DN: 'uid=admin,ou=system'
-    LDAP_BIND_PASSWORD: 'secret'
-    LDAP_BASE_DN: 'ou=internal,dc=example,dc=com'
-    LDAP_BASE_FILTER: '(objectClass=inetOrgPerson)'
     VERIFY_DEPLOYMENT_USER: false
+    AZURE:
+      B2C_TENANT: 'capiotb2codp.onmicrosoft.com'
+      CLIENT_ID: '57ceab52-f7b8-4de4-a3ad-25dad057c497'
+      CLIENT_SECRET: '-pzzClg_8m1-A.FtGhqJ9Oo70_fpLlMH5s'
+      AD_USER_ATTRIBUTE: 'mail'
+    LDAP:
+      SERVER_URL: 'ldap://dev.xcro.appveen.com:10389'
+      BIND_DN: 'uid=admin,ou=system'
+      BIND_PASSWORD: 'secret'
+      BASE_DN: 'ou=internal,dc=example,dc=com'
+      BASE_FILTER: '(objectClass=inetOrgPerson)'

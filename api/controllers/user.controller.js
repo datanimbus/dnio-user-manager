@@ -384,7 +384,7 @@ schema.pre('save', function (next) {
 schema.pre('save', utils.counter.getIdGenerator('USR', 'User', null, null, 1000));
 
 schema.pre('save', function (next) {
-	// if (this.auth && !this.bot && (this.auth.isLdap || (this.auth.authType === 'azure') || this.auth.authType === 'ldap')) return next();
+	if (this.auth && !this.bot && (this.auth.authType === 'azure' || this.auth.authType === 'ldap')) return next();
 	var self = this;
 	if (!self.salt) {
 		crudder.model.findOne({
@@ -642,9 +642,25 @@ function localLogin(req, res) {
 }
 
 function validateLdapLogin(ldapUser, done) {
-	logger.debug('Validating ldap user :: ', ldapUser.cn);
+	logger.trace('Validating ldap user :: ', ldapUser);
 	findActiveUserbyAuthtype(ldapUser.cn, 'ldap')
-		.then(dbUser => done(null, dbUser))
+		.then(dbUser => {
+			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
+			// For first time logging users
+			if(dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
+				let ldapMapping = envConfig.ldapDetails.mapping;
+				dbUser.basicDetails = {
+					name: ldapUser[ldapMapping.name],
+					alternateEmail: ldapUser[ldapMapping.email],
+					phone: null
+				};
+				dbUser.save().then(user => {
+					done(null, user);
+				});
+			} else {
+				done(null, dbUser);
+			}
+		})
 		.catch(err => done(err, false));
 }
 
@@ -672,10 +688,20 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 	}
 	try {
 		logger.trace('azure acces token ::', accessToken);
-		// search user in azure and get odp username
-		let azureFilter = `startswith(mail,'${profile._json.email}')`;
-		let searchResult = await azureAdUtil.searchUser(accessToken, azureFilter);
-		let dbUser = await findActiveUserbyAuthtype(searchResult[0]['username'], 'azure');
+		// get user info from azure to get odp username
+		let userInfo = await azureAdUtil.getADUserInfo(accessToken);
+		logger.debug('search User :: ', userInfo);
+		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
+		logger.trace('dbUser :: ', dbUser.basicDetails);
+		// For first time logging in user
+		if(dbUser && JSON.stringify(dbUser.basicDetails) === '{}') {
+			dbUser.basicDetails = {
+				name: userInfo.name,
+				alternateEmail: userInfo.email,
+				phone: userInfo.phone
+			};
+			await dbUser.save();
+		}
 		let userDoc = await getLoginUserdoc(dbUser);
 		done(null, userDoc);
 	} catch (err) {
@@ -713,54 +739,55 @@ function azureLoginCallback(req, res) {
 	}
 }
 
-function validateAzureUserFetch(iss, sub, profile, accessToken, refreshToken, done) {
-	logger.info('validating user fetch!');
-	if (!profile.oid) {
-		logger.debug('profile:::: ', profile);
-		return done(new Error('No oid found'), null);
-	}
-	azureAdUtil.searchUser(accessToken)
-		.then(() => done(null, accessToken))
-		.catch(err => {
-			logger.error('error in validate azure user fetch:: ', err);
-			done(err, false);
-		});
-}
+// Azure user fetch api
+// function validateAzureUserFetch(iss, sub, profile, accessToken, refreshToken, done) {
+// 	logger.info('validating user fetch!');
+// 	if (!profile.oid) {
+// 		logger.debug('profile:::: ', profile);
+// 		return done(new Error('No oid found'), null);
+// 	}
+// 	azureAdUtil.searchUser(accessToken)
+// 		.then(() => done(null, accessToken))
+// 		.catch(err => {
+// 			logger.error('error in validate azure user fetch:: ', err);
+// 			done(err, false);
+// 		});
+// }
+//
+// function azureUserFetch(req, res) {
+// 	logger.debug('userFetch called : ', req.path);
+// 	if (checkAuthMode(res, 'azure')) {
+// 		passport.authenticate('AzureUserFetch', {
+// 			session: false
+// 		})(req, res);
+// 	}
+// }
 
-function azureUserFetch(req, res) {
-	logger.debug('userFetch called : ', req.path);
-	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureUserFetch', {
-			session: false
-		})(req, res);
-	}
-}
-
-function azureUserFetchCallback(req, res) {
-	logger.debug('userFetch callback called : ', req.path);
-	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureUserFetch', {
-			response: res,
-			failureRedirect: '/',
-		},
-		function (err, accessToken, info) {
-			if (err) {
-				logger.error('error in azureUserFetchCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!accessToken) {
-				logger.error('Something went wrong in azureUserFetchCallback:: ', info);
-				return sendAzureCallbackResponse(res, 401, { message: info });
-			} else {
-				let encryptedToken = azureAdUtil.encrypt(accessToken);
-				return sendAzureCallbackResponse(res, 200, {
-					message: 'Success',
-					adToken: encryptedToken
-				});
-			}
-		})(req, res);
-	}
-}
+// function azureUserFetchCallback(req, res) {
+// 	logger.debug('userFetch callback called : ', req.path);
+// 	if (checkAuthMode(res, 'azure')) {
+// 		passport.authenticate('AzureUserFetch', {
+// 			response: res,
+// 			failureRedirect: '/',
+// 		},
+// 		function (err, accessToken, info) {
+// 			if (err) {
+// 				logger.error('error in azureUserFetchCallback ::: ', err);
+// 				if (info) userLog.loginFailed(info, req, res);
+// 				return sendAzureCallbackResponse(res, 500, { message: err.message });
+// 			} else if (!accessToken) {
+// 				logger.error('Something went wrong in azureUserFetchCallback:: ', info);
+// 				return sendAzureCallbackResponse(res, 401, { message: info });
+// 			} else {
+// 				let encryptedToken = azureAdUtil.encrypt(accessToken);
+// 				return sendAzureCallbackResponse(res, 200, {
+// 					message: 'Success',
+// 					adToken: encryptedToken
+// 				});
+// 			}
+// 		})(req, res);
+// 	}
+// }
 
 function sendAzureCallbackResponse(res, statusCode, body) {
 	return res.end(`
@@ -1346,6 +1373,13 @@ function customizer(objValue, srcValue) {
 
 function customCreate(req, res) {
 	req.body._id = (!req.body._id && req.body.bot) ? cacheUtil.uuid() : req.body._id;
+	let authType = req.body.auth && req.body.auth.authType ? req.body.auth.authType : 'local';
+	if(!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
+		logger.error(authType + ' auth mode is not supported.');
+		return res.status(400).json({
+			message: authType + ' auth mode is not supported.'
+		});
+	}
 	if (!req.body.accessControl) {
 		req.body.accessControl = {
 			accessLevel: 'None',
@@ -1863,7 +1897,7 @@ function authType(req, res) {
 			if (usrObj) {
 				resObj.bot = usrObj.bot;
 				resObj.sessionActive = _d;
-				resObj.name = usrObj.basicDetails.name;
+				resObj.name = usrObj.basicDetails ? usrObj.basicDetails.name: usrObj._id;
 				resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = envConfig.RBAC_USER_TO_SINGLE_SESSION;
 				resObj[_.camelCase('RBAC_USER_RELOGIN_ACTION')] = envConfig.RBAC_USER_RELOGIN_ACTION;
 				resObj['fqdn'] = process.env.FQDN;
@@ -1874,7 +1908,7 @@ function authType(req, res) {
 			}
 		})
 		.catch(err => {
-			logger.error(err.message);
+			logger.error(err);
 			if (!res.headersSent) {
 				res.status(500).json({
 					message: err.message
@@ -1935,6 +1969,13 @@ function createUserinGroups(req, res) {
 	let UserModel = crudder.model;
 	// console.log(JSON.stringify(req.body));
 	let user = req.body.user;
+	let authType = user.auth ? user.auth.authType : 'local';
+	if(!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
+		logger.error(authType + ' auth mode is not supported.');
+		return res.status(400).json({
+			message: authType + ' auth mode is not supported.'
+		});
+	}
 	if (user && user.bot) {
 		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;
@@ -1952,7 +1993,7 @@ function createUserinGroups(req, res) {
 			if (createdUser && !createdUser.bot) {
 				let eventDoc = Object.assign(createdUser, {
 					app: app,
-					name: createdUser.basicDetails.name
+					name: createdUser.basicDetails ? createdUser.basicDetails.name : createdUser._id
 				});
 				odpUtils.eventsUtil.publishEvent('APP_USER_ADDED', 'app', req, eventDoc);
 			}
@@ -1991,12 +2032,14 @@ function createUserinGroups(req, res) {
 			}
 		}, err => {
 			if (err) {
+				logger.error('Error in createUserinGroups :: ', err);
 				res.status(400).json({
 					message: err.message
 				});
 			}
 		})
 		.catch(err => {
+			logger.error('Error in createUserinGroups :: ', err);
 			res.status(500).json({
 				message: err.message
 			});
@@ -3579,7 +3622,7 @@ module.exports = {
 	validateLdapLogin: validateLdapLogin,
 	validateAzureLogin: validateAzureLogin,
 	azureLogin: azureLogin,
-	azureUserFetch: azureUserFetch,
-	azureUserFetchCallback: azureUserFetchCallback,
-	validateAzureUserFetch: validateAzureUserFetch
+	// azureUserFetch: azureUserFetch,
+	// azureUserFetchCallback: azureUserFetchCallback,
+	// validateAzureUserFetch: validateAzureUserFetch
 };

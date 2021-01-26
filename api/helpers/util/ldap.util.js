@@ -80,11 +80,11 @@ e.validateLdapCredentials = function (config) {
 	let baseDN = config.ldapServerDetails.searchBase;
 	let mapping = config.mapping;
 	let filter = config.baseFilter;
-	if(!url) return Promise.reject('Missing LDAP_SERVER_URL.');
-	if(!bindDN) return Promise.reject('Missing LDAP_BIND_DN.');
-	if(!pwd) return Promise.reject('Missing LDAP_BIND_PASSWORD.');
-	if(!baseDN) return Promise.reject('Missing LDAP_BASE_DN.');
-	if(!filter) return Promise.reject('Missing LDAP_BASE_FILTER.');
+	if(!url) return Promise.reject('Missing LDAP.SERVER_URL');
+	if(!bindDN) return Promise.reject('Missing LDAP.BIND_DN');
+	if(!pwd) return Promise.reject('Missing LDAP.BIND_PASSWORD');
+	if(!baseDN) return Promise.reject('Missing LDAP.BASE_DN');
+	if(!filter) return Promise.reject('Missing LDAP.BASE_FILTER');
 	let requiredMapping = ['name', 'username'];
 	if (requiredMapping.some(_k => !mapping[_k] || typeof mapping[_k] !== 'string' || mapping[_k].length == 0)) {
 		return Promise.reject('Both' + requiredMapping + ' are required.');

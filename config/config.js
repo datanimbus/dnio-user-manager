@@ -154,7 +154,7 @@ module.exports = {
 	azurePassportConfig: azurePassportConfig,
 	azureConfig: {
 		clientId: azureConfig['CLIENT_ID'],
-		clientSecret: azureConfig['CLIENT_SECERT'],
+		clientSecret: azureConfig['CLIENT_SECRET'],
 		b2cTenant: azureConfig['B2C_TENANT'],
 		adUserAttribute: azureConfig['AD_USER_ATTRIBUTE'] ? azureConfig['AD_USER_ATTRIBUTE'] : 'mail'
 	},

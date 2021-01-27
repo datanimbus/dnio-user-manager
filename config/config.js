@@ -57,7 +57,9 @@ function get(_service) {
 
 let ldapConfig = process.env.LDAP ? JSON.parse(process.env.LDAP) : {};
 
+logger.info('ldap in config :: ', ldapConfig);
 let azureConfig = process.env.AZURE ? JSON.parse(process.env.AZURE) : {};
+logger.info('azure in config :: ', azureConfig);
 
 function azurePassportConfig(type) {
 	return {

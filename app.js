@@ -35,6 +35,9 @@ logger.info(`RBAC_USER_RELOGIN_ACTION :: ${conf.RBAC_USER_RELOGIN_ACTION}`);
 logger.info(`PRIVATE_FILTER :: ${conf.PRIVATE_FILTER}`);
 logger.info(`DS_FUZZY_SEARCH :: ${conf.DS_FUZZY_SEARCH}`);
 
+logger.info('azure app :: ', conf.azureConfig);
+logger.info('ldap app :: ', conf.ldapDetails);
+
 
 const cacheUtil = utils.cache;
 

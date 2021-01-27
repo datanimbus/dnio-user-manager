@@ -39,3 +39,6 @@ apps:
       BIND_PASSWORD: 'secret'
       BASE_DN: 'ou=internal,dc=example,dc=com'
       BASE_FILTER: '(objectClass=inetOrgPerson)'
+      USER_ID_ATTRIBUTE: 'cn'
+      USER_NAME_ATTRIBUTE: "sn"
+      USER_EMAIL_ATTRIBUTE: "mail"

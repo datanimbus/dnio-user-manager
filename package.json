@@ -1,6 +1,6 @@
 {
   "name": "ds-user-management",
-  "version": "3.9.0",
+  "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
@@ -17,9 +17,9 @@
   "author": "Shobhit Agrawal <shobhit@appveen.com>",
   "license": "ISC",
   "dependencies": {
-    "@appveen/odp-utils": "1.5.8",
+    "@appveen/data.stack-utils": "^1.0.5",
     "@appveen/swagger-mongoose-crud": "1.1.2",
-    "@appveen/utils": "2.0.0",
+    "@appveen/utils": "^2.1.2",
     "@microsoft/microsoft-graph-client": "^2.2.1",
     "adal-node": "^0.1.28",
     "bluebird": "^3.5.0",

@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const logger = global.logger;
 const config = require('../../config/config');
 const appHook = require('../helpers/util/appHooks');
-const kubeutil = require('@appveen/odp-utils').kubeutil;
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const request = require('request');
 const pmRole = require('../../config/roles').find(_r => _r.entity == 'PM');
 const nsRole = require('../../config/roles').find(_r => _r.entity == 'NS');

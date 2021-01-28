@@ -6,7 +6,7 @@ const SMCrud = require('@appveen/swagger-mongoose-crud');
 const schema = new mongoose.Schema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
-const odpUtils = require('@appveen/odp-utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('../../util/queueMgmt');
 let groupLog = require('./insight.group.controller');
 var client = queueMgmt.client;
@@ -99,9 +99,9 @@ schema.pre('save', function (next, req) {
 	next();
 });
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('userMgmt.groups'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.groups'));
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('userMgmt.groups.audit', client, 'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.groups.audit', client, 'auditQueue'));
 
 schema.post('save', groupLog.create());
 
@@ -113,21 +113,21 @@ schema.post('save', function(doc) {
 		eventId = 'EVENT_GROUP_CREATE';
 	else
 		eventId = 'EVENT_GROUP_UPDATE';
-	odpUtils.eventsUtil.publishEvent(eventId, 'group', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent(eventId, 'group', doc._req, doc);
 
 });
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.pre('remove', function(next, req) {
 	this._req = req;
 	next();
 });
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('userMgmt.groups.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.groups.audit', client, 'auditQueue'));
 
 schema.post('remove', groupLog.deleteGroup());
 
 schema.post('remove', function(doc) {
-	odpUtils.eventsUtil.publishEvent('EVENT_GROUP_DELETE', 'group', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent('EVENT_GROUP_DELETE', 'group', doc._req, doc);
 });
 
 schema.post('remove', function (doc) {

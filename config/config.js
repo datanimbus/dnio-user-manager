@@ -57,8 +57,6 @@ function get(_service) {
 
 let ldapConfig = process.env.LDAP ? JSON.parse(process.env.LDAP) : {};
 let azureConfig = process.env.AZURE ? JSON.parse(process.env.AZURE) : {};
-logger.debug(`LDAP ENV :: ${JSON.stringify(ldapConfig)}`);
-logger.debug(`Azure ENV :: ${JSON.stringify(azureConfig)}`);
 
 function azurePassportConfig(type) {
 	return {

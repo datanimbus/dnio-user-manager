@@ -39,9 +39,6 @@ logger.info(`RBAC_USER_RELOGIN_ACTION :: ${conf.RBAC_USER_RELOGIN_ACTION}`);
 logger.info(`PRIVATE_FILTER :: ${conf.PRIVATE_FILTER}`);
 logger.info(`DS_FUZZY_SEARCH :: ${conf.DS_FUZZY_SEARCH}`);
 
-logger.debug(`Azure config :: ${JSON.stringify(conf.azureConfig)}`);
-logger.debug(`LDAP config :: ${JSON.stringify(conf.ldapDetails)}`);
-
 const cacheUtil = utils.cache;
 
 mongoose.Promise = global.Promise;

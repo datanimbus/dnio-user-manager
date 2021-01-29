@@ -73,7 +73,7 @@ e.validateAzureCredentials = function (azureConfig) {
 	let resource = '00000002-0000-0000-c000-000000000000'; // URI that identifies the resource for which the token is valid.
 	let context = new AuthenticationContext(authorityUrl);
 	return new Promise((resolve, reject) => {
-		logger.debug({ resource, applicationId, clientSecret });
+		logger.debug({ resource, applicationId });
 		context.acquireTokenWithClientCredentials(resource, applicationId, clientSecret, function (err, tokenResponse) {
 			if (err) {
 				logger.error('Error in validateAzureCredentials :: ', err);

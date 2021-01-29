@@ -4,6 +4,7 @@ if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debu
 
 let logger = global.logger;
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
+logger.debug(`DATA_STACK_NAMESPACE : ${process.env.DATA_STACK_NAMESPACE}`)
 
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
 	dataStackUtils.kubeutil.check()

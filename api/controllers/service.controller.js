@@ -14,8 +14,8 @@ e.destroy = function (req, res) {
 			}
 		})
 		.then(doc => {
-			if (doc) logger.info(`[${req.get("TxnId")}] Service role removed :  ${doc._id}`)
-			logger.trace(`[${req.get("TxnId")}] ${JSON.stringify(doc)}`);
+			if (doc) logger.info(`[${req.get('TxnId')}] Service role removed :  ${doc._id}`);
+			logger.trace(`[${req.get('TxnId')}] ${JSON.stringify(doc)}`);
 			return mongoose.model('preference').find({ 'type': { '$in': ['column'] }, 'key': id });
 		})
 		.then(docs => {
@@ -33,8 +33,8 @@ e.destroy = function (req, res) {
 			if (_d) return _d.remove(req);
 		})
 		.then(_d=>{
-			logger.info(`[${req.get("TxnId")}] Removed : ${_d._id}`);
-			logger.trace(`[${req.get("TxnId")}] ${JSON.stringify(_d)}`);
+			logger.info(`[${req.get('TxnId')}] Removed : ${_d._id}`);
+			logger.trace(`[${req.get('TxnId')}] ${JSON.stringify(_d)}`);
 		})
 		.then(()=>{
 			return mongoose.model('userMgmt.filter').find({'serviceId': id });
@@ -79,7 +79,7 @@ e.create = function (req, res) {
 	let docModel = new model(newsmRole);
 	return docModel.save(req)
 		.then((_d) => {
-			logger.info(`[${req.get("TxnId")}] Service role created`)
+			logger.info(`[${req.get('TxnId')}] Service role created`);
 			logger.trace(`${JSON.stringify(_d)}`);
 			res.json({ 'message': 'Role created' });
 		})
@@ -100,7 +100,7 @@ e.createLibrary = function (req, res) {
 	let docModel = new model(newgsRole);
 	return docModel.save(req)
 		.then((_d) => {
-			logger.info(`[${req.get("TxnId")}] Library role created`)
+			logger.info(`[${req.get('TxnId')}] Library role created`);
 			logger.trace(`${JSON.stringify(_d)}`);
 			res.json({ 'message': 'Role created' });
 		})
@@ -117,7 +117,7 @@ e.deleteLibrary = function(req, res){
 			if (_d) return _d.remove(req);
 		})
 		.then(_d=>{
-			logger.info(`[${req.get("TxnId")}] Library role deleted :: ${id}`)
+			logger.info(`[${req.get('TxnId')}] Library role deleted :: ${id}`);
 			logger.trace(`${JSON.stringify(_d)}`);
 			res.json({ 'message': 'Roles deleted' });
 		})

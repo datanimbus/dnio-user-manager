@@ -7,7 +7,11 @@ const express = require('express');
 const app = express();
 const utils = require('@appveen/utils');
 const log4js = utils.logger.getLogger;
-const loggerName = process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT && process.env.ODPENV == 'K8s' ? `[${process.env.DATA_STACK_NAMESPACE}][${process.env.HOSTNAME}]` : '[userManagement]';
+
+let version = require('./package.json').version;
+const loggerName = (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) ? `[${process.env.DATA_STACK_NAMESPACE}] [${process.env.HOSTNAME}] [USER ${version}]` : `[USER ${version}]`;
+
+
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
 const mongo = require('mongodb').MongoClient;
@@ -35,6 +39,8 @@ logger.info(`RBAC_USER_RELOGIN_ACTION :: ${conf.RBAC_USER_RELOGIN_ACTION}`);
 logger.info(`PRIVATE_FILTER :: ${conf.PRIVATE_FILTER}`);
 logger.info(`DS_FUZZY_SEARCH :: ${conf.DS_FUZZY_SEARCH}`);
 
+logger.debug(`Azure config :: ${JSON.stringify(conf.azureConfig)}`);
+logger.debug(`LDAP config :: ${JSON.stringify(conf.ldapDetails)}`);
 
 const cacheUtil = utils.cache;
 
@@ -94,10 +100,10 @@ app.use(passport.initialize());
 
 // app.use(fileUpload());
 
-let odpUtils = require('@appveen/odp-utils');
+let dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('./util/queueMgmt');
-odpUtils.eventsUtil.setNatsClient(queueMgmt.client);
-// let logToQueue = odpUtils.logToQueue('user', queueMgmt.client, conf.logQueueName,'user.logs');
+dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
+// let logToQueue = dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName,'user.logs');
 //app.use(logToQueue);
 
 // Adds user info to req object.

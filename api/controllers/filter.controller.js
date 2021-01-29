@@ -8,7 +8,7 @@ const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const logger = global.logger;
-const odpUtils = require('@appveen/odp-utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
 
 var options = {
 	logger: logger,
@@ -37,13 +37,13 @@ schema.pre('save', function (next) {
 	next();
 });
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('userMgmt.filter'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.filter'));
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('userMgmt.filter.audit',client,'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.filter.audit',client,'auditQueue'));
 
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit',client,'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit',client,'auditQueue'));
 
 var crudder = new SMCrud(schema, 'userMgmt.filter', options);
 function customCreate(req,res){

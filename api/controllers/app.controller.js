@@ -5,8 +5,8 @@ const definition = require('../helpers/app.definition.js').definition;
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const schema = new mongoose.Schema(definition);
 const logger = global.logger;
-const odpUtils = require('@appveen/odp-utils');
-const kubeutil = require('@appveen/odp-utils').kubeutil;
+const dataStackUtils = require('@appveen/data.stack-utils');
+const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const appInit = require('../../config/apps');
@@ -102,9 +102,9 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('userMgmt.apps'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.apps'));
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('userMgmt.apps.audit', client, 'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.apps.audit', client, 'auditQueue'));
 
 schema.post('save', function (doc) {
 	let eventId;
@@ -112,7 +112,7 @@ schema.post('save', function (doc) {
 		eventId = 'EVENT_APP_CREATE';
 	else
 		eventId = 'EVENT_APP_UPDATE';
-	odpUtils.eventsUtil.publishEvent(eventId, 'app', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent(eventId, 'app', doc._req, doc);
 });
 
 // To add SM role in new App.
@@ -185,9 +185,9 @@ function isEqualObjectValue(a, b) {
 	return _.isEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)));
 }
 
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
 
 schema.pre('remove', function (next, req) {
 	this._req = req;
@@ -200,7 +200,7 @@ schema.pre('remove', appHook.preRemovePMFlows());
 schema.post('remove', appHook.getPostRemoveHook());
 
 schema.post('remove', function (doc) {
-	odpUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
+	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
 });
 
 schema.post('remove', (_doc) => {
@@ -406,7 +406,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
-						_usr.forEach(user => odpUtils.eventsUtil.publishEvent(eventId, userType, req, user));
+						_usr.forEach(user => dataStackUtils.eventsUtil.publishEvent(eventId, userType, req, user));
 						res.status(200).json({ message: `Removed ${userType}/s from app` });
 					}
 				});

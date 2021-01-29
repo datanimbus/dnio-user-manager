@@ -26,12 +26,12 @@ function getClusterNodes() {
 
 e.init = () => {
 	if (process.env.CACHE_CLUSTER) {
-		logger.info('Connecting to Redis cluster');
-		logger.info('Redis cluster nodes :: ', JSON.stringify(getClusterNodes()));
+		logger.info('Connecting to cache cluster');
+		logger.info('Cache cluster nodes :: ', JSON.stringify(getClusterNodes()));
 		client = new redis.Cluster(getClusterNodes());
 	}
 	else {
-		logger.info('Connecting to standalone Redis');
+		logger.info('Connecting to standalone cache');
 		client = redis.createClient(port, host);
 	}
 	client.on('error', function (err) {
@@ -39,7 +39,7 @@ e.init = () => {
 	});
 
 	client.on('connect', function () {
-		logger.info('Redis client connected');
+		logger.info('Cache client connected');
 	});
 };
 

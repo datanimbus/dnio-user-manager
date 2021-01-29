@@ -9,7 +9,7 @@ const schema = new mongoose.Schema(definition);
 const logger = global.logger;
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
-const odpUtils = require('@appveen/odp-utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
 const rolesHelper = require('../helpers/util/rolesHooks.js');
 var options = {
 	logger: logger,
@@ -119,17 +119,17 @@ schema.pre('save', function (next) {
 
 });
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('userMgmt.roles'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.roles'));
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('userMgmt.roles.audit', client, 'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.roles.audit', client, 'auditQueue'));
 
 // schema.post('save', rolesHelper.createRolesPostHook());
 
 schema.post('save', rolesHelper.updateRolesHook());
 
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
 
 schema.pre('remove', function (next, _req) {
 	this._req = _req;

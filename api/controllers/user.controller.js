@@ -6,7 +6,7 @@ const definition = require('../helpers/user.definition.js').definition;
 const SMCrud = require('@appveen/swagger-mongoose-crud');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
-const odpUtils = require('@appveen/odp-utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
 const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
 let globalCache = require('../../util/cache');
@@ -436,25 +436,25 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', odpUtils.auditTrail.getAuditPreSaveHook('userMgmt.users'));
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.users'));
 
 schema.post('save', userLog.updateUser());
 
 schema.post('save', userLog.createUser());
 
-schema.post('save', odpUtils.auditTrail.getAuditPostSaveHook('userMgmt.users.audit', client, 'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.users.audit', client, 'auditQueue'));
 
 schema.post('save', function (doc) {
 	if (doc.wasNew && doc.bot) {
-		odpUtils.eventsUtil.publishEvent('EVENT_BOT_CREATE', 'bot', doc._req, doc);
+		dataStackUtils.eventsUtil.publishEvent('EVENT_BOT_CREATE', 'bot', doc._req, doc);
 	} else if (doc.wasNew) {
-		odpUtils.eventsUtil.publishEvent('EVENT_USER_CREATE', 'user', doc._req, doc);
+		dataStackUtils.eventsUtil.publishEvent('EVENT_USER_CREATE', 'user', doc._req, doc);
 	}
 });
 
-schema.pre('remove', odpUtils.auditTrail.getAuditPreRemoveHook());
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', odpUtils.auditTrail.getAuditPostRemoveHook('userMgmt.users.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.users.audit', client, 'auditQueue'));
 
 schema.post('remove', userLog.removeUsers());
 
@@ -1360,9 +1360,9 @@ function publishUserOrBotUpdates(isBot, newData, oldData, req) {
 	let newAttibutes = newData.attributes ? JSON.parse(JSON.stringify(newData.attributes)) : {};
 	let oldAttibutes = oldData.attributes ? JSON.parse(JSON.stringify(oldData.attributes)) : {};
 	if (!_.isEqual(newBasicDetails, oldBasicDetails))
-		odpUtils.eventsUtil.publishEvent(eventId1, source, req, newData);
+		dataStackUtils.eventsUtil.publishEvent(eventId1, source, req, newData);
 	if (!_.isEqual(newAttibutes, oldAttibutes))
-		odpUtils.eventsUtil.publishEvent(eventId2, source, req, newData);
+		dataStackUtils.eventsUtil.publishEvent(eventId2, source, req, newData);
 }
 
 function customizer(objValue, srcValue) {
@@ -1431,7 +1431,7 @@ function createBotKey(req, res) {
 		})
 		.then(() => {
 			collectionObj.keyValue = resKeyValue;
-			odpUtils.eventsUtil.publishEvent('EVENT_BOT_KEYS_ADDED', 'bot', req, botData);
+			dataStackUtils.eventsUtil.publishEvent('EVENT_BOT_KEYS_ADDED', 'bot', req, botData);
 			return res.status(200).json(collectionObj);
 		})
 		.catch(err => {
@@ -1521,7 +1521,7 @@ function updateBotKey(req, res) {
 			return document.save(req);
 		})
 		.then(() => {
-			odpUtils.eventsUtil.publishEvent(eventId, 'bot', req, data);
+			dataStackUtils.eventsUtil.publishEvent(eventId, 'bot', req, data);
 			res.status(200).json(responseObj);
 		})
 		.catch(err => {
@@ -1556,10 +1556,10 @@ function disableUser(req, res) {
 		.then(() => {
 			if (isBot) {
 				let eventId = status ? 'EVENT_BOT_ACCESS_LOGIN_ENABLED' : 'EVENT_BOT_ACCESS_LOGIN_DISABLED';
-				odpUtils.eventsUtil.publishEvent(eventId, 'bot', req, responseObj);
+				dataStackUtils.eventsUtil.publishEvent(eventId, 'bot', req, responseObj);
 			} else {
 				let eventId = status ? 'EVENT_BOT_ACCESS_LOGIN_ENABLED' : 'EVENT_BOT_ACCESS_LOGIN_DISABLED';
-				odpUtils.eventsUtil.publishEvent(eventId, 'user', req, responseObj);
+				dataStackUtils.eventsUtil.publishEvent(eventId, 'user', req, responseObj);
 			}
 			return res.status(200).json(responseObj);
 		})
@@ -1598,7 +1598,7 @@ function deleteBotKey(req, res) {
 			return document.save(req);
 		})
 		.then((doc) => {
-			odpUtils.eventsUtil.publishEvent('EVENT_BOT_KEYS_DELETED', 'bot', req, doc.toObject());
+			dataStackUtils.eventsUtil.publishEvent('EVENT_BOT_KEYS_DELETED', 'bot', req, doc.toObject());
 			return res.status(200).json(doc.toObject());
 		})
 		.catch(err => {
@@ -1995,7 +1995,7 @@ function createUserinGroups(req, res) {
 					app: app,
 					name: createdUser.basicDetails ? createdUser.basicDetails.name : createdUser._id
 				});
-				odpUtils.eventsUtil.publishEvent('APP_USER_ADDED', 'app', req, eventDoc);
+				dataStackUtils.eventsUtil.publishEvent('APP_USER_ADDED', 'app', req, eventDoc);
 			}
 			return mongoose.model('group').find({
 				$or: [{
@@ -2194,7 +2194,7 @@ function editAppAdmin(req, res) {
 			if (docs) {
 				logger.debug(docs);
 				let eventId = action == 'grant' ? 'EVENT_USER_ACCESS_APPADMIN_GRANTED' : 'EVENT_USER_ACCESS_APPADMIN_REVOKED';
-				odpUtils.eventsUtil.publishEvent(eventId, 'user', req, userData);
+				dataStackUtils.eventsUtil.publishEvent(eventId, 'user', req, userData);
 				res.status(200).json({
 					message: 'App Admin access:: ' + action
 				});
@@ -2293,7 +2293,7 @@ function editSuperAdmin(req, res) {
 		})
 		.then(() => {
 			let eventId = action == 'grant' ? 'EVENT_USER_ACCESS_SUPERADMIN_GRANTED' : 'EVENT_USER_ACCESS_SUPERADMIN_REVOKED';
-			odpUtils.eventsUtil.publishEvent(eventId, 'user', req, userData);
+			dataStackUtils.eventsUtil.publishEvent(eventId, 'user', req, userData);
 			res.json({
 				message: 'Super Admin access:: ' + action
 			});
@@ -2396,7 +2396,7 @@ function customDestroy(req, res) {
 			});
 			return Promise.all(pr);
 		})
-		.then(() => odpUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
+		.then(() => dataStackUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
 			res.status(400).json({
 				message: err.message
@@ -2905,7 +2905,7 @@ function importUserToApp(req, res) {
 				delete usrdoc.salt;
 				delete usrdoc.password;
 				userLog.addUser(req, res, usrdoc);
-				odpUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
+				dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
 					app: app
 				}));
 				res.json({

@@ -446,8 +446,7 @@ e.customDestroy = (req, res) => {
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
 	};
-	logger.debug('Options for request');
-	logger.debug(JSON.stringify(options));
+	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 	request(options, function (err, newres, body) {
 		if (err) {
 			logger.error(err.message);

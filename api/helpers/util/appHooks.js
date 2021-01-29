@@ -23,8 +23,7 @@ e.sendRequest = (url, method, qs, body, _req) => {
 	if (qs) {
 		options.qs = qs;
 	}
-	logger.debug('Options for request');
-	logger.debug(options);
+	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 	return new Promise((resolve, reject) => {
 		request[method.toLowerCase()](options, function (err, res, body) {
 			if (err) {

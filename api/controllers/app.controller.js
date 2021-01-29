@@ -314,7 +314,7 @@ e.init = () => {
 				if (_d == 0) {
 					return app.reduce((_p, _c) => {
 						const ns = dataStackNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
-						logger.debug(`init() :: ns :: ${ns}`)
+						logger.debug(`init() :: ns :: ${ns}`);
 						return _p.then(() => {
 							return crudder.model.create(_c)
 								.then(_d => {

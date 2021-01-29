@@ -77,3 +77,5 @@ downloads/
 uploads/
 
 .DS_Store
+build.sh
+send.sh

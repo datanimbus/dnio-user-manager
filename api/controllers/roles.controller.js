@@ -467,7 +467,7 @@ function reviewPermissionService(req, res) {
 }
 
 function fixRoles(req) {
-	logger.debug('old reqBody ' + JSON.stringify(req.body));
+	logger.debug(`[${req.get("TxnId")}] OLD reqBody - ${JSON.stringify(req.body)}`);
 	let definition = req.body.definition;
 	let promise = Promise.resolve(req.body);
 	if (!req.body.roles) {
@@ -498,7 +498,7 @@ function customCreate(req, res) {
 			return crudder.create(req, res);
 		})
 		.catch(err => {
-			logger.error(err.message);
+			logger.error(`[${req.get("TxnId")}] ${err.message}`);
 			res.status(500).json({ message: err.message });
 		});
 
@@ -507,7 +507,7 @@ function customCreate(req, res) {
 function customUpdate(req, res) {
 	fixRoles(req)
 		.then(() => {
-			logger.debug('new reqBody ' + JSON.stringify(req.body));
+			logger.debug(`[${req.get("TxnId")}] NEW reqBody ${JSON.stringify(req.body)}`);
 			return crudder.update(req, res);
 		})
 		.catch(err => {

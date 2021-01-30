@@ -314,6 +314,7 @@ e.init = () => {
 				if (_d == 0) {
 					return app.reduce((_p, _c) => {
 						const ns = dataStackNS + '-' + _c._id.toLowerCase().replace(/ /g, '');
+						logger.debug(`init() :: ns :: ${ns}`);
 						return _p.then(() => {
 							return crudder.model.create(_c)
 								.then(_d => {
@@ -445,8 +446,7 @@ e.customDestroy = (req, res) => {
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
 	};
-	logger.debug('Options for request');
-	logger.debug(JSON.stringify(options));
+	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 	request(options, function (err, newres, body) {
 		if (err) {
 			logger.error(err.message);

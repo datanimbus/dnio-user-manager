@@ -100,7 +100,11 @@ else
     echo "****************************************************"
 	docker build -t data.stack:user.$TAG .
     if [ $CICD ]; then
-        kubectl set image deployment/user user=data.stack:user.$TAG -n $DATA_STACK_NS --record=true
+        if [ $DOCKER_REG ]; then
+            kubectl set image deployment/user user=$DOCKER_REG/data.stack:user.$TAG -n $DATA_STACK_NS --record=true
+        else 
+            kubectl set image deployment/user user=data.stack:user.$TAG -n $DATA_STACK_NS --record=true
+        fi
     fi
 fi
 if [ $DOCKER_REG ]; then

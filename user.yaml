@@ -33,7 +33,7 @@ spec:
       serviceAccountName: odp-admin
       containers:
         - name: user
-          image: '__docker_registry_server__/odp:user.__release__'
+          image: '__docker_registry_server__/data.stack:user.__release__'
           ports:
             - containerPort: 10004
           livenessProbe:

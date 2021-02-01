@@ -257,8 +257,8 @@ schema.post('save', function (doc) {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.get('txnId') : null,
-				'User': doc._req ? doc._req.get('user') : null
+				'TxnId': doc._req ? doc._req.headers['txnId']: null,
+				'User': doc._req ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -285,8 +285,8 @@ schema.post('save', function (doc) {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.get('txnId') : null,
-				'User': doc._req ? doc._req.get('user') : null
+				'TxnId': doc._req ? doc._req.header['txnId'] : null,
+				'User': doc._req ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -440,8 +440,8 @@ e.customDestroy = (req, res) => {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': req ? req.get('txnId') : null,
-			'User': req ? req.get('user') : null
+			'TxnId': req ? req.headers['txnId'] : null,
+			'User': req ? req.headers['user'] : null
 		},
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
@@ -645,7 +645,7 @@ e.customAppIndex = (_req, _res) => {
 			
 			logger.info(`Updated filter :: ${JSON.stringify(filter)}`);
 			_req.swagger.params.filter.value = JSON.stringify(filter);
-			
+
 			return crudder.index(_req, _res);
 		}).catch(err => {
 			logger.error('Error in customAppIndex ', err);

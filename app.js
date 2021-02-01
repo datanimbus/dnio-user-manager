@@ -38,7 +38,7 @@ logger.info(`RBAC_HB_INTERVAL :: ${conf.RBAC_HB_INTERVAL}`);
 logger.info(`RBAC_USER_RELOGIN_ACTION :: ${conf.RBAC_USER_RELOGIN_ACTION}`);
 logger.info(`PRIVATE_FILTER :: ${conf.PRIVATE_FILTER}`);
 logger.info(`DS_FUZZY_SEARCH :: ${conf.DS_FUZZY_SEARCH}`);
-
+logger.info(`Default Timezone :: ${conf.dataStackDefaultTimezone}`);
 const cacheUtil = utils.cache;
 
 mongoose.Promise = global.Promise;

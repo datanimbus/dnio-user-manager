@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const envConfig = require('../../config/config');
 const Schema = mongoose.Schema;
 var definition = {
 	'_id': {
@@ -74,6 +75,10 @@ var definition = {
 			'type': 'Boolean',
 			'default': false
 		}
+	},
+	'defaultTimezone': {
+		'type': 'String',
+		'default': envConfig.dataStackDefaultTimezone
 	}
 };
 module.exports.definition = definition;

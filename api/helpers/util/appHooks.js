@@ -11,8 +11,8 @@ e.sendRequest = (url, method, qs, body, _req) => {
 		method: method,
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req ? _req.get('txnId') : null,
-			'User': _req ? _req.get('user') : null
+			'TxnId': _req ? _req.headers['txnId'] : null,
+			'User': _req ? _req.headers['user'] : null
 		},
 		json: true
 	};

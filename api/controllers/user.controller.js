@@ -111,6 +111,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('B2B_ENABLE_TRUSTED_IP')] = envConfig.B2B_ENABLE_TRUSTED_IP;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
+			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
 			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;

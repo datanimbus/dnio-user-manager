@@ -1,9 +1,10 @@
+let defaultTimezone = require('./config').dataStackDefaultTimezone;
 module.exports = [
 	{
 		'_id': 'Adam',
 		'type': 'Management',
 		'description': 'Sample Management app.',
-
+		'defaultTimezone': defaultTimezone,
 		'appCenterStyle': [{
 			'theme': {
 				'default': 'Light'

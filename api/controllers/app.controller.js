@@ -285,7 +285,7 @@ schema.post('save', function (doc) {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.header['txnId'] : null,
+				'TxnId': doc._req ? doc._req.headers['txnId'] : null,
 				'User': doc._req ? doc._req.headers['user'] : null
 			},
 			json: true,

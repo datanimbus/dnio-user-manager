@@ -502,7 +502,7 @@ function getLoginUserdoc(doc) {
 function findActiveUserbyAuthtype(username, authType) {
 	return new Promise((resolve, reject) => {
 		crudder.model.findOne({
-			_id: username,
+			_id: new RegExp('^' + username + '$', 'i'),
 			'isActive': true,
 			'auth.authType': authType
 		}).then(user => {

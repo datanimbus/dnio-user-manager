@@ -387,7 +387,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 				})
 				.then(_rs => {
 					logger.info('Removed user ' + usrIds + ' from ' + _rs.map(_r => _r._id));
-					return mongoose.model('user').find({ _id: { $in: [usrIds] }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
+					return mongoose.model('user').find({ _id: { $in: usrIds }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
 				})
 				.then(_users => {
 					let promises = _users.map(_usr => {
@@ -414,6 +414,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 		})
 		.then(() => e.deleteUserDoc(req, usrIds, app))
 		.catch(err => {
+			logger.error('Error in removeUserBotFromApp :: ', err);
 			res.status(500).json({ message: err.message });
 		});
 };

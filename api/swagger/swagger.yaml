@@ -3295,7 +3295,7 @@ definitions:
       username:
         type: string
       password:
-        type: string
+        type: [string, "null"]
       isActive:
         type: boolean
         default: true

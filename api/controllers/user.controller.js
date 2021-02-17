@@ -230,18 +230,18 @@ schema.pre('validate', function (next) {
 
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
-	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
+	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
 	if (((this._id && this.password && this.basicDetails.name) != null) && ((this.basicDetails.name.length && this._id.length) >= 1)) {
 		next();
 	} else {
-		next(new Error('Username ,Password and name are mandatory fields.'));
+		next(new Error('Username, Password and Name are mandatory fields.'));
 	}
 });
 
 
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
-	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
+	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
 	if ((this.password.length) >= 8) {
 		next();
 	} else {

@@ -29,7 +29,7 @@ e.loginFailed = (data, req, res) => {
 e.logout = (req, res) => {
 	return mongoose.model('group').aggregate([{
 		'$match': {
-			'users': 'test@appveen.com'
+			'users': req.user._id
 		}
 	}, {
 		'$group': {

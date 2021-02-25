@@ -1227,6 +1227,44 @@ function init() {
 
 var crudder = new SMCrud(schema, 'user', options);
 
+function modifyFilter(req) {
+	let apps = req.swagger.params.apps.value ? req.swagger.params.apps.value.split(',') : [];
+	if(!apps.length) return Promise.resolve();
+	let filter = req.swagger.params.filter.value;
+	if (filter && typeof filter === 'string') {
+		filter = JSON.parse(filter);
+	}
+	return mongoose.model('group').find({
+		app: { $in : apps }
+	})
+		.then(_grps => {
+			let users = [].concat.apply([], _grps.map(_g => _g.users));
+			if (filter && typeof filter === 'object') {
+				filter = {
+					$and: [filter, {
+						'$or': [{
+							'_id': {
+								'$in': users
+							}
+						}, {
+							'isSuperAdmin': true
+						}]
+					}]
+				};
+			} else {
+				filter = {
+					'$or': [{
+						'_id': {
+							'$in': users
+						}
+					}, {
+						'isSuperAdmin': true
+					}]
+				};
+			}
+			req.swagger.params.filter.value = JSON.stringify(filter);
+		});
+}
 function customIndex(_req, _res) {
 	let omitKeys = ['-salt', '-password'];
 	let select = _req.swagger.params.select.value ? _req.swagger.params.select.value.split(',') : [];
@@ -1238,7 +1276,19 @@ function customIndex(_req, _res) {
 	_idIndex > -1 ? select.push('-_id') : null;
 	select = select.join(',');
 	_req.swagger.params.select.value = select;
-	crudder.index(_req, _res);
+	let apps = _req.swagger.params.apps.value;
+	if(apps) {
+		return modifyFilter(_req).then(() => crudder.index(_req,_res));
+	}
+	return crudder.index(_req, _res);
+}
+
+function customCount(_req, _res) {
+	let apps = _req.swagger.params.apps.value;
+	if(apps) {
+		return modifyFilter(_req).then(() => crudder.count(_req,_res));
+	}
+	return crudder.count(_req, _res);
 }
 
 function customUpdate(req, res) {
@@ -2842,7 +2892,7 @@ function importUserToApp(req, res) {
 }
 
 
-function modifyFilter(req, isBot) {
+function modifyFilterForApp(req, isBot) {
 	let filter = req.swagger.params.filter.value;
 	let app = req.swagger.params.app.value;
 	if (filter && typeof filter === 'string') {
@@ -2883,7 +2933,7 @@ function modifyFilter(req, isBot) {
 }
 
 function userInApp(req, res) {
-	modifyFilter(req, false)
+	modifyFilterForApp(req, false)
 		.then(() => {
 			crudder.index(req, res);
 		})
@@ -2956,7 +3006,7 @@ function UserInGroupCount(req, res) {
 }
 
 function userInAppCount(req, res) {
-	modifyFilter(req, false)
+	modifyFilterForApp(req, false)
 		.then(() => {
 			crudder.count(req, res);
 		})
@@ -2969,7 +3019,7 @@ function userInAppCount(req, res) {
 }
 
 function botInApp(req, res) {
-	modifyFilter(req, true)
+	modifyFilterForApp(req, true)
 		.then(() => {
 			crudder.index(req, res);
 		})
@@ -2982,7 +3032,7 @@ function botInApp(req, res) {
 }
 
 function botInAppCount(req, res) {
-	modifyFilter(req, true)
+	modifyFilterForApp(req, true)
 		.then(() => {
 			crudder.count(req, res);
 		})
@@ -3096,7 +3146,7 @@ module.exports = {
 	show: crudder.show,
 	destroy: customDestroy,
 	update: customUpdate,
-	count: crudder.count,
+	count: customCount, //crudder.count,
 	localLogin: localLogin,
 	ldapLogin: ldapLogin,
 	logout: logout,

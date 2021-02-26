@@ -55,7 +55,7 @@ e.logout = (req, res) => {
 function makeBody(data, req, res) {
 	let headers = JSON.parse(JSON.stringify(req.headers));
 	// For login api headers.user would be undefined
-	let user = headers.user ? headers.user : data._id;
+	let user = headers.user != 'null' ? headers.user : data._id;
 	let body = {
 		data: {
 			userId: user,

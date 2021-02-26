@@ -1116,13 +1116,14 @@ function refreshToken(req, res) {
 						cacheUtil.blacklist(tokenHash);
 					}
 					userLog.refreshToken(req, res);
-					return res.json({
+					let userData = req.user;
+					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() =>  res.json({
 						token: newToken,
 						rToken: newRToken,
 						expiresIn: expiresIn,
 						serverTime: Date.now(),
 						uuid: uuid
-					});
+					}));
 				} else throw 'invalid';
 			} catch (err) {
 				logger.error(err);

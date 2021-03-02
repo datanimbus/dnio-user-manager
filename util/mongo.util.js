@@ -16,7 +16,7 @@ async function getMongoDbVersion() {
 async function setIsTransactionAllowed() {
 	try {
 		global.isTransactionAllowed = false;
-		let replicaSetStatus = await global.mongoConnection.db().admin().command({ "replSetGetStatus": 1 });
+		let replicaSetStatus = await global.mongoConnection.db().admin().command({ 'replSetGetStatus': 1 });
 		logger.trace('Appcenter Replica Status :: ', replicaSetStatus);
 		if (replicaSetStatus) {
 			let mongoDbVersion = await getMongoDbVersion();

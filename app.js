@@ -77,7 +77,7 @@ mongo.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, 
 	if (db) {
 		global.mongoConnection = db;
 		logger.info('Connected to Appcenter DB');
-		global.mongoDbVersion = await mongoUtil.getMongoDbVersion();
+		await mongoUtil.setIsTransactionAllowed();
 	}
 });
 

@@ -112,7 +112,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
-			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
+			resObj['transactionsEnabled'] = global.isTransactionAllowed;
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
 			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;

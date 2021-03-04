@@ -22,9 +22,10 @@ async function setIsTransactionAllowed() {
 			let mongoDbVersion = await getMongoDbVersion();
 			global.isTransactionAllowed = mongoDbVersion && mongoDbVersion  >= '4.2.0';
 		}
-		logger.info('Are MongoDb Transactions Allowed :: ', global.isTransactionAllowed);
 	} catch (err) {
-		logger.error('Failed to get MongoDB version', err);
+		logger.error('Error in setIsTransactionAllowed :: ', err.message);
+	} finally {
+		logger.info('Are MongoDb Transactions Allowed :: ', global.isTransactionAllowed);
 	}
 }
 module.exports = {

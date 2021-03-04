@@ -1113,7 +1113,8 @@ function refreshToken(req, res) {
 						expiresIn = Date.now() + (expireIn * 1000);
 						var userId = d.bot ? `B:${d._id}` : `U:${d._id}`;
 						cacheUtil.refreshToken(userId, tokenHash, md5(newToken), uuid, expiresIn, envConfig.RBAC_USER_TO_SINGLE_SESSION, envConfig.RBAC_HB_INTERVAL + 5);
-						cacheUtil.blacklist(tokenHash);
+						// Letting token expire itself.
+						// cacheUtil.blacklist(tokenHash);
 					}
 					userLog.refreshToken(req, res);
 					let userData = req.user;

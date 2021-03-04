@@ -199,6 +199,14 @@ schema.pre('remove', appHook.preRemovePMFlows());
 
 schema.post('remove', appHook.getPostRemoveHook());
 
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App Security Credentials Are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
+	})
+})
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
 });

@@ -113,7 +113,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
-			resObj['transactionsEnabled'] = global.mongoDbVersion && global.mongoDbVersion >= '4.2.0';
+			resObj['transactionsEnabled'] = global.isTransactionAllowed;
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
 			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;
@@ -231,18 +231,18 @@ schema.pre('validate', function (next) {
 
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
-	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
+	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
 	if (((this._id && this.password && this.basicDetails.name) != null) && ((this.basicDetails.name.length && this._id.length) >= 1)) {
 		next();
 	} else {
-		next(new Error('Username ,Password and name are mandatory fields.'));
+		next(new Error('Username, Password and Name are mandatory fields.'));
 	}
 });
 
 
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
-	if ((!this.auth || !this.auth.authType == 'local') && this.bot) return next();
+	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
 	if ((this.password.length) >= 8) {
 		next();
 	} else {
@@ -1117,13 +1117,14 @@ function refreshToken(req, res) {
 						cacheUtil.blacklist(tokenHash);
 					}
 					userLog.refreshToken(req, res);
-					return res.json({
+					let userData = req.user;
+					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() =>  res.json({
 						token: newToken,
 						rToken: newRToken,
 						expiresIn: expiresIn,
 						serverTime: Date.now(),
 						uuid: uuid
-					});
+					}));
 				} else throw 'invalid';
 			} catch (err) {
 				logger.error(err);
@@ -1228,6 +1229,44 @@ function init() {
 
 var crudder = new SMCrud(schema, 'user', options);
 
+function modifyFilter(req) {
+	let apps = req.swagger.params.apps.value ? req.swagger.params.apps.value.split(',') : [];
+	if(!apps.length) return Promise.resolve();
+	let filter = req.swagger.params.filter.value;
+	if (filter && typeof filter === 'string') {
+		filter = JSON.parse(filter);
+	}
+	return mongoose.model('group').find({
+		app: { $in : apps }
+	})
+		.then(_grps => {
+			let users = [].concat.apply([], _grps.map(_g => _g.users));
+			if (filter && typeof filter === 'object') {
+				filter = {
+					$and: [filter, {
+						'$or': [{
+							'_id': {
+								'$in': users
+							}
+						}, {
+							'isSuperAdmin': true
+						}]
+					}]
+				};
+			} else {
+				filter = {
+					'$or': [{
+						'_id': {
+							'$in': users
+						}
+					}, {
+						'isSuperAdmin': true
+					}]
+				};
+			}
+			req.swagger.params.filter.value = JSON.stringify(filter);
+		});
+}
 function customIndex(_req, _res) {
 	let omitKeys = ['-salt', '-password'];
 	let select = _req.swagger.params.select.value ? _req.swagger.params.select.value.split(',') : [];
@@ -1239,7 +1278,19 @@ function customIndex(_req, _res) {
 	_idIndex > -1 ? select.push('-_id') : null;
 	select = select.join(',');
 	_req.swagger.params.select.value = select;
-	crudder.index(_req, _res);
+	let apps = _req.swagger.params.apps.value;
+	if(apps) {
+		return modifyFilter(_req).then(() => crudder.index(_req,_res));
+	}
+	return crudder.index(_req, _res);
+}
+
+function customCount(_req, _res) {
+	let apps = _req.swagger.params.apps.value;
+	if(apps) {
+		return modifyFilter(_req).then(() => crudder.count(_req,_res));
+	}
+	return crudder.count(_req, _res);
 }
 
 function customUpdate(req, res) {
@@ -2843,7 +2894,7 @@ function importUserToApp(req, res) {
 }
 
 
-function modifyFilter(req, isBot) {
+function modifyFilterForApp(req, isBot) {
 	let filter = req.swagger.params.filter.value;
 	let app = req.swagger.params.app.value;
 	if (filter && typeof filter === 'string') {
@@ -2884,7 +2935,7 @@ function modifyFilter(req, isBot) {
 }
 
 function userInApp(req, res) {
-	modifyFilter(req, false)
+	modifyFilterForApp(req, false)
 		.then(() => {
 			crudder.index(req, res);
 		})
@@ -2957,7 +3008,7 @@ function UserInGroupCount(req, res) {
 }
 
 function userInAppCount(req, res) {
-	modifyFilter(req, false)
+	modifyFilterForApp(req, false)
 		.then(() => {
 			crudder.count(req, res);
 		})
@@ -2970,7 +3021,7 @@ function userInAppCount(req, res) {
 }
 
 function botInApp(req, res) {
-	modifyFilter(req, true)
+	modifyFilterForApp(req, true)
 		.then(() => {
 			crudder.index(req, res);
 		})
@@ -2983,7 +3034,7 @@ function botInApp(req, res) {
 }
 
 function botInAppCount(req, res) {
-	modifyFilter(req, true)
+	modifyFilterForApp(req, true)
 		.then(() => {
 			crudder.count(req, res);
 		})
@@ -3097,7 +3148,7 @@ module.exports = {
 	show: crudder.show,
 	destroy: customDestroy,
 	update: customUpdate,
-	count: crudder.count,
+	count: customCount, //crudder.count,
 	localLogin: localLogin,
 	ldapLogin: ldapLogin,
 	logout: logout,

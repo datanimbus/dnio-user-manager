@@ -43,6 +43,10 @@ paths:
         in: query
         type: string
         description: sort parameter
+      - name: apps
+        in: query
+        type: string
+        description: Filter user on the basis of apps
       responses:
         '200':
           description: List of the entites
@@ -329,6 +333,10 @@ paths:
         in: query
         type: string
         description: Filter results based on certain fields
+      - name: apps
+        in: query
+        type: string
+        description: Filter user on the basis of apps
       responses:
         '200':
           description: List of the entites

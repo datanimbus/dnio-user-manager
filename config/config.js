@@ -157,8 +157,9 @@ module.exports = {
 		adUserAttribute: azureConfig['AD_USER_ATTRIBUTE'] ? azureConfig['AD_USER_ATTRIBUTE'] : 'mail'
 	},
 	dataStackDefaultTimezone: process.env.TZ_DEFAULT || 'Zulu',
+	disableInsightsApp: process.env.DISABLE_INSIGHTS ? parseBoolean(process.env.DISABLE_INSIGHTS) : false,
 	RBAC_USER_AUTH_MODES: process.env.RBAC_USER_AUTH_MODES ? (process.env.RBAC_USER_AUTH_MODES).split(',') : ['local'],
-	RBAC_USER_TOKEN_DURATION: parseInt(process.env.RBAC_USER_TOKEN_DURATION || 1800),
+	RBAC_USER_TOKEN_DURATION: parseInt(process.env.RBAC_USER_TOKEN_DURATION || 600),
 	RBAC_USER_TOKEN_REFRESH: process.env.RBAC_USER_TOKEN_REFRESH ? parseBoolean(process.env.RBAC_USER_TOKEN_REFRESH) : true,
 	RBAC_USER_TO_SINGLE_SESSION: parseBoolean(process.env.RBAC_USER_TO_SINGLE_SESSION || false),
 	RBAC_USER_CLOSE_WINDOW_TO_LOGOUT: parseBoolean(process.env.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT || false),

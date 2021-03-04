@@ -29,7 +29,7 @@ e.loginFailed = (data, req, res) => {
 e.logout = (req, res) => {
 	return mongoose.model('group').aggregate([{
 		'$match': {
-			'users': 'test@appveen.com'
+			'users': req.user._id
 		}
 	}, {
 		'$group': {
@@ -54,9 +54,11 @@ e.logout = (req, res) => {
 
 function makeBody(data, req, res) {
 	let headers = JSON.parse(JSON.stringify(req.headers));
+	// For login api headers.user would be undefined
+	let user = headers.user != 'null' ? headers.user : data._id;
 	let body = {
 		data: {
-			userId: headers.user,
+			userId: user,
 			txnid: headers.txnid,
 			resStatusCode: res.statusCode,
 			_metadata: {

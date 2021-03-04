@@ -79,6 +79,10 @@ var definition = {
 	'defaultTimezone': {
 		'type': 'String',
 		'default': envConfig.dataStackDefaultTimezone
+	},
+	'disableInsights': {
+		'type': 'Boolean',
+		'default': envConfig.disableInsightsApp
 	}
 };
 module.exports.definition = definition;

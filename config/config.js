@@ -175,5 +175,5 @@ module.exports = {
 	B2B_ENABLE_TIMEBOUND: parseBoolean(process.env.B2B_ENABLE_TIMEBOUND),
 	B2B_ENABLE_TRUSTED_IP: parseBoolean(process.env.B2B_ENABLE_TRUSTED_IP),
 	VERIFY_DEPLOYMENT_USER: parseBoolean(process.env.VERIFY_DEPLOYMENT_USER),
-	ENABLE_B2B: parseBoolean(process.env.ENABLE_B2B)
+	B2B_ENABLE: parseBoolean(process.env.B2B_ENABLE)
 };

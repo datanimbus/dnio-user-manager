@@ -205,8 +205,8 @@ schema.post('remove', (doc) => {
 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
 	}).catch(err => {
 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-	})
-})
+	});
+});
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
 });

@@ -50,7 +50,7 @@ module.exports = [
 			{ id: 'PMDSSPD', name: 'Manage Data Services Permannent Delete', operations: [{ method: 'PUT' }, { method: 'POST' }] },
 			{ id: 'PNDSSPD', name: 'No Access Data Services Permannent Delete', operations: [{ method: 'PUT' }, { method: 'GET' }] },
 			{ id: 'PVDSSRE', name: 'View Data Services Reset Setting', operations: [{ method: 'GET' }] },
-			{ id: 'PMDSSRE', name: 'Manage Data Services Reset Setting', operations: [{ method: 'PUT' }, { method: 'POST' }] },
+			{ id: 'PMDSSRE', name: 'Manage Data Services Reset Setting', operations: [{ method: 'PUT' }, { method: 'POST' }, { method: 'DELETE' }] },
 			{ id: 'PNDSSRE', name: 'No Access Data Services Reset Setting', operations: [{ method: 'PUT' }, { method: 'GET' }] },
 			{ id: 'PVDSSEP', name: 'View Data Services End-Point Setting', operations: [{ method: 'GET' }] },
 			{ id: 'PMDSSEP', name: 'Manage Data Services End-Point Setting', operations: [{ method: 'PUT' }, { method: 'POST' }] },

@@ -1297,7 +1297,7 @@ function customCount(_req, _res) {
 
 function customUpdate(req, res) {
 	let isBot = req.body.bot;
-	let arr = ['username', 'password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
+	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
 	arr.forEach(_k => {
 		delete req.body[_k];
 	});
@@ -1308,6 +1308,11 @@ function customUpdate(req, res) {
 	let oldValues = null;
 	let updated = null;
 	let id = req.swagger.params.id.value;
+	if(req.body.username && req.body.username != id) {
+		return res.status(400).json({
+			message: 'Username cannot be changed.'
+		})
+	}
 	return crudder.model.findOne({
 		'_id': id,
 		'_metadata.deleted': false

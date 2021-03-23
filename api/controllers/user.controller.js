@@ -1311,7 +1311,7 @@ function customUpdate(req, res) {
 	if(req.body.username && req.body.username != id) {
 		return res.status(400).json({
 			message: 'Username cannot be changed.'
-		})
+		});
 	}
 	return crudder.model.findOne({
 		'_id': id,
@@ -2396,7 +2396,9 @@ function customDestroy(req, res) {
 		.then(() => dataStackUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
 			logger.error('Error in User customDestroy :: ', err);
-			res.status(400).json({
+			logger.error('Error in User customDestroy :: ', err.message);
+		
+			return res.status(400).json({
 				message: err.meessage
 			});
 		});

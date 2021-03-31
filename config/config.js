@@ -65,7 +65,7 @@ function azurePassportConfig(type) {
 		clientID: azureConfig['CLIENT_ID'],
 		responseType: 'code',
 		responseMode: 'query',
-		redirectUrl: (isK8sEnv() ? 'https://' : 'http://') + process.env.FQDN + 
+		redirectUrl: (isK8sEnv() ? 'https://' : 'http://') + process.env.FQDN +
 			(type === 'login' ? '/api/a/rbac/azure/login/callback' : '/api/a/rbac/azure/userFetch/callback'),
 		allowHttpForRedirectUrl: process.env.FQDN == 'localhost',
 		clientSecret: azureConfig['CLIENT_SECRET'],
@@ -137,9 +137,9 @@ module.exports = {
 	ldapDetails: {
 		ldapServerDetails: {
 			'url': ldapConfig['SERVER_URL'],
-			'bindDN' : ldapConfig['BIND_DN'],
+			'bindDN': ldapConfig['BIND_DN'],
 			'bindCredentials': ldapConfig['BIND_PASSWORD'],
-			'searchBase' : ldapConfig['BASE_DN'],
+			'searchBase': ldapConfig['BASE_DN'],
 			'searchFilter': ldapConfig['USER_ID_ATTRIBUTE'] ? `(${ldapConfig['USER_ID_ATTRIBUTE']}={{username}})` : '(cn={{username}})',
 		},
 		mapping: {
@@ -175,5 +175,6 @@ module.exports = {
 	B2B_ENABLE_TIMEBOUND: parseBoolean(process.env.B2B_ENABLE_TIMEBOUND),
 	B2B_ENABLE_TRUSTED_IP: parseBoolean(process.env.B2B_ENABLE_TRUSTED_IP),
 	VERIFY_DEPLOYMENT_USER: parseBoolean(process.env.VERIFY_DEPLOYMENT_USER),
-	B2B_ENABLE: parseBoolean(process.env.B2B_ENABLE)
+	B2B_ENABLE: parseBoolean(process.env.B2B_ENABLE),
+	EXPERIMENTAL_FEATURES: parseBoolean(process.env.EXPERIMENTAL_FEATURES)
 };

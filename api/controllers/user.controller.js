@@ -110,6 +110,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('B2B_ENABLE_TIMEBOUND')] = envConfig.B2B_ENABLE_TIMEBOUND;
 			resObj[_.camelCase('B2B_ENABLE_TRUSTED_IP')] = envConfig.B2B_ENABLE_TRUSTED_IP;
 			resObj[_.camelCase('B2B_ENABLE')] = envConfig.B2B_ENABLE;
+			resObj[_.camelCase('EXPERIMENTAL_FEATURES')] = envConfig.EXPERIMENTAL_FEATURES;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;

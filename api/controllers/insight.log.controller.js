@@ -14,12 +14,9 @@ e.login = async (data, req, res) => {
 	var body = makeBody(data, req, res, 'USER_LOGIN');
 	body.data.summary = data.username + ' logged in';
 	try {
-		let apps;
-		if(data.isSuperAdmin) {
-			apps = [null];
-		} else {
-			apps = await getUserApps(data._id);
-		}
+		let apps = await getUserApps(data._id);
+		if(data.isSuperAdmin)
+			apps.push(null);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -36,6 +33,8 @@ e.loginFailed = async (data, req, res) => {
 		body.data.summary = 'Login failed for ' + data.username;
 		try {
 			let apps = await getUserApps(data._id);
+			if(data.isSuperAdmin)
+				apps.push(null);
 			apps.forEach(app => {
 				let message = _.cloneDeep(body.data);
 				message.app = app;
@@ -56,12 +55,10 @@ e.logout = async (req, res) => {
 	var body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
 	body.data.summary = user + ' logged out';
 	try {
-		let apps;
-		if(req.headers.isSuperAdmin) {
-			apps = [null];
-		} else {
-			apps = await getUserApps(user);
-		}
+		
+		let apps = await getUserApps(user);
+		if(req.user.isSuperAdmin)
+			apps.push(null);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -73,7 +70,6 @@ e.logout = async (req, res) => {
 };
 
 function makeBody(data, req, res, activityCode) {
-	logger.debug('req.headers :: ', req.headers);
 	let headers = JSON.parse(JSON.stringify(req.headers));
 	// For login api headers.user would be undefined
 	let user = headers.user != 'null' ? headers.user : data._id;
@@ -102,6 +98,8 @@ e.refreshToken = async (data, req, res) => {
 	body.data.summary = data.username + ' refreshed token';
 	try {
 		let apps = await getUserApps(data._id);
+		if(data.isSuperAdmin)
+			apps.push(null);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -142,24 +140,6 @@ e.removeUser = (req, res, data) => {
 };
 
 
-// TBD - REALLY REQUIRED??
-// e.changePassword = (req, res) => {
-// 	let apps = [];
-// 	return mongoose.model('group').find({
-// 		'users': req.user.id
-// 	}, 'app')
-// 		.then(_grps => {
-// 			apps = _grps.map(_g => _g.app);
-// 			apps = _.uniq(apps);
-// 		})
-// 		.then(() => {
-// 			var body = makeBody(null, req, res, 'USER_PASSWORD_CHANGE');
-// 			body.data.apps = apps;
-// 			body.data.summary = req.user.username + ' changed password';
-// 			client.publish(queue, JSON.stringify(body.data));
-// 		});
-// };
-
 e.superAdminAccess = (req, res, action, data) => {
 	let activityCode;
 	if (action == 'revoke')
@@ -186,7 +166,7 @@ e.appAdminAccess = (req, res, action, data, apps) => {
 	apps.forEach(app => {
 		let message = _.cloneDeep(body.data);
 		if (action == 'revoke') {
-			message.summary = req.user.username + ' removed ' + data.username + ' app admin of App ' + app;
+			message.summary = req.user.username + ' removed ' + data.username + ' from app admin of App ' + app;
 		} else if (action == 'grant') {
 			message.summary = req.user.username + ' made ' + data.username + ' app admin of App ' + app;
 		}
@@ -257,6 +237,8 @@ e.updateUser = () => {
 				};
 				return getUserApps(doc._auditData.data.old._id).then(apps => {
 					body.data.summary = makeUpdatemsg(doc._auditData.data.old._id, doc._auditData.user, doc.basicDetails, doc._auditData.data.old.basicDetails);
+					if(doc._auditData.data.old.isSuperAdmin)
+						apps.push(null);
 					apps.forEach(app => {
 						let message = _.cloneDeep(body.data);
 						message.app = app;
@@ -291,7 +273,7 @@ e.createUser = () => {
 						}
 					};
 					mainUser = doc._auditData.user;
-					normalUser = doc._auditData.data.new;
+					normalUser = doc._id;
 					body.data.app = null;
 					body.data.summary = mainUser + ' added a new user ' + normalUser;
 					client.publish(queue, JSON.stringify(body.data));
@@ -402,7 +384,12 @@ function getUserApps(userId) {
 				'$addToSet': '$_id'
 			}
 		}
-	}]).then(appData => appData.apps)
+	}]).then(appData => {
+		if(appData && appData[0])
+			return appData[0].apps;
+		else
+			return [];
+	})
 		.catch(err => {
 			logger.error('Error in getUserApps :: ', err);
 			throw err;

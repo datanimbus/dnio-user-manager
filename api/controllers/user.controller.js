@@ -885,7 +885,7 @@ function updatePassword(request, response) {
 						});
 					}
 					if (response.status(200)) {
-						userLog.changePassword(request, response);
+						// userLog.changePassword(request, response);
 						closeAllSessionForUser(request, response);
 
 						return response.status(200).send({
@@ -930,7 +930,7 @@ function resetPassword(req, res) {
 					}
 				})
 				.then(() => {
-					userLog.resetPassword(req, res, JSON.parse(JSON.stringify(userDoc)));
+					userLog.resetPassword(JSON.parse(JSON.stringify(userDoc)), req, res);
 				})
 				.then(() => {
 					if (res.status(200)) {
@@ -1119,7 +1119,7 @@ function refreshToken(req, res) {
 							cacheUtil.blacklist(tokenHash);
 						// Letting token expire itself when single session is disabled.
 					}
-					userLog.refreshToken(req, res);
+					userLog.refreshToken(req.user, req, res);
 					let userData = req.user;
 					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() =>  res.json({
 						token: newToken,
@@ -2023,6 +2023,7 @@ function createUserinGroups(req, res) {
 			if (_d) {
 				delete createdUser.salt;
 				delete createdUser.password;
+				userLog.addUserToApp(req, res, createdUser);
 				res.json({
 					user: createdUser,
 					groups: _d.map(_o => _o._id)
@@ -2104,17 +2105,15 @@ function removeUserFromGroups(req, res) {
 			});
 			return Promise.all(promises);
 		})
-		.then(docs => {
-			return userLog.userRemovedFromTeam(req, res, docs, usrId);
-		})
-		.then(_d => {
-			res.json({
+		.then(groupDocs => {
+			userLog.userRemovedFromTeam(req, res, groupDocs, usrId);
+			return res.json({
 				user: usrId,
-				groups: _d.map(_o => _o._id)
+				groups: groupDocs.map(_g => _g._id)
 			});
 		})
 		.catch(err => {
-			logger.error(err.message);
+			logger.error(err);
 			res.status(500).json({
 				message: err.message
 			});

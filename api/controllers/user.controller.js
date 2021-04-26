@@ -2104,6 +2104,9 @@ function removeUserFromGroups(req, res) {
 			});
 			return Promise.all(promises);
 		})
+		.then(docs => {
+			return userLog.userRemovedFromTeam(req, res, docs, usrId);
+		})
 		.then(_d => {
 			res.json({
 				user: usrId,
@@ -2863,7 +2866,7 @@ function importUserToApp(req, res) {
 			if (_d) {
 				delete usrdoc.salt;
 				delete usrdoc.password;
-				userLog.addUser(req, res, usrdoc);
+				userLog.addUserToApp(req, res, usrdoc);
 				dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
 					app: app
 				}));

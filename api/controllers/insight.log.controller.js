@@ -5,20 +5,40 @@ var client = queueMgmt.client;
 var queue = 'user-insight';
 const mongoose = require('mongoose');
 let logger = global.logger;
+const { userActivities } = require('./../../config/userInsights');
+
 
 let e = {};
 
-e.login = (data, req, res) => {
-	var body = makeBody(data, req, res);
+e.login = async (data, req, res) => {
+	var body = makeBody(data, req, res, 'USER_LOGIN');
 	body.data.summary = data.username + ' logged in';
-	client.publish(queue, JSON.stringify(body.data));
+	try {
+		let apps = await getUserApps(data._id);
+		apps.forEach(app => {
+			let message = _.cloneDeep(body.data);
+			message.app = app;
+			client.publish(queue, JSON.stringify(message));
+		});
+	} catch (e) {
+		logger.error('Error in publishing login messages :', e);
+	}
 };
 
-e.loginFailed = (data, req, res) => {
+e.loginFailed = async (data, req, res) => {
 	if (data != null) {
-		var body = makeBody(data, req, res);
+		var body = makeBody(data, req, res, 'USER_LOGIN_FAILED');
 		body.data.summary = 'Login failed for ' + data.username;
-		client.publish(queue, JSON.stringify(body.data));
+		try {
+			let apps = await getUserApps(data._id);
+			apps.forEach(app => {
+				let message = _.cloneDeep(body.data);
+				message.app = app;
+				client.publish(queue, JSON.stringify(message));
+			});
+		} catch (e) {
+			logger.error('Error in publishing login failure messages :', e);
+		}
 	} else {
 		return res.status(404).json({
 			message: 'username does not exists'
@@ -26,33 +46,22 @@ e.loginFailed = (data, req, res) => {
 	}
 };
 
-e.logout = (req, res) => {
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': req.user._id
-		}
-	}, {
-		'$group': {
-			'_id': '$app'
-		}
-	}, {
-		'$group': {
-			'_id': null,
-			'apps': {
-				'$addToSet': '$_id'
-			}
-		}
-	}])
-		.then(_apps => {
-			var body = makeBody(null, req, res);
-			body.data.apps = _apps.apps;
-			body.data.summary = req.user.username + ' logged out';
-			logger.debug(JSON.stringify(body.data));
-			client.publish(queue, JSON.stringify(body.data));
+e.logout = async (data, req, res) => {
+	var body = makeBody(data, req, res, 'USER_LOGOUT');
+	body.data.summary = data.username + ' logged out';
+	try {
+		let apps = await getUserApps(data._id);
+		apps.forEach(app => {
+			let message = _.cloneDeep(body.data);
+			message.app = app;
+			client.publish(queue, JSON.stringify(message));
 		});
+	} catch (e) {
+		logger.error('Error in publishing logout messages :', e);
+	}
 };
 
-function makeBody(data, req, res) {
+function makeBody(data, req, res, activityCode) {
 	let headers = JSON.parse(JSON.stringify(req.headers));
 	// For login api headers.user would be undefined
 	let user = headers.user != 'null' ? headers.user : data._id;
@@ -65,61 +74,41 @@ function makeBody(data, req, res) {
 				'deleted': false,
 				'createdAt': new Date(),
 				'lastUpdated': new Date()
-			}
+			},
+			activityCode: activityCode,
+			activityType: userActivities[activityCode]
 		}
 	};
-	if (data) {
-		body.data.apps = data.apps;
-	}
+	// if (data) {
+	// 	body.data.apps = data.apps;
+	// }
 	return body;
 }
 
-e.refreshToken = (req, res) => {
-	return mongoose.model('group').aggregate([{
-		'$match': {
-			'users': 'test@appveen.com'
-		}
-	}, {
-		'$group': {
-			'_id': '$app'
-		}
-	}, {
-		'$group': {
-			'_id': null,
-			'apps': {
-				'$addToSet': '$_id'
-			}
-		}
-	}])
-		.then(_apps => {
-			var body = makeBody(null, req, res);
-			body.data.apps = _apps.apps;
-			body.data.summary = req.user.username + ' refreshed token';
-			client.publish(queue, JSON.stringify(body.data));
+e.refreshToken = async (data, req, res) => {
+	var body = makeBody(data, req, res, 'USER_TOKEN_REFRESH');
+	body.data.summary = data.username + ' refreshed token';
+	try {
+		let apps = await getUserApps(data._id);
+		apps.forEach(app => {
+			let message = _.cloneDeep(body.data);
+			message.app = app;
+			client.publish(queue, JSON.stringify(message));
 		});
+	} catch (e) {
+		logger.error('Error in publishing tokenm refresh messages :', e);
+	}
 };
 
-e.addUser = (req, res, data) => {
-	let apps = [];
-	return mongoose.model('group').find({
-		$or: [{
-			'users': req.user.id
-		}, {
-			'users': data._id
-		}]
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			body.data.summary = req.user.username + ' added a new user ' + data.username;
-			client.publish(queue, JSON.stringify(body.data));
-		});
+e.addUserToApp = (req, res, data) => {
+	var body = makeBody(null, req, res, 'APP_USER_ADDED');
+	body.data.app = req.swagger.params.app.value;
+	body.data.summary = req.user.username + ' added a new user ' + data.username;
+	client.publish(queue, JSON.stringify(body.data));
 };
 
+
+// TODO
 e.removeUser = (req, res, data) => {
 	let apps = [];
 	return mongoose.model('group').find({
@@ -133,135 +122,105 @@ e.removeUser = (req, res, data) => {
 			apps = _.uniq(apps);
 		})
 		.then(() => {
-			var body = makeBody(null, req, res);
+			var body = makeBody(null, req, res, 'APP_USER_REMOVED');
 			body.data.apps = apps;
 			body.data.summary = req.user.username + ' deleted user ' + data.username;
 			client.publish(queue, JSON.stringify(body.data));
 		});
 };
 
-e.changePassword = (req, res) => {
-	let apps = [];
-	return mongoose.model('group').find({
-		'users': req.user.id
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			body.data.summary = req.user.username + ' changed password';
-			client.publish(queue, JSON.stringify(body.data));
-		});
-};
+
+// TBD - REALLY REQUIRED??
+// e.changePassword = (req, res) => {
+// 	let apps = [];
+// 	return mongoose.model('group').find({
+// 		'users': req.user.id
+// 	}, 'app')
+// 		.then(_grps => {
+// 			apps = _grps.map(_g => _g.app);
+// 			apps = _.uniq(apps);
+// 		})
+// 		.then(() => {
+// 			var body = makeBody(null, req, res, 'USER_PASSWORD_CHANGE');
+// 			body.data.apps = apps;
+// 			body.data.summary = req.user.username + ' changed password';
+// 			client.publish(queue, JSON.stringify(body.data));
+// 		});
+// };
 
 e.superAdminAccess = (req, res, action, data) => {
-
-	let apps = [];
-	return mongoose.model('group').find({
-		$or: [{
-			'users': req.user.id
-		}, {
-			'users': data._id
-		}]
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			if (action == 'revoke') {
-				body.data.summary = req.user.username + ' removed ' + data.username + ' as super admin';
-			} else if (action == 'grant') {
-				body.data.summary = req.user.username + ' made ' + data.username + ' as super admin';
-			}
-
-			client.publish(queue, JSON.stringify(body.data));
-		});
-};
-
-e.appAdminAccess = (req, res, action, data, app) => {
-
-	let apps = [];
-	return mongoose.model('group').find({
-		$or: [{
-			'users': req.user.id
-		}, {
-			'users': data._id
-		}]
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			if (action == 'revoke') {
-				body.data.summary = req.user.username + ' removed ' + data.username + ' app admin of App ' + app;
-			} else if (action == 'grant') {
-				body.data.summary = req.user.username + ' made ' + data.username + ' app admin of App ' + app;
-			}
-
-			client.publish(queue, JSON.stringify(body.data));
-		});
-};
-
-e.resetPassword = (req, res, data) => {
-	let apps = [];
-	return mongoose.model('group').find({
-		$or: [{
-			'users': req.user.id
-		}, {
-			'users': data._id
-		}]
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			body.data.summary = req.user.username + ' reset the password for user ' + data.username;
-			client.publish(queue, JSON.stringify(body.data));
-		});
-};
-
-e.userAddedInTeam = (req, res, data, groupDetails) => {
-	let groupName = [];
-	let apps = [];
-	for (let i = 0; i < groupDetails.length; i++) {
-		groupName.push(groupDetails[i].name);
+	let activityCode;
+	if (action == 'revoke')
+		activityCode = 'SUPER_ADMIN_REVOKE';
+	else if (action == 'grant')
+		activityCode = 'SUPER_ADMIN_GRANT';
+	var body = makeBody(null, req, res, activityCode);
+	body.data.app = null;
+	if (action == 'revoke') {
+		body.data.summary = req.user.username + ' removed ' + data.username + ' as super admin';
+	} else if (action == 'grant') {
+		body.data.summary = req.user.username + ' made ' + data.username + ' as super admin';
 	}
-	return mongoose.model('group').find({
-		$or: [{
-			'users': req.user.id
-		}, {
-			'users': data._id
-		}]
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res);
-			body.data.apps = apps;
-			body.data.summary = req.user.username + ' added ' + data.username + ' to Team ' + groupName;
-			client.publish(queue, JSON.stringify(body.data));
+	client.publish(queue, JSON.stringify(body.data));
+};
+
+e.appAdminAccess = (req, res, action, data, apps) => {
+	let activityCode;
+	if (action == 'revoke')
+		activityCode = 'APP_ADMIN_REVOKE';
+	else if (action == 'grant')
+		activityCode = 'APP_ADMIN_GRANT';
+	var body = makeBody(null, req, res, activityCode);
+	apps.forEach(app => {
+		let message = _.cloneDeep(body.data);
+		if (action == 'revoke') {
+			message.summary = req.user.username + ' removed ' + data.username + ' app admin of App ' + app;
+		} else if (action == 'grant') {
+			message.summary = req.user.username + ' made ' + data.username + ' app admin of App ' + app;
+		}
+		message.app = app;
+		client.publish(queue, JSON.stringify(message));
+	});
+};
+
+
+e.resetPassword = async (data, req, res) => {
+	var body = makeBody(data, req, res, 'USER_PASSWORD_RESET');
+	body.data.summary = req.user.username + ' reset the password for user ' + data.username;
+	try {
+		let apps = await getUserApps(data._id);
+		apps.forEach(app => {
+			let message = _.cloneDeep(body.data);
+			message.app = app;
+			client.publish(queue, JSON.stringify(message));
 		});
+	} catch (e) {
+		logger.error('Error in publishing resetPassword messages :', e);
+	}
+};
+
+e.userAddedInTeam = (req, res, data, groups) => {
+	var body = makeBody(null, req, res, 'GROUP_USER_ADDED');
+	groups.forEach(grp => {
+		let message = _.cloneDeep(body.data);
+		message.app = grp.app;
+		body.data.summary = req.user.username + ' added ' + data.username + ' to group ' + grp.name;
+		client.publish(queue, JSON.stringify(message));
+	});
+};
+
+e.userRemovedFromTeam = (req, res, groups, userId) => {
+	var body = makeBody(null, req, res, 'GROUP_USER_REMOVED');
+	groups.forEach(grp => {
+		let message = _.cloneDeep(body.data);
+		message.app = grp.app;
+		body.data.summary = req.user.username + ' removed ' + userId + ' from group ' + grp.name;
+		client.publish(queue, JSON.stringify(message));
+	});
 };
 
 e.updateUser = () => {
-	let mainUser = null;
-	let normalUser = null;
-	let apps = [];
 	let body = {};
-
-
 	return function (doc) {
 		if (doc._auditData) {
 			let oldBasicDetails = null;
@@ -279,33 +238,19 @@ e.updateUser = () => {
 							'deleted': false,
 							'createdAt': new Date(),
 							'lastUpdated': new Date()
-						}
+						},
+						activityCode: 'USER_DETAILS_UPDATE',
+						activityType: userActivities['USER_DETAILS_UPDATE']
 					}
 				};
-				return getUserDetails(doc._auditData.user)
-					.then(data => {
-						mainUser = data.username;
-						return getUserDetails(doc._auditData.data.old._id);
-					})
-					.then(data => {
-						normalUser = data.username;
-						return mongoose.model('group').find({
-							$or: [{
-								'users': doc._auditData.user
-							}, {
-								'users': doc._auditData.data.old._id
-							}]
-						}, 'app');
-					})
-					.then(_grps => {
-						apps = _grps.map(_g => _g.app);
-						apps = _.uniq(apps);
-						body.data.apps = apps;
-						body.data.summary = makeUpdatemsg(normalUser, mainUser, doc.basicDetails, doc._auditData.data.old.basicDetails);
-					})
-					.then(() => {
-						client.publish(queue, JSON.stringify(body.data));
+				return getUserApps(doc._auditData.data.old._id).then(apps => {
+					body.data.summary = makeUpdatemsg(doc._auditData.data.old._id, doc._auditData.user, doc.basicDetails, doc._auditData.data.old.basicDetails);
+					apps.forEach(app => {
+						let message = _.cloneDeep(body.data);
+						message.app = app;
+						client.publish(queue, JSON.stringify(message));
 					});
+				});
 			}
 		}
 	};
@@ -314,7 +259,6 @@ e.updateUser = () => {
 e.createUser = () => {
 	let mainUser = null;
 	let normalUser = null;
-	let apps = [];
 	let body = {};
 	return function (doc) {
 		try {
@@ -329,33 +273,14 @@ e.createUser = () => {
 								'deleted': false,
 								'createdAt': new Date(),
 								'lastUpdated': new Date()
-							}
+							},
+							activityCode: 'USER_ADDED',
+							activityType: userActivities['USER_ADDED']
 						}
 					};
-					return getUserDetails(doc._auditData.user)
-						.then(data => {
-							mainUser = data.username;
-							normalUser = doc.username;
-							return mongoose.model('group').find({
-								$or: [{
-									'users': doc._auditData.user
-								}, {
-									'users': doc._id
-								}]
-							}, 'app');
-						})
-						.then(_grps => {
-							apps = _grps.map(_g => _g.app);
-							apps = _.uniq(apps);
-							body.data.apps = apps;
-							body.data.summary = mainUser + ' added a new user ' + normalUser;
-						})
-						.then(() => {
-							client.publish(queue, JSON.stringify(body.data));
-						})
-						.catch(err => {
-							logger.error(err);
-						});
+					body.data.app = null;
+					body.data.summary = mainUser + ' added a new user ' + normalUser;
+					client.publish(queue, JSON.stringify(body.data));
 				}
 			}
 		} catch (err) {
@@ -368,7 +293,6 @@ e.createUser = () => {
 e.removeUsers = () => {
 	let mainUser = null;
 	let normalUser = null;
-	let apps = [];
 	let body = {};
 	return function (doc) {
 		try {
@@ -383,29 +307,23 @@ e.removeUsers = () => {
 								'deleted': false,
 								'createdAt': new Date(),
 								'lastUpdated': new Date()
-							}
+							},
+							activityCode: 'USER_REMOVED',
+							activityType: userActivities['USER_REMOVED']
 						}
 					};
-					return getUserDetails(doc._auditData.user)
-						.then(data => {
-							mainUser = data.username;
+					return getUserApps(doc.username)
+						.then(apps => {
+							mainUser = doc._auditData.user;
 							normalUser = doc.username;
-							return mongoose.model('group').find({
-								$or: [{
-									'users': doc._auditData.user
-								}, {
-									'users': doc._id
-								}]
-							}, 'app');
-						})
-						.then(_grps => {
-							apps = _grps.map(_g => _g.app);
-							apps = _.uniq(apps);
-							body.data.apps = apps;
 							body.data.summary = mainUser + ' deleted user ' + normalUser;
-						})
-						.then(() => {
-							client.publish(queue, JSON.stringify(body.data));
+							// To have one log at admin panel level as well
+							apps.push(null);
+							apps.forEach(app => {
+								let message = _.cloneDeep(body.data);
+								message.app = app;
+								client.publish(queue, JSON.stringify(message));
+							});
 						});
 				}
 			}
@@ -443,14 +361,38 @@ function makeUpdatemsg(user1, user2, newMsg, oldMsg) {
 	return message;
 }
 
-function getUserDetails(userId) {
-	return mongoose.model('user').findOne({
-		_id: userId
-	});
-}
+// function getUserDetails(userId) {
+// 	return mongoose.model('user').findOne({
+// 		_id: userId
+// 	});
+// }
 
 function isEmpty(obj) {
 	return Object.keys(obj).length === 0;
+}
+
+function getUserApps(userId) {
+	logger.trace('Getting apps for user ', userId);
+	return mongoose.model('group').aggregate([{
+		'$match': {
+			'users': userId
+		}
+	}, {
+		'$group': {
+			'_id': '$app'
+		}
+	}, {
+		'$group': {
+			'_id': null,
+			'apps': {
+				'$addToSet': '$_id'
+			}
+		}
+	}]).then(appData => appData.apps)
+		.catch(err => {
+			logger.error('Error in getUserApps :: ', err);
+			throw err;
+		});
 }
 
 module.exports = e;

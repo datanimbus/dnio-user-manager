@@ -16,7 +16,7 @@ e.login = async (data, req, res) => {
 	try {
 		let apps;
 		if(data.isSuperAdmin) {
-			apps = [null]
+			apps = [null];
 		} else {
 			apps = await getUserApps(data._id);
 		}
@@ -73,7 +73,7 @@ e.logout = async (req, res) => {
 };
 
 function makeBody(data, req, res, activityCode) {
-	logger.debug('req.headers :: ', req.headers)
+	logger.debug('req.headers :: ', req.headers);
 	let headers = JSON.parse(JSON.stringify(req.headers));
 	// For login api headers.user would be undefined
 	let user = headers.user != 'null' ? headers.user : data._id;

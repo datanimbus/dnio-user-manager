@@ -14,7 +14,12 @@ e.login = async (data, req, res) => {
 	var body = makeBody(data, req, res, 'USER_LOGIN');
 	body.data.summary = data.username + ' logged in';
 	try {
-		let apps = await getUserApps(data._id);
+		let apps;
+		if(data.isSuperAdmin) {
+			apps = [null]
+		} else {
+			apps = await getUserApps(data._id);
+		}
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -46,11 +51,17 @@ e.loginFailed = async (data, req, res) => {
 	}
 };
 
-e.logout = async (data, req, res) => {
-	var body = makeBody(data, req, res, 'USER_LOGOUT');
-	body.data.summary = data.username + ' logged out';
+e.logout = async (req, res) => {
+	let user = req.headers.user;
+	var body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
+	body.data.summary = user + ' logged out';
 	try {
-		let apps = await getUserApps(data._id);
+		let apps;
+		if(req.headers.isSuperAdmin) {
+			apps = [null];
+		} else {
+			apps = await getUserApps(user);
+		}
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -62,6 +73,7 @@ e.logout = async (data, req, res) => {
 };
 
 function makeBody(data, req, res, activityCode) {
+	logger.debug('req.headers :: ', req.headers)
 	let headers = JSON.parse(JSON.stringify(req.headers));
 	// For login api headers.user would be undefined
 	let user = headers.user != 'null' ? headers.user : data._id;
@@ -278,6 +290,8 @@ e.createUser = () => {
 							activityType: userActivities['USER_ADDED']
 						}
 					};
+					mainUser = doc._auditData.user;
+					normalUser = doc._auditData.data.new;
 					body.data.app = null;
 					body.data.summary = mainUser + ' added a new user ' + normalUser;
 					client.publish(queue, JSON.stringify(body.data));
@@ -372,7 +386,7 @@ function isEmpty(obj) {
 }
 
 function getUserApps(userId) {
-	logger.trace('Getting apps for user ', userId);
+	logger.debug('Getting apps for user ', userId);
 	return mongoose.model('group').aggregate([{
 		'$match': {
 			'users': userId

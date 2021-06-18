@@ -111,6 +111,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('B2B_ENABLE_TRUSTED_IP')] = envConfig.B2B_ENABLE_TRUSTED_IP;
 			resObj[_.camelCase('B2B_ENABLE')] = envConfig.B2B_ENABLE;
 			resObj[_.camelCase('EXPERIMENTAL_FEATURES')] = envConfig.EXPERIMENTAL_FEATURES;
+			resObj[_.camelCase('FQDN')] = process.env.FQDN;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
@@ -262,8 +263,8 @@ schema.pre('validate', function (next) {
 
 schema.pre('validate', function (next) {
 	if (this.auth && ['azure', 'ldap'].includes(this.auth.authType)) return next();
-	var nameRegex =/^[a-zA-Z0-9-_@#. ]*$/;
-	if (this.basicDetails && this.basicDetails.name &&  this.basicDetails.name.match(nameRegex)) {
+	var nameRegex = /^[a-zA-Z0-9-_@#. ]*$/;
+	if (this.basicDetails && this.basicDetails.name && this.basicDetails.name.match(nameRegex)) {
 		next();
 	} else {
 		next(new Error('Name can contain alphanumeric and  _ , - , @ , # and . characters only'));
@@ -272,13 +273,13 @@ schema.pre('validate', function (next) {
 
 schema.pre('validate', function (next) {
 	if (this.auth && this.auth.authType === 'azure' && this.bot) {
-		var idRegex =/^[a-zA-Z0-9-_@#.]*$/;
-		if (this.username && this.username &&  this.username.match(idRegex)) {
+		var idRegex = /^[a-zA-Z0-9-_@#.]*$/;
+		if (this.username && this.username && this.username.match(idRegex)) {
 			next();
 		} else {
 			next(new Error('Client Id can contain alphanumeric and  _ , - , @ , # and . characters only'));
 		}
-	}else {
+	} else {
 		next();
 	}
 });
@@ -587,7 +588,7 @@ function validateLdapLogin(ldapUser, done) {
 		.then(dbUser => {
 			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
 			// For first time logging users
-			if(dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
+			if (dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
 				let ldapMapping = envConfig.ldapDetails.mapping;
 				dbUser.basicDetails = {
 					name: ldapUser[ldapMapping.name],
@@ -634,7 +635,7 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
 		logger.trace('dbUser :: ', dbUser.basicDetails);
 		// For first time logging in user
-		if(dbUser && JSON.stringify(dbUser.basicDetails) === '{}') {
+		if (dbUser && JSON.stringify(dbUser.basicDetails) === '{}') {
 			dbUser.basicDetails = {
 				name: userInfo.name,
 				alternateEmail: userInfo.email,
@@ -664,18 +665,18 @@ function azureLoginCallback(req, res) {
 			response: res,
 			failureRedirect: '/'
 		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage : info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
-			}
-		})(req, res);
+			function (err, user, info) {
+				if (err) {
+					logger.error('error in azureLoginCallback ::: ', err);
+					if (info) userLog.loginFailed(info, req, res);
+					return sendAzureCallbackResponse(res, 500, { message: err.message });
+				} else if (!user) {
+					logger.error('Something went wrong in azureLoginCallback:: ', info);
+					return sendAzureCallbackResponse(res, 400, { meessage: info });
+				} else {
+					return handleSessionAndGenerateToken(req, res, user, null, true);
+				}
+			})(req, res);
 	}
 }
 
@@ -1115,13 +1116,13 @@ function refreshToken(req, res) {
 						expiresIn = Date.now() + (expireIn * 1000);
 						var userId = d.bot ? `B:${d._id}` : `U:${d._id}`;
 						cacheUtil.refreshToken(userId, tokenHash, md5(newToken), uuid, expiresIn, envConfig.RBAC_USER_TO_SINGLE_SESSION, envConfig.RBAC_HB_INTERVAL + 5);
-						if(envConfig.RBAC_USER_TO_SINGLE_SESSION)
+						if (envConfig.RBAC_USER_TO_SINGLE_SESSION)
 							cacheUtil.blacklist(tokenHash);
 						// Letting token expire itself when single session is disabled.
 					}
 					userLog.refreshToken(req.user, req, res);
 					let userData = req.user;
-					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() =>  res.json({
+					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() => res.json({
 						token: newToken,
 						rToken: newRToken,
 						expiresIn: expiresIn,
@@ -1218,10 +1219,10 @@ function init() {
 								.then(_d => {
 									logger.info('Added user :: ' + _d._id);
 								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
+									_e => {
+										logger.error('Error adding user :: ' + _c._id);
+										logger.error(_e);
+									});
 						});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());
@@ -1234,13 +1235,13 @@ var crudder = new SMCrud(schema, 'user', options);
 
 function modifyFilter(req) {
 	let apps = req.swagger.params.apps.value ? req.swagger.params.apps.value.split(',') : [];
-	if(!apps.length) return Promise.resolve();
+	if (!apps.length) return Promise.resolve();
 	let filter = req.swagger.params.filter.value;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
 	return mongoose.model('group').find({
-		app: { $in : apps }
+		app: { $in: apps }
 	})
 		.then(_grps => {
 			let users = [].concat.apply([], _grps.map(_g => _g.users));
@@ -1282,16 +1283,16 @@ function customIndex(_req, _res) {
 	select = select.join(',');
 	_req.swagger.params.select.value = select;
 	let apps = _req.swagger.params.apps.value;
-	if(apps) {
-		return modifyFilter(_req).then(() => crudder.index(_req,_res));
+	if (apps) {
+		return modifyFilter(_req).then(() => crudder.index(_req, _res));
 	}
 	return crudder.index(_req, _res);
 }
 
 function customCount(_req, _res) {
 	let apps = _req.swagger.params.apps.value;
-	if(apps) {
-		return modifyFilter(_req).then(() => crudder.count(_req,_res));
+	if (apps) {
+		return modifyFilter(_req).then(() => crudder.count(_req, _res));
 	}
 	return crudder.count(_req, _res);
 }
@@ -1309,7 +1310,7 @@ function customUpdate(req, res) {
 	let oldValues = null;
 	let updated = null;
 	let id = req.swagger.params.id.value;
-	if(req.body.username && req.body.username != id) {
+	if (req.body.username && req.body.username != id) {
 		return res.status(400).json({
 			message: 'Username cannot be changed.'
 		});
@@ -1372,7 +1373,7 @@ function customizer(objValue, srcValue) {
 function customCreate(req, res) {
 	req.body._id = (!req.body._id && req.body.bot) ? cacheUtil.uuid() : req.body._id;
 	let authType = req.body.auth && req.body.auth.authType ? req.body.auth.authType : 'local';
-	if(!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
+	if (!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
 		logger.error(authType + ' auth mode is not supported.');
 		return res.status(400).json({
 			message: authType + ' auth mode is not supported.'
@@ -1895,7 +1896,7 @@ function authType(req, res) {
 			if (usrObj) {
 				resObj.bot = usrObj.bot;
 				resObj.sessionActive = _d;
-				resObj.name = usrObj.basicDetails ? usrObj.basicDetails.name: usrObj._id;
+				resObj.name = usrObj.basicDetails ? usrObj.basicDetails.name : usrObj._id;
 				resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = envConfig.RBAC_USER_TO_SINGLE_SESSION;
 				resObj[_.camelCase('RBAC_USER_RELOGIN_ACTION')] = envConfig.RBAC_USER_RELOGIN_ACTION;
 				resObj['fqdn'] = process.env.FQDN;
@@ -1968,7 +1969,7 @@ function createUserinGroups(req, res) {
 	// console.log(JSON.stringify(req.body));
 	let user = req.body.user;
 	let authType = user.auth ? user.auth.authType : 'local';
-	if(!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
+	if (!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
 		logger.error(authType + ' auth mode is not supported.');
 		return res.status(400).json({
 			message: authType + ' auth mode is not supported.'
@@ -2399,7 +2400,7 @@ function customDestroy(req, res) {
 		.then(() => dataStackUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
 			logger.error('Error in User customDestroy :: ', err);
-		
+
 			return res.status(400).json({
 				message: err.message
 			});

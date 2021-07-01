@@ -115,6 +115,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
+			resObj['allowedFileExt'] = envConfig.allowedFileExt;
 			resObj['transactionsEnabled'] = global.isTransactionAllowed;
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
@@ -665,18 +666,18 @@ function azureLoginCallback(req, res) {
 			response: res,
 			failureRedirect: '/'
 		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage: info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
-			}
-		})(req, res);
+			function (err, user, info) {
+				if (err) {
+					logger.error('error in azureLoginCallback ::: ', err);
+					if (info) userLog.loginFailed(info, req, res);
+					return sendAzureCallbackResponse(res, 500, { message: err.message });
+				} else if (!user) {
+					logger.error('Something went wrong in azureLoginCallback:: ', info);
+					return sendAzureCallbackResponse(res, 400, { meessage: info });
+				} else {
+					return handleSessionAndGenerateToken(req, res, user, null, true);
+				}
+			})(req, res);
 	}
 }
 
@@ -1219,10 +1220,10 @@ function init() {
 								.then(_d => {
 									logger.info('Added user :: ' + _d._id);
 								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
+									_e => {
+										logger.error('Error adding user :: ' + _c._id);
+										logger.error(_e);
+									});
 						});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());

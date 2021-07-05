@@ -115,6 +115,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
 			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
+			resObj['allowedFileExt'] = envConfig.allowedFileExt;
 			resObj['transactionsEnabled'] = global.isTransactionAllowed;
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;

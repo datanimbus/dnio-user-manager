@@ -15,8 +15,10 @@ e.login = async (data, req, res) => {
 	body.data.summary = data.username + ' logged in';
 	try {
 		let apps = await getUserApps(data._id);
-		if(data.isSuperAdmin)
+		if (data.isSuperAdmin) {
 			apps.push(null);
+		}
+		apps = _.uniq(apps);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -33,8 +35,10 @@ e.loginFailed = async (data, req, res) => {
 		body.data.summary = 'Login failed for ' + data.username;
 		try {
 			let apps = await getUserApps(data._id);
-			if(data.isSuperAdmin)
+			if (data.isSuperAdmin) {
 				apps.push(null);
+			}
+			apps = _.uniq(apps);
 			apps.forEach(app => {
 				let message = _.cloneDeep(body.data);
 				message.app = app;
@@ -55,10 +59,12 @@ e.logout = async (req, res) => {
 	var body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
 	body.data.summary = user + ' logged out';
 	try {
-		
+
 		let apps = await getUserApps(user);
-		if(req.user.isSuperAdmin)
+		if (req.user.isSuperAdmin) {
 			apps.push(null);
+		}
+		apps = _.uniq(apps);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -98,8 +104,10 @@ e.refreshToken = async (data, req, res) => {
 	body.data.summary = data.username + ' refreshed token';
 	try {
 		let apps = await getUserApps(data._id);
-		if(data.isSuperAdmin)
+		if (data.isSuperAdmin) {
 			apps.push(null);
+		}
+		apps = _.uniq(apps);
 		apps.forEach(app => {
 			let message = _.cloneDeep(body.data);
 			message.app = app;
@@ -237,8 +245,10 @@ e.updateUser = () => {
 				};
 				return getUserApps(doc._auditData.data.old._id).then(apps => {
 					body.data.summary = makeUpdatemsg(doc._auditData.data.old._id, doc._auditData.user, doc.basicDetails, doc._auditData.data.old.basicDetails);
-					if(doc._auditData.data.old.isSuperAdmin)
+					if (doc._auditData.data.old.isSuperAdmin) {
 						apps.push(null);
+					}
+					apps = _.uniq(apps);
 					apps.forEach(app => {
 						let message = _.cloneDeep(body.data);
 						message.app = app;
@@ -315,6 +325,8 @@ e.removeUsers = () => {
 							body.data.summary = mainUser + ' deleted user ' + normalUser;
 							// To have one log at admin panel level as well
 							apps.push(null);
+
+							apps = _.uniq(apps);
 							apps.forEach(app => {
 								let message = _.cloneDeep(body.data);
 								message.app = app;
@@ -385,7 +397,7 @@ function getUserApps(userId) {
 			}
 		}
 	}]).then(appData => {
-		if(appData && appData[0])
+		if (appData && appData[0])
 			return appData[0].apps;
 		else
 			return [];

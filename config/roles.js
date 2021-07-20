@@ -2489,6 +2489,176 @@ module.exports = [
 		}
 	},
 	{
+		'entity': 'FAAS',
+		'app': 'Adam',
+		'entityName': 'Library',
+		'roles': [
+			{ id: 'PMF', name: 'Manage FaaS', operations: [{ method: 'PUT' }, { method: 'POST' }, { method: 'DELETE' }] },
+			{ id: 'PVF', name: 'View FaaS', operations: [{ method: 'GET' }] },
+			{ id: 'PNF', name: 'No Access FaaS', operations: [{ method: 'PUT' }, { method: 'POST' }, { method: 'DELETE' }, { method: 'GET' }] }
+		],
+		'default': 'R',
+		'type': 'author',
+		'fields': {
+			'_id': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'name': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'app': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'url': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'collectionName': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'deploymentName': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'namespace': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'port': {
+				'_t': 'Number',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'headers': {
+				'_t': 'Object',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'version': {
+				'_t': 'Number',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'code': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'description': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'status': {
+				'_t': 'String',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'draftVersion': {
+				'_t': 'Number',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'lastInvoked': {
+				'_t': 'Date',
+				'_p': {
+					'PNF': 'N',
+					'PMF': 'W',
+					'PVF': 'R'
+				}
+			},
+			'_metadata': {
+				'lastUpdated': {
+					'_t': 'Date',
+					'_p': {
+						'PNF': 'N',
+						'PMF': 'W',
+						'PVF': 'R'
+					}
+				},
+				'createdAt': {
+					'_t': 'Date',
+					'_p': {
+						'PNF': 'N',
+						'PMF': 'W',
+						'PVF': 'R'
+					}
+				},
+				'version': {
+					'release': {
+						'_t': 'Number',
+						'_p': {
+							'PNF': 'N',
+							'PMF': 'W',
+							'PVF': 'R'
+						}
+					},
+					'document': {
+						'_t': 'Number',
+						'_p': {
+							'PNF': 'N',
+							'PMF': 'W',
+							'PVF': 'R'
+						}
+					}
+				}
+			}
+		}
+	},
+	{
 		'entity': 'USER',
 		'app': 'Adam',
 		'entityName': 'User',

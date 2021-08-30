@@ -246,11 +246,12 @@ schema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
 	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
-	if ((this.password.length) >= 8) {
-		next();
-	} else {
-		next(new Error('Password should contain minimum 8 character.'));
-	}
+	// if ((this.password.length) >= 8) {
+	// 	next();
+	// } else {
+	// 	next(new Error('Password should contain minimum 8 character.'));
+	// }
+	next();
 });
 
 
@@ -459,6 +460,52 @@ schema.post('remove', function (doc) {
 			logger.error(err.message);
 		});
 });
+
+function checkPassword(password){
+	let result = {};
+	if (envConfig.RBAC_PASSWORD_COMPLEXITY) {
+		const passwordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*?~]).+$/;
+		if (password.length >= envConfig.RBAC_PASSWORD_LENGTH) {
+			// check complexity
+			if (password.match(passwordPattern)) {
+				// success
+				result = {
+					success : true
+				};
+				return result;
+			} else {
+				// return password should contain alphanumeric and special characters
+				result = {
+					success : false,
+					message: 'Password must have one of following - Uppercase(A - Z), Lowercase(a - z), Special characters (!@#$%^&*?~) and Numbers (0 - 9)'
+				};
+				return result;
+			}
+		} else {
+			// return password should contain this many characters
+			result = {
+				success: false,
+				message: `Password should contain ${envConfig.RBAC_PASSWORD_LENGTH} characters`
+			};
+			return result;
+		}
+	} else {
+		if ((password.length) >= envConfig.RBAC_PASSWORD_LENGTH) {
+			//
+			result = {
+				success : true
+			};
+			return result;
+		} else {
+			//
+			result = {
+				success: false,
+				message: `Password should contain ${envConfig.RBAC_PASSWORD_LENGTH} characters`
+			};
+			return result;
+		}
+	}
+}
 
 function getLoginUserdoc(doc) {
 	if (!doc) return null;
@@ -876,25 +923,32 @@ function updatePassword(request, response) {
 		})
 		.then(isPasswordValid => {
 			if (isPasswordValid) {
-				let salt = new Date().toJSON();
-				let password = crypto.createHash('md5').update(credentials.newpassword + salt).digest('hex');
-				usrDoc.password = password;
-				usrDoc.salt = salt;
-				usrDoc.save(err => {
-					if (err) {
-						return response.status(500).send({
-							message: 'Something went wrong! Try again later.'
-						});
-					}
-					if (response.status(200)) {
-						// userLog.changePassword(request, response);
-						closeAllSessionForUser(request, response);
-
-						return response.status(200).send({
-							message: 'Updated Password Successfully'
-						});
-					}
-				});
+				let result = checkPassword(credentials.newpassword);
+				if (result.success) {
+					//
+					let salt = new Date().toJSON();
+					let password = crypto.createHash('md5').update(credentials.newpassword + salt).digest('hex');
+					usrDoc.password = password;
+					usrDoc.salt = salt;
+					usrDoc.save(err => {
+						if (err) {
+							return response.status(500).send({
+								message: 'Something went wrong! Try again later.'
+							});
+						}
+						if (response.status(200)) {
+							// userLog.changePassword(request, response);
+							closeAllSessionForUser(request, response);
+							return response.status(200).send({
+								message: 'Updated Password Successfully'
+							});
+						}
+					});
+				} else {
+					return response.status(400).json({
+						message: result.message
+					});
+				}
 			} else {
 				if (!response.headersSent)
 					response.status(400).json({
@@ -911,8 +965,9 @@ function resetPassword(req, res) {
 	var credentials = req.body;
 	let userDoc = null;
 	let id = req.swagger.params.id.value;
-	if (credentials.password.length >= 8 && credentials.cpassword.length >= 8) {
-		if (credentials.password == credentials.cpassword) {
+	if (credentials.password == credentials.cpassword) {
+		let result = checkPassword(credentials.password);
+		if (result.success) {
 			let salt = new Date().toJSON();
 			let password = crypto.createHash('md5').update(credentials.password + salt).digest('hex');
 			crudder.model.findOne({
@@ -942,7 +997,6 @@ function resetPassword(req, res) {
 							message: 'Updated Password Successfully.'
 						});
 					}
-
 				})
 				.catch(err => {
 					logger.error(err);
@@ -954,12 +1008,12 @@ function resetPassword(req, res) {
 				});
 		} else {
 			return res.status(400).json({
-				message: 'Passwords do not match.'
+				message: result.message
 			});
 		}
 	} else {
 		return res.status(400).json({
-			message: 'Password should contain minimum 8 character.'
+			message: 'Passwords do not match.'
 		});
 	}
 }
@@ -1386,7 +1440,15 @@ function customCreate(req, res) {
 			app: []
 		};
 	}
-	crudder.create(req, res);
+	let password = req.body.password;
+	let result = checkPassword(password);
+	if (result.success) {
+		crudder.create(req, res);
+	} else {
+		return res.status(400).json({
+			message: result.message
+		});
+	}
 }
 
 function createBotKey(req, res) {

@@ -179,5 +179,7 @@ module.exports = {
 	VERIFY_DEPLOYMENT_USER: parseBoolean(process.env.VERIFY_DEPLOYMENT_USER),
 	B2B_ENABLE: parseBoolean(process.env.B2B_ENABLE),
 	EXPERIMENTAL_FEATURES: parseBoolean(process.env.EXPERIMENTAL_FEATURES),
-	allowedFileExt
+	allowedFileExt,
+	RBAC_PASSWORD_LENGTH: parseInt(process.env.RBAC_PASSWORD_LENGTH || 8),
+	RBAC_PASSWORD_COMPLEXITY: parseBoolean(process.env.RBAC_PASSWORD_COMPLEXITY || true),
 };

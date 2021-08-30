@@ -550,6 +550,73 @@ function getLoginUserdoc(doc) {
 		});
 }
 
+async function checkLoginCoolDown(username){
+	const db = global.mongoConnection.db('odpConfig');
+	try {
+		let doc = await db.collection('userMgmt.sessions').findOne({
+			'username' : username,
+			'type': 'LOGIN COOLDOWN'
+		});
+		if (doc) {
+			return true;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
+async function insertLoginFailure(username){
+	const db = global.mongoConnection.db('odpConfig');
+	const collectionName = 'userMgmt.sessions';
+	const loginFailed = 'LOGIN FAILED';
+	const loginCoolDown = 'LOGIN COOLDOWN';
+	try {
+		// find all login failure entry
+		let failureCount = await db.collection(collectionName).find({
+			'username' : username,
+			'type' : loginFailed
+		}).count();
+		logger.info('Current failure count ', failureCount);
+		if ((failureCount+1) < envConfig.RBAC_USER_LOGIN_FAILURE_THRESHOLD) {
+			// insert login failed
+			let failureDuration = envConfig.RBAC_USER_LOGIN_FAILURE_DURATION * 1000; // in milliseconds
+			let d = new Date();
+			d = d.getTime() + failureDuration;
+			await db.collection(collectionName).insertOne({
+				'username' : username,
+				'type' : loginFailed,
+				'expireAt' : new Date(d)
+			});
+		} else {
+			// insert login cooldown
+			let cooldownDuration = envConfig.RBAC_USER_LOGIN_FAILURE_COOLDOWN * 1000; // in milliseconds
+			let d = new Date();
+			d = d.getTime() + cooldownDuration;
+			await db.collection(collectionName).insertOne({
+				'username' : username,
+				'type': loginCoolDown,
+				'expireAt' : new Date(d)
+			});
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
+async function deleteLoginFailure(username){
+	const db = global.mongoConnection.db('odpConfig');
+	const collectionName = 'userMgmt.sessions';
+	try {
+		await db.collection(collectionName).deleteMany({
+			'username' : username
+		});
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
 function findActiveUserbyAuthtype(username, authType) {
 	return new Promise((resolve, reject) => {
 		crudder.model.findOne({
@@ -583,30 +650,39 @@ function validatePassword(userDoc, password) {
 	return Promise.resolve(userDoc.password == crypto.createHash('md5').update(password + userDoc.salt).digest('hex') && userDoc.isActive);
 }
 
-function validateLocalLogin(username, password, done) {
+async function validateLocalLogin(username, password, done) {
 	let botKey = null;
 	if (username && password) {
 		let doc = null;
-		findActiveUserbyAuthtype(username, 'local')
-			.then((dbUser) => {
-				doc = dbUser;
-				return validatePassword(doc, password);
-			})
-			.then(_isValidPassword => {
-				if (!_isValidPassword) {
-					logger.error(`Password check failed for user ${username}`);
-					done(new Error('Invalid Credentials'), false, JSON.parse(JSON.stringify(doc)));
-				} else {
-					// in case of a bot we get the bot key as response
-					if (doc.bot) botKey = _isValidPassword;
-					logger.debug(`Bot key :: ${botKey}`);
-					logger.info(`Is password valid for ${username} :: true`);
-					done(null, doc, botKey);
-				}
-			}).catch(err => {
-				logger.error('Error in validateLocalLogin :: ', err);
-				done(err, false, { username, password });
-			});
+		let isCoolDown = await checkLoginCoolDown(username);
+		if (! isCoolDown) {
+			findActiveUserbyAuthtype(username, 'local')
+				.then((dbUser) => {
+					doc = dbUser;
+					return validatePassword(doc, password);
+				})
+				.then(_isValidPassword => {
+					if (!_isValidPassword) {
+						logger.error(`Password check failed for user ${username}`);
+						insertLoginFailure(username);
+						done(new Error('Invalid Credentials'), false, JSON.parse(JSON.stringify(doc)));
+					} else {
+						// in case of a bot we get the bot key as response
+						if (doc.bot) botKey = _isValidPassword;
+						logger.debug(`Bot key :: ${botKey}`);
+						logger.info(`Is password valid for ${username} :: true`);
+						deleteLoginFailure(username);
+						done(null, doc, botKey);
+					}
+				}).catch(err => {
+					insertLoginFailure(username);
+					logger.error('Error in validateLocalLogin :: ', err);
+					done(err, false, { username, password });
+				});
+		} else {
+			// try after some time
+			done(new Error('Please try after some time'), false, {message: 'Please try after some time'});
+		}
 	} else {
 		done(new Error('Invalid Credentials'), false, { username, password });
 	}

@@ -194,7 +194,7 @@ function validateAuthModes() {
 }
 
 async function createIndexForSession(){
-	const db = global.mongoConnection.db('odpConfig');
+	const db = global.mongoConnection.db(config.mongoOptions.dbName);
 	try {
 		await db.collection('userMgmt.sessions').createIndex(
 			{'expireAt' : 1}, { expireAfterSeconds: 0 }

@@ -551,7 +551,7 @@ function getLoginUserdoc(doc) {
 }
 
 async function checkLoginCoolDown(username){
-	const db = global.mongoConnection.db('odpConfig');
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	try {
 		let doc = await db.collection('userMgmt.sessions').findOne({
 			'username' : username,
@@ -568,7 +568,7 @@ async function checkLoginCoolDown(username){
 }
 
 async function insertLoginFailure(username){
-	const db = global.mongoConnection.db('odpConfig');
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	const collectionName = 'userMgmt.sessions';
 	const loginFailed = 'LOGIN FAILED';
 	const loginCoolDown = 'LOGIN COOLDOWN';
@@ -606,7 +606,7 @@ async function insertLoginFailure(username){
 }
 
 async function deleteLoginFailure(username){
-	const db = global.mongoConnection.db('odpConfig');
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	const collectionName = 'userMgmt.sessions';
 	try {
 		await db.collection(collectionName).deleteMany({

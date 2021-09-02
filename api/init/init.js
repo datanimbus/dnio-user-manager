@@ -193,13 +193,33 @@ function validateAuthModes() {
 		.catch(err => logger.error('Error in validateAuthModes :: ', err));
 }
 
+async function createIndexForSession(){
+	const db = global.mongoConnection.db(config.mongoOptions.dbName);
+	try {
+		await db.collection('userMgmt.sessions').createIndex(
+			{'expireAt' : 1}, { expireAfterSeconds: 0 }
+		);
+		await db.collection('userMgmt.sessions').createIndex(
+			{
+				username: 'text',
+				type: 'text'
+			}
+		);
+		logger.info('Successfully created indexes for sessions collection');
+	} catch (error) {
+		//
+		logger.error(error);
+	}
+}
+
 function init() {
 	return checkDependency()
 		.then(() => createNS())
 		.then(() => createPMrole())
 		.then(() => createNSrole())
 		.then(() => createSecurityKeys())
-		.then(() => validateAuthModes());
+		.then(() => validateAuthModes())
+		.then(() => createIndexForSession());
 }
 
 module.exports = init;

@@ -246,11 +246,12 @@ schema.pre('validate', function (next) {
 schema.pre('validate', function (next) {
 	if (this.auth && ((this.auth.authType === 'azure' && !this.bot) || this.auth.authType === 'ldap')) return next();
 	if ((!this.auth || !this.auth.authType == 'local' || this.isNew) && this.bot) return next();
-	if ((this.password.length) >= 8) {
-		next();
-	} else {
-		next(new Error('Password should contain minimum 8 character.'));
-	}
+	// if ((this.password.length) >= 8) {
+	// 	next();
+	// } else {
+	// 	next(new Error('Password should contain minimum 8 character.'));
+	// }
+	next();
 });
 
 
@@ -460,6 +461,52 @@ schema.post('remove', function (doc) {
 		});
 });
 
+function checkPassword(password){
+	let result = {};
+	if (envConfig.RBAC_PASSWORD_COMPLEXITY) {
+		const passwordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*?~]).+$/;
+		if (password.length >= envConfig.RBAC_PASSWORD_LENGTH) {
+			// check complexity
+			if (password.match(passwordPattern)) {
+				// success
+				result = {
+					success : true
+				};
+				return result;
+			} else {
+				// return password should contain alphanumeric and special characters
+				result = {
+					success : false,
+					message: 'Password must have one of following - Uppercase(A - Z), Lowercase(a - z), Special characters (!@#$%^&*?~) and Numbers (0 - 9)'
+				};
+				return result;
+			}
+		} else {
+			// return password should contain this many characters
+			result = {
+				success: false,
+				message: `Password should contain ${envConfig.RBAC_PASSWORD_LENGTH} characters`
+			};
+			return result;
+		}
+	} else {
+		if ((password.length) >= envConfig.RBAC_PASSWORD_LENGTH) {
+			//
+			result = {
+				success : true
+			};
+			return result;
+		} else {
+			//
+			result = {
+				success: false,
+				message: `Password should contain ${envConfig.RBAC_PASSWORD_LENGTH} characters`
+			};
+			return result;
+		}
+	}
+}
+
 function getLoginUserdoc(doc) {
 	if (!doc) return null;
 	let id = doc._id;
@@ -503,6 +550,73 @@ function getLoginUserdoc(doc) {
 		});
 }
 
+async function checkLoginCoolDown(username){
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
+	try {
+		let doc = await db.collection('userMgmt.sessions').findOne({
+			'username' : username,
+			'type': 'LOGIN COOLDOWN'
+		});
+		if (doc) {
+			return true;
+		} else {
+			return false;
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
+async function insertLoginFailure(username){
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
+	const collectionName = 'userMgmt.sessions';
+	const loginFailed = 'LOGIN FAILED';
+	const loginCoolDown = 'LOGIN COOLDOWN';
+	try {
+		// find all login failure entry
+		let failureCount = await db.collection(collectionName).find({
+			'username' : username,
+			'type' : loginFailed
+		}).count();
+		logger.info('Current failure count ', failureCount);
+		if ((failureCount+1) < envConfig.RBAC_USER_LOGIN_FAILURE_THRESHOLD) {
+			// insert login failed
+			let failureDuration = envConfig.RBAC_USER_LOGIN_FAILURE_DURATION * 1000; // in milliseconds
+			let d = new Date();
+			d = d.getTime() + failureDuration;
+			await db.collection(collectionName).insertOne({
+				'username' : username,
+				'type' : loginFailed,
+				'expireAt' : new Date(d)
+			});
+		} else {
+			// insert login cooldown
+			let cooldownDuration = envConfig.RBAC_USER_LOGIN_FAILURE_COOLDOWN * 1000; // in milliseconds
+			let d = new Date();
+			d = d.getTime() + cooldownDuration;
+			await db.collection(collectionName).insertOne({
+				'username' : username,
+				'type': loginCoolDown,
+				'expireAt' : new Date(d)
+			});
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
+async function deleteLoginFailure(username){
+	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
+	const collectionName = 'userMgmt.sessions';
+	try {
+		await db.collection(collectionName).deleteMany({
+			'username' : username
+		});
+	} catch (error) {
+		logger.error(error);
+	}
+}
+
 function findActiveUserbyAuthtype(username, authType) {
 	return new Promise((resolve, reject) => {
 		crudder.model.findOne({
@@ -536,30 +650,39 @@ function validatePassword(userDoc, password) {
 	return Promise.resolve(userDoc.password == crypto.createHash('md5').update(password + userDoc.salt).digest('hex') && userDoc.isActive);
 }
 
-function validateLocalLogin(username, password, done) {
+async function validateLocalLogin(username, password, done) {
 	let botKey = null;
 	if (username && password) {
 		let doc = null;
-		findActiveUserbyAuthtype(username, 'local')
-			.then((dbUser) => {
-				doc = dbUser;
-				return validatePassword(doc, password);
-			})
-			.then(_isValidPassword => {
-				if (!_isValidPassword) {
-					logger.error(`Password check failed for user ${username}`);
-					done(new Error('Invalid Credentials'), false, JSON.parse(JSON.stringify(doc)));
-				} else {
-					// in case of a bot we get the bot key as response
-					if (doc.bot) botKey = _isValidPassword;
-					logger.debug(`Bot key :: ${botKey}`);
-					logger.info(`Is password valid for ${username} :: true`);
-					done(null, doc, botKey);
-				}
-			}).catch(err => {
-				logger.error('Error in validateLocalLogin :: ', err);
-				done(err, false, { username, password });
-			});
+		let isCoolDown = await checkLoginCoolDown(username);
+		if (! isCoolDown) {
+			findActiveUserbyAuthtype(username, 'local')
+				.then((dbUser) => {
+					doc = dbUser;
+					return validatePassword(doc, password);
+				})
+				.then(_isValidPassword => {
+					if (!_isValidPassword) {
+						logger.error(`Password check failed for user ${username}`);
+						insertLoginFailure(username);
+						done(new Error('Invalid Credentials'), false, JSON.parse(JSON.stringify(doc)));
+					} else {
+						// in case of a bot we get the bot key as response
+						if (doc.bot) botKey = _isValidPassword;
+						logger.debug(`Bot key :: ${botKey}`);
+						logger.info(`Is password valid for ${username} :: true`);
+						deleteLoginFailure(username);
+						done(null, doc, botKey);
+					}
+				}).catch(err => {
+					insertLoginFailure(username);
+					logger.error('Error in validateLocalLogin :: ', err);
+					done(err, false, { username, password });
+				});
+		} else {
+			// try after some time
+			done(new Error('Please try after some time'), false, {message: 'Please try after some time'});
+		}
 	} else {
 		done(new Error('Invalid Credentials'), false, { username, password });
 	}
@@ -876,25 +999,32 @@ function updatePassword(request, response) {
 		})
 		.then(isPasswordValid => {
 			if (isPasswordValid) {
-				let salt = new Date().toJSON();
-				let password = crypto.createHash('md5').update(credentials.newpassword + salt).digest('hex');
-				usrDoc.password = password;
-				usrDoc.salt = salt;
-				usrDoc.save(err => {
-					if (err) {
-						return response.status(500).send({
-							message: 'Something went wrong! Try again later.'
-						});
-					}
-					if (response.status(200)) {
-						// userLog.changePassword(request, response);
-						closeAllSessionForUser(request, response);
-
-						return response.status(200).send({
-							message: 'Updated Password Successfully'
-						});
-					}
-				});
+				let result = checkPassword(credentials.newpassword);
+				if (result.success) {
+					//
+					let salt = new Date().toJSON();
+					let password = crypto.createHash('md5').update(credentials.newpassword + salt).digest('hex');
+					usrDoc.password = password;
+					usrDoc.salt = salt;
+					usrDoc.save(err => {
+						if (err) {
+							return response.status(500).send({
+								message: 'Something went wrong! Try again later.'
+							});
+						}
+						if (response.status(200)) {
+							// userLog.changePassword(request, response);
+							closeAllSessionForUser(request, response);
+							return response.status(200).send({
+								message: 'Updated Password Successfully'
+							});
+						}
+					});
+				} else {
+					return response.status(400).json({
+						message: result.message
+					});
+				}
 			} else {
 				if (!response.headersSent)
 					response.status(400).json({
@@ -911,8 +1041,9 @@ function resetPassword(req, res) {
 	var credentials = req.body;
 	let userDoc = null;
 	let id = req.swagger.params.id.value;
-	if (credentials.password.length >= 8 && credentials.cpassword.length >= 8) {
-		if (credentials.password == credentials.cpassword) {
+	if (credentials.password == credentials.cpassword) {
+		let result = checkPassword(credentials.password);
+		if (result.success) {
 			let salt = new Date().toJSON();
 			let password = crypto.createHash('md5').update(credentials.password + salt).digest('hex');
 			crudder.model.findOne({
@@ -942,7 +1073,6 @@ function resetPassword(req, res) {
 							message: 'Updated Password Successfully.'
 						});
 					}
-
 				})
 				.catch(err => {
 					logger.error(err);
@@ -954,12 +1084,12 @@ function resetPassword(req, res) {
 				});
 		} else {
 			return res.status(400).json({
-				message: 'Passwords do not match.'
+				message: result.message
 			});
 		}
 	} else {
 		return res.status(400).json({
-			message: 'Password should contain minimum 8 character.'
+			message: 'Passwords do not match.'
 		});
 	}
 }
@@ -1386,7 +1516,15 @@ function customCreate(req, res) {
 			app: []
 		};
 	}
-	crudder.create(req, res);
+	let password = req.body.password;
+	let result = checkPassword(password);
+	if (result.success) {
+		crudder.create(req, res);
+	} else {
+		return res.status(400).json({
+			message: result.message
+		});
+	}
 }
 
 function createBotKey(req, res) {

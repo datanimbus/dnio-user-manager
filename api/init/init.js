@@ -6,10 +6,10 @@ const config = require('../../config/config');
 const appHook = require('../helpers/util/appHooks');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 const request = require('request');
-const pmRole = require('../../config/roles').find(_r => _r.entity == 'PM');
-const nsRole = require('../../config/roles').find(_r => _r.entity == 'NS');
+// const pmRole = require('../../config/roles').find(_r => _r.entity == 'PM');
+// const nsRole = require('../../config/roles').find(_r => _r.entity == 'NS');
 
-let _ = require('lodash');
+// let _ = require('lodash');
 let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
 let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
@@ -79,61 +79,61 @@ function createNS() {
 		});
 }
 
-function createPMrole() {
-	logger.debug('Creating PM roles');
-	let appList = [];
-	return mongoose.model('app').find({}).lean(true)
-		.then(apps => {
-			appList = apps.map(_d => _d._id);
-			return mongoose.model('roles').find({ entity: 'PM' }, { app: 1 }).lean(true);
-		})
-		.then(roles => {
-			let rolesAppList = roles.map(_r => _r.app);
-			let appRoleTobeCreated = _.difference(appList, rolesAppList);
-			let promises = appRoleTobeCreated.map(app => {
-				let roleObj = JSON.parse(JSON.stringify(pmRole));
-				roleObj.app = app;
-				roleObj.fields = JSON.stringify(roleObj.fields);
-				return mongoose.model('roles').create(roleObj)
-					.catch(err => { logger.debug(err); });
-			});
-			return Promise.all(promises);
-		})
-		.then(_d => {
-			logger.debug(JSON.stringify(_d));
-		})
-		.catch(err => {
-			logger.error(err);
-		});
-}
+// function createPMrole() {
+// 	logger.debug('Creating PM roles');
+// 	let appList = [];
+// 	return mongoose.model('app').find({}).lean(true)
+// 		.then(apps => {
+// 			appList = apps.map(_d => _d._id);
+// 			return mongoose.model('roles').find({ entity: 'PM' }, { app: 1 }).lean(true);
+// 		})
+// 		.then(roles => {
+// 			let rolesAppList = roles.map(_r => _r.app);
+// 			let appRoleTobeCreated = _.difference(appList, rolesAppList);
+// 			let promises = appRoleTobeCreated.map(app => {
+// 				let roleObj = JSON.parse(JSON.stringify(pmRole));
+// 				roleObj.app = app;
+// 				roleObj.fields = JSON.stringify(roleObj.fields);
+// 				return mongoose.model('roles').create(roleObj)
+// 					.catch(err => { logger.debug(err); });
+// 			});
+// 			return Promise.all(promises);
+// 		})
+// 		.then(_d => {
+// 			logger.debug(JSON.stringify(_d));
+// 		})
+// 		.catch(err => {
+// 			logger.error(err);
+// 		});
+// }
 
-function createNSrole() {
-	logger.debug('Creating NS roles');
-	let appList = [];
-	return mongoose.model('app').find({}).lean(true)
-		.then(apps => {
-			appList = apps.map(_d => _d._id);
-			return mongoose.model('roles').find({ entity: 'NS' }, { app: 1 }).lean(true);
-		})
-		.then(roles => {
-			let rolesAppList = roles.map(_r => _r.app);
-			let appRoleTobeCreated = _.difference(appList, rolesAppList);
-			let promises = appRoleTobeCreated.map(app => {
-				let roleObj = JSON.parse(JSON.stringify(nsRole));
-				roleObj.app = app;
-				roleObj.fields = JSON.stringify(roleObj.fields);
-				return mongoose.model('roles').create(roleObj)
-					.catch(err => { logger.debug(err); });
-			});
-			return Promise.all(promises);
-		})
-		.then(_d => {
-			logger.debug(JSON.stringify(_d));
-		})
-		.catch(err => {
-			logger.error(err);
-		});
-}
+// function createNSrole() {
+// 	logger.debug('Creating NS roles');
+// 	let appList = [];
+// 	return mongoose.model('app').find({}).lean(true)
+// 		.then(apps => {
+// 			appList = apps.map(_d => _d._id);
+// 			return mongoose.model('roles').find({ entity: 'NS' }, { app: 1 }).lean(true);
+// 		})
+// 		.then(roles => {
+// 			let rolesAppList = roles.map(_r => _r.app);
+// 			let appRoleTobeCreated = _.difference(appList, rolesAppList);
+// 			let promises = appRoleTobeCreated.map(app => {
+// 				let roleObj = JSON.parse(JSON.stringify(nsRole));
+// 				roleObj.app = app;
+// 				roleObj.fields = JSON.stringify(roleObj.fields);
+// 				return mongoose.model('roles').create(roleObj)
+// 					.catch(err => { logger.debug(err); });
+// 			});
+// 			return Promise.all(promises);
+// 		})
+// 		.then(_d => {
+// 			logger.debug(JSON.stringify(_d));
+// 		})
+// 		.catch(err => {
+// 			logger.error(err);
+// 		});
+// }
 
 function checkDependency() {
 	var options = {
@@ -215,8 +215,8 @@ async function createIndexForSession(){
 function init() {
 	return checkDependency()
 		.then(() => createNS())
-		.then(() => createPMrole())
-		.then(() => createNSrole())
+		// .then(() => createPMrole())
+		// .then(() => createNSrole())
 		.then(() => createSecurityKeys())
 		.then(() => validateAuthModes())
 		.then(() => createIndexForSession());

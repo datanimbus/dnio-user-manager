@@ -149,14 +149,14 @@ function init() {
 				if (_c === 0) {
 					let promiseArr = roles.map(obj => {
 						if (obj.fields) obj.fields = JSON.stringify(obj.fields);
-						return crudder.model.create(obj);
+						// return crudder.model.create(obj);
 					});
 					return Promise.all(promiseArr);
 				}
 			})
 			.then(createdDefs => {
 				if (createdDefs) {
-					createdDefs.map(defs => logger.info('Added role :: ' + defs.entityName + ' on App' + defs.app));
+					//createdDefs.map(defs => logger.info('Added role :: ' + defs.entityName + ' on App' + defs.app));
 				}
 				resolve();
 			})
@@ -516,11 +516,24 @@ function customUpdate(req, res) {
 		});
 }
 
+function show(req, res) {
+	let id = req.swagger.params.id.value;
+	let roles = require('../../config/roles');
+	let role = roles.filter(role => role.entity === id);
+
+	if (role && role.length != 0) {
+		res.status(200).json(role);
+		return role;
+	} else {
+		return crudder.show(req, res);
+	}
+}
+
 module.exports = {
 	init: init,
 	create: customCreate,
 	index: crudder.index,
-	show: crudder.show,
+	show: show,
 	destroy: crudder.destroy,
 	update: customUpdate,
 	changeRolesDefinition: changeRolesDefinition,

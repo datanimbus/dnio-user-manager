@@ -1,6 +1,5 @@
 const bluebird = require('bluebird');
 const redis = require('ioredis');
-bluebird.promisifyAll(redis);
 
 let host = process.env.CACHE_HOST;
 let port = process.env.CACHE_PORT;
@@ -29,11 +28,11 @@ e.init = () => {
 		logger.info('Connecting to cache cluster');
 		logger.info('Cache cluster nodes :: ', JSON.stringify(getClusterNodes()));
 		client = new redis.Cluster(getClusterNodes());
-	}
-	else {
+	} else {
 		logger.info('Connecting to standalone cache');
 		client = redis.createClient(port, host);
 	}
+	client = bluebird.promisifyAll(client);
 	client.on('error', function (err) {
 		logger.error(err.message);
 	});

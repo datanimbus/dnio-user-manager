@@ -19,7 +19,7 @@
   "dependencies": {
     "@appveen/data.stack-utils": "^1.0.17",
     "@appveen/swagger-mongoose-crud": "1.1.2",
-    "@appveen/utils": "^2.1.3",
+    "@appveen/utils": "github:appveen/utils#release/2.0.0",
     "@microsoft/microsoft-graph-client": "^1.3.0",
     "adal-node": "^0.1.28",
     "bluebird": "^3.5.0",

@@ -55,7 +55,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		enableSessionRefresh: resObj.enableSessionRefresh,
 		sessionTime: resObj.sessionTime,
 		bot: resObj.bot,
-		keyId: _botKey
+		keyId: _botKey,
+		isSuperAdmin: resObj.isSuperAdmin
 	};
 	const deleteKeys = ['password', '_metadata', 'salt', '_v', 'roles', 'botKeys'];
 	deleteKeys.forEach(_k => delete resObj[_k]);

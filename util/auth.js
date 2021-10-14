@@ -31,7 +31,7 @@ router.use((req, res, next) => {
 		req.locals.app = req.body.app;
 	}
 	// check if user is app admin or super admin
-	if (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1)) {
+	if (req.user && (req.user.isSuperAdmin || (req.user.apps && req.user.apps.indexOf(req.locals.app) > -1))) {
 		req.locals.skipPermissionCheck = true;
 	}
 	next();

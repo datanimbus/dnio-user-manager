@@ -91,10 +91,11 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
-app.use(require('./util/auth'));
 
 require('./config/passport')(passport);
 app.use(passport.initialize());
+
+app.use(require('./util/auth'));
 
 // app.use(fileUpload());
 
@@ -120,7 +121,6 @@ let userInfoMiddleware = (req, res, next) => {
 	} else {
 		next();
 	}
-
 };
 app.use(userInfoMiddleware);
 

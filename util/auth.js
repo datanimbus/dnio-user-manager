@@ -104,7 +104,7 @@ const commonUrls = [
 	'/app/{app}/addUsers',
 ];
 
-router.use(AuthCacheMW({ permittedUrls, secret: config.TOKEN_SECRET, decodeOnly: true }));
+router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
 
 router.use((req, res, next) => {
 	if (!req.locals) {

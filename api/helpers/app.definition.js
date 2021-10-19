@@ -83,6 +83,16 @@ var definition = {
 	'disableInsights': {
 		'type': 'Boolean',
 		'default': envConfig.disableInsightsApp
+	},
+	'owner': {
+		'type': 'String'
+	},
+	'plan': {
+		'type': 'String',
+		'enum': ['free', 'paid']
+	},
+	'gracePeriod':{
+		'type': 'Number'
 	}
 };
 module.exports.definition = definition;

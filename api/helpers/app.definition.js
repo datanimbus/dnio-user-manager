@@ -7,13 +7,6 @@ var definition = {
 		'required': true,
 		'uniqueCaseInsensitive': true
 	},
-	'type': {
-		'type': 'String',
-		'enum': ['Management', 'Distribution']
-	},
-	'description': {
-		'type': 'String'
-	},
 	'_metadata': {
 		'type': {
 			'version': {

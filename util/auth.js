@@ -140,7 +140,7 @@ router.use((req, res, next) => {
 router.use((req, res, next) => {
 
 	// Check if path required only authentication checks.
-	if (onlyAuthUrls.some(e => compareURL(e, req.path))) {
+	if (_.concat(onlyAuthUrls, permittedUrls).some(e => compareURL(e, req.path))) {
 		return next();
 	}
 

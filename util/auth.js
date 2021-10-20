@@ -11,7 +11,9 @@ const permittedUrls = [
 	'/rbac/azure/login',
 	'/rbac/azure/login/callback',
 	'/rbac/azure/userFetch/callback',
-	'/rbac/authType/{userName}'
+	'/rbac/authType/{userName}',
+	'/rbac/health/live',
+	'/rbac/health/ready'
 ];
 
 const onlyAuthUrls = [

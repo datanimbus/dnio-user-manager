@@ -12,7 +12,8 @@ e.sendRequest = (url, method, qs, body, _req) => {
 		headers: {
 			'Content-Type': 'application/json',
 			'TxnId': _req ? _req.headers['txnId'] : null,
-			'User': _req ? _req.headers['user'] : null
+			'User': _req ? _req.headers['user'] : null,
+			'Authorization': `JWT ${global.USER_TOKEN}`
 		},
 		json: true
 	};

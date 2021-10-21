@@ -1,9 +1,11 @@
 const router = require('express').Router();
 const { AuthCacheMW } = require('@appveen/ds-auth-cache');
+const JWT = require('jsonwebtoken');
 const _ = require('lodash');
 const config = require('../config/config');
 
 const logger = global.logger;
+global.USER_TOKEN = JWT.sign({ name: "USER", _id: "admin", isSuperAdmin: true }, config.TOKEN_SECRET);
 
 const permittedUrls = [
 	'/rbac/login',

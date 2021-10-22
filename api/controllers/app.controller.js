@@ -14,6 +14,7 @@ const appIdMDM = appInit.find(obj => obj.type === 'Management')._id;
 const rolesInit = require('../../config/roles');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
+var userLog = require('./insight.log.controller');
 const dataStackNS = config.dataStackNS;
 let _ = require('lodash');
 let release = process.env.RELEASE;
@@ -416,6 +417,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
 						_usr.forEach(user => dataStackUtils.eventsUtil.publishEvent(eventId, userType, req, user));
+						_usr.forEach(user => userLog.removeUser(req, res, JSON.parse(JSON.stringify(user))));
 						res.status(200).json({ message: `Removed ${userType}/s from app` });
 					}
 				});

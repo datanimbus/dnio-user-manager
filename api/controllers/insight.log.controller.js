@@ -6,12 +6,19 @@ var queue = 'user-insight';
 const mongoose = require('mongoose');
 let logger = global.logger;
 const { userActivities } = require('./../../config/userInsights');
+const { data } = require('../../../ds-monitoring/api/helpers/preHooks.definition');
 
 
 let e = {};
 
 e.login = async (data, req, res) => {
-	var body = makeBody(data, req, res, 'USER_LOGIN');
+	var body;
+	if (!data.bot) {
+		body = makeBody(data, req, res, 'USER_LOGIN');
+	} else {
+		body = makeBody(data, req, res, 'BOT_LOGIN');
+	}
+	
 	body.data.summary = data.username + ' logged in';
 	try {
 		let apps = await getUserApps(data._id);
@@ -31,7 +38,12 @@ e.login = async (data, req, res) => {
 
 e.loginFailed = async (data, req, res) => {
 	if (data != null) {
-		var body = makeBody(data, req, res, 'USER_LOGIN_FAILED');
+		var body;
+		if (!data.bot) {
+			body = makeBody(data, req, res, 'USER_LOGIN_FAILED');
+		} else {
+			body = makeBody(data, req, res, 'BOT_LOGIN_FAILED');
+		}
 		body.data.summary = 'Login failed for ' + data.username;
 		try {
 			let apps = await getUserApps(data._id);
@@ -56,7 +68,12 @@ e.loginFailed = async (data, req, res) => {
 
 e.logout = async (req, res) => {
 	let user = req.headers.user;
-	var body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
+	var body;
+	if (data.bot) {
+		body = makeBody({ _id: user }, req, res, 'BOT_LOGOUT');
+	} else {
+		body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
+	}
 	body.data.summary = user + ' logged out';
 	try {
 
@@ -100,7 +117,12 @@ function makeBody(data, req, res, activityCode) {
 }
 
 e.refreshToken = async (data, req, res) => {
-	var body = makeBody(data, req, res, 'USER_TOKEN_REFRESH');
+	var body;
+	if (data.bot) {
+		body = makeBody(data, req, res, 'BOT_TOKEN_REFRESH');
+	} else {
+		body = makeBody(data, req, res, 'USER_TOKEN_REFRESH');
+	}
 	body.data.summary = data.username + ' refreshed token';
 	try {
 		let apps = await getUserApps(data._id);
@@ -119,32 +141,28 @@ e.refreshToken = async (data, req, res) => {
 };
 
 e.addUserToApp = (req, res, data) => {
-	var body = makeBody(null, req, res, 'APP_USER_ADDED');
+	var body;
+	if (data.bot) {
+		body = makeBody(null, req, res, 'APP_BOT_ADDED');
+	} else {
+		body = makeBody(null, req, res, 'APP_USER_ADDED');
+	}
 	body.data.app = req.swagger.params.app.value;
-	body.data.summary = req.user.username + ' added a new user ' + data.username;
+	body.data.summary = data.bot ? req.user.username + ' added a new bot ' + data.username : req.user.username + ' added a new user ' + data.username;
 	client.publish(queue, JSON.stringify(body.data));
 };
 
 
-// TODO
 e.removeUser = (req, res, data) => {
-	let apps = [];
-	return mongoose.model('group').find({
-		'users': req.user.id
-	}, 'app')
-		.then(_grps => {
-			apps = _grps.map(_g => _g.app);
-			for (let i = 0; i < data.app.length; i++) {
-				apps.push(data.app[i]);
-			}
-			apps = _.uniq(apps);
-		})
-		.then(() => {
-			var body = makeBody(null, req, res, 'APP_USER_REMOVED');
-			body.data.apps = apps;
-			body.data.summary = req.user.username + ' deleted user ' + data.username;
-			client.publish(queue, JSON.stringify(body.data));
-		});
+	var body;
+	if (data.bot) {
+		body = makeBody(null, req, res, 'APP_BOT_REMOVED');
+	} else {
+		body = makeBody(null, req, res, 'APP_USER_REMOVED');
+	}
+	body.data.app = req.swagger.params.app.value;
+	body.data.summary = data.bot ? req.user.username + ' removed bot ' + data.username : req.user.username + ' removed user ' + data.username;
+	client.publish(queue, JSON.stringify(body.data));
 };
 
 
@@ -185,7 +203,12 @@ e.appAdminAccess = (req, res, action, data, apps) => {
 
 
 e.resetPassword = async (data, req, res) => {
-	var body = makeBody(data, req, res, 'USER_PASSWORD_RESET');
+	var body;
+	if (data.bot) {
+		body = makeBody(data, req, res, 'BOT_PASSWORD_RESET');
+	}  else {
+		body = makeBody(data, req, res, 'USER_PASSWORD_RESET');
+	}
 	body.data.summary = req.user.username + ' reset the password for user ' + data.username;
 	try {
 		let apps = await getUserApps(data._id);
@@ -200,7 +223,12 @@ e.resetPassword = async (data, req, res) => {
 };
 
 e.userAddedInTeam = (req, res, data, groups) => {
-	var body = makeBody(null, req, res, 'GROUP_USER_ADDED');
+	var body;
+	if (data.bot) {
+		body = makeBody(null, req, res, 'GROUP_BOT_ADDED');
+	} else {
+		body = makeBody(null, req, res, 'GROUP_USER_ADDED');
+	}
 	groups.forEach(grp => {
 		let message = _.cloneDeep(body.data);
 		message.app = grp.app;
@@ -210,7 +238,12 @@ e.userAddedInTeam = (req, res, data, groups) => {
 };
 
 e.userRemovedFromTeam = (req, res, groups, userId) => {
-	var body = makeBody(null, req, res, 'GROUP_USER_REMOVED');
+	var body;
+	if (data.bot) {
+		body = makeBody(null, req, res, 'GROUP_BOT_REMOVED');
+	} else {
+		body = makeBody(null, req, res, 'GROUP_USER_REMOVED');
+	}
 	groups.forEach(grp => {
 		let message = _.cloneDeep(body.data);
 		message.app = grp.app;
@@ -239,12 +272,12 @@ e.updateUser = () => {
 							'createdAt': new Date(),
 							'lastUpdated': new Date()
 						},
-						activityCode: 'USER_DETAILS_UPDATE',
-						activityType: userActivities['USER_DETAILS_UPDATE']
+						activityCode: doc.bot ? 'BOT_DETAILS_UPDATE' : 'USER_DETAILS_UPDATE',
+						activityType: doc.bot ? userActivities['BOT_DETAILS_UPDATE'] : userActivities['USER_DETAILS_UPDATE']
 					}
 				};
 				return getUserApps(doc._auditData.data.old._id).then(apps => {
-					body.data.summary = makeUpdatemsg(doc._auditData.data.old._id, doc._auditData.user, doc.basicDetails, doc._auditData.data.old.basicDetails);
+					body.data.summary = makeUpdatemsg(doc._auditData.data.old._id, doc._auditData.user, doc.basicDetails, doc._auditData.data.old.basicDetails, doc.bot);
 					if (doc._auditData.data.old.isSuperAdmin) {
 						apps.push(null);
 					}
@@ -278,14 +311,14 @@ e.createUser = () => {
 								'createdAt': new Date(),
 								'lastUpdated': new Date()
 							},
-							activityCode: 'USER_ADDED',
-							activityType: userActivities['USER_ADDED']
+							activityCode: doc.bot ? 'BOT_ADDED' : 'USER_ADDED',
+							activityType: doc.bot ? userActivities['BOT_ADDED'] : userActivities['USER_ADDED']
 						}
 					};
 					mainUser = doc._auditData.user;
 					normalUser = doc._id;
 					body.data.app = null;
-					body.data.summary = mainUser + ' added a new user ' + normalUser;
+					body.data.summary = doc.bot ? mainUser + ' added a new bot ' + normalUser : mainUser + ' added a new user ' + normalUser;
 					client.publish(queue, JSON.stringify(body.data));
 				}
 			}
@@ -314,15 +347,15 @@ e.removeUsers = () => {
 								'createdAt': new Date(),
 								'lastUpdated': new Date()
 							},
-							activityCode: 'USER_REMOVED',
-							activityType: userActivities['USER_REMOVED']
+							activityCode: doc.bot ? 'BOT_REMOVED' : 'USER_REMOVED',
+							activityType: doc.bot ? userActivities['BOT_REMOVED'] : userActivities['USER_REMOVED']
 						}
 					};
 					return getUserApps(doc.username)
 						.then(apps => {
 							mainUser = doc._auditData.user;
 							normalUser = doc.username;
-							body.data.summary = mainUser + ' deleted user ' + normalUser;
+							body.data.summary = doc.bot ? mainUser + ' deleted bot ' + normalUser : mainUser + ' deleted user ' + normalUser;
 							// To have one log at admin panel level as well
 							apps.push(null);
 
@@ -341,7 +374,7 @@ e.removeUsers = () => {
 	};
 };
 
-function makeUpdatemsg(user1, user2, newMsg, oldMsg) {
+function makeUpdatemsg(user1, user2, newMsg, oldMsg, bot) {
 	let message = null;
 	let actions = [];
 	let oldValue = [];
@@ -362,7 +395,11 @@ function makeUpdatemsg(user1, user2, newMsg, oldMsg) {
 		newValue.push(newMsg.phone);
 	}
 	if (user1 != user2) {
-		message = user2 + ' updated ' + actions + ' of user ' + user1 + ' from ' + oldValue + ' to ' + newValue;
+		if (bot) {
+			message = user2 + ' updated ' + actions + ' of bot ' + user1 + ' from ' + oldValue + ' to ' + newValue;
+		} else {
+			message = user2 + ' updated ' + actions + ' of user ' + user1 + ' from ' + oldValue + ' to ' + newValue;
+		}
 	} else {
 		message = user2 + ' updated ' + actions + ' from ' + oldValue + ' to ' + newValue;
 	}

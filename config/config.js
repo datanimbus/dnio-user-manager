@@ -124,7 +124,7 @@ module.exports = {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
 		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || 'odpConfig'
+		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig'
 	},
 	mongoAppcenterOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,

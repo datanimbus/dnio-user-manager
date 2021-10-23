@@ -903,11 +903,11 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  /usr/app/{app}/{userId}:
+  '/usr/app/{app}/{id}':
     x-swagger-router-controller: controller
     get:
-      description: Retrieve a list of User in the app
-      operationId: userInAppShow
+      description: Retrieve a User in the app
+      operationId: UserInAppShow
       parameters:
       - name: authorization
         in: header
@@ -938,7 +938,7 @@ paths:
         required: true
         type: string
         description: App name against which we db will be querried  
-      - name: userId
+      - name: id
         in: path
         required: true
         type: string

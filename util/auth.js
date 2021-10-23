@@ -31,7 +31,8 @@ const onlyAuthUrls = [
 	'/rbac/validate',
 	'/rbac/check',
 	'/rbac/extend',
-	'/rbac/refresh'
+	'/rbac/refresh',
+	'/rbac/usr/reviewpermissionservice/{entity}',
 ];
 
 const internalUrls = [
@@ -63,7 +64,6 @@ const superAdminOnlyUrls = [
 	'/rbac/usr/bulkCreate/{fileId}/download',
 	'/rbac/usr/bulkCreate/{fileId}/count',
 	'/rbac/usr/bulkCreate/{fileId}/userList',
-	'/rbac/usr/reviewpermissionservice/{entity}',
 	'/rbac/usr/{id}',
 	'/rbac/usr/{usrId}/appList',
 	'/rbac/usr/{id}/password',

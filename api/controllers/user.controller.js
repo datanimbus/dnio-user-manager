@@ -3101,25 +3101,24 @@ function userInApp(req, res) {
 		});
 }
 
-async function userInAppShow(req, res) {
-	try {
-		const app = req.swagger.params.app.value;
-		const userId = req.swagger.params.userId.value;
-		const groups = await mongoose.model('group').aggregate([
-			{
-				$match: { app: app, users: userId }
-			}
-		]);
+function userInAppShow(req, res) {
+	const app = req.swagger.params.app.value;
+	const userId = req.swagger.params.userId.value;
+	mongoose.model('group').aggregate([
+		{
+			$match: { app: app, users: userId }
+		}
+	]).then(groups => {
 		if (groups && groups.length > 0) {
 			return crudder.show(req, res);
 		}
 		return res.status(400).json({ message: 'User Not Found' });
-	} catch (err) {
+	}).catch(err => {
 		logger.error(err.message);
 		res.status(500).json({
 			message: err.message
 		});
-	}
+	});
 }
 
 function modifyFilterForGroup(req) {

@@ -903,6 +903,55 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
+  /usr/app/{app}/{userId}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User in the app
+      operationId: userInAppShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried  
+      - name: userId
+        in: path
+        required: true
+        type: string
+        description: User Id to fetch details of that user
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
   /{usrType}/app/{app}/{groupId}/count:
     x-swagger-router-controller: controller
     get:

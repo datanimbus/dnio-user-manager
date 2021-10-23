@@ -462,7 +462,7 @@ schema.post('remove', function (doc) {
 		});
 });
 
-function checkPassword(password){
+function checkPassword(password) {
 	let result = {};
 	if (envConfig.RBAC_PASSWORD_COMPLEXITY) {
 		const passwordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*?~]).+$/;
@@ -471,13 +471,13 @@ function checkPassword(password){
 			if (password.match(passwordPattern)) {
 				// success
 				result = {
-					success : true
+					success: true
 				};
 				return result;
 			} else {
 				// return password should contain alphanumeric and special characters
 				result = {
-					success : false,
+					success: false,
 					message: 'Password must have one of following - Uppercase(A - Z), Lowercase(a - z), Special characters (!@#$%^&*?~) and Numbers (0 - 9)'
 				};
 				return result;
@@ -494,7 +494,7 @@ function checkPassword(password){
 		if ((password.length) >= envConfig.RBAC_PASSWORD_LENGTH) {
 			//
 			result = {
-				success : true
+				success: true
 			};
 			return result;
 		} else {
@@ -551,11 +551,11 @@ function getLoginUserdoc(doc) {
 		});
 }
 
-async function checkLoginCoolDown(username){
+async function checkLoginCoolDown(username) {
 	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	try {
 		let doc = await db.collection('userMgmt.sessions').findOne({
-			'username' : username,
+			'username': username,
 			'type': 'LOGIN COOLDOWN'
 		});
 		if (doc) {
@@ -568,7 +568,7 @@ async function checkLoginCoolDown(username){
 	}
 }
 
-async function insertLoginFailure(username){
+async function insertLoginFailure(username) {
 	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	const collectionName = 'userMgmt.sessions';
 	const loginFailed = 'LOGIN FAILED';
@@ -576,19 +576,19 @@ async function insertLoginFailure(username){
 	try {
 		// find all login failure entry
 		let failureCount = await db.collection(collectionName).find({
-			'username' : username,
-			'type' : loginFailed
+			'username': username,
+			'type': loginFailed
 		}).count();
 		logger.info('Current failure count ', failureCount);
-		if ((failureCount+1) < envConfig.RBAC_USER_LOGIN_FAILURE_THRESHOLD) {
+		if ((failureCount + 1) < envConfig.RBAC_USER_LOGIN_FAILURE_THRESHOLD) {
 			// insert login failed
 			let failureDuration = envConfig.RBAC_USER_LOGIN_FAILURE_DURATION * 1000; // in milliseconds
 			let d = new Date();
 			d = d.getTime() + failureDuration;
 			await db.collection(collectionName).insertOne({
-				'username' : username,
-				'type' : loginFailed,
-				'expireAt' : new Date(d)
+				'username': username,
+				'type': loginFailed,
+				'expireAt': new Date(d)
 			});
 		} else {
 			// insert login cooldown
@@ -596,9 +596,9 @@ async function insertLoginFailure(username){
 			let d = new Date();
 			d = d.getTime() + cooldownDuration;
 			await db.collection(collectionName).insertOne({
-				'username' : username,
+				'username': username,
 				'type': loginCoolDown,
-				'expireAt' : new Date(d)
+				'expireAt': new Date(d)
 			});
 		}
 	} catch (error) {
@@ -606,12 +606,12 @@ async function insertLoginFailure(username){
 	}
 }
 
-async function deleteLoginFailure(username){
+async function deleteLoginFailure(username) {
 	const db = global.mongoConnection.db(envConfig.mongoOptions.dbName);
 	const collectionName = 'userMgmt.sessions';
 	try {
 		await db.collection(collectionName).deleteMany({
-			'username' : username
+			'username': username
 		});
 	} catch (error) {
 		logger.error(error);
@@ -656,7 +656,7 @@ async function validateLocalLogin(username, password, done) {
 	if (username && password) {
 		let doc = null;
 		let isCoolDown = await checkLoginCoolDown(username);
-		if (! isCoolDown) {
+		if (!isCoolDown) {
 			findActiveUserbyAuthtype(username, 'local')
 				.then((dbUser) => {
 					doc = dbUser;
@@ -682,7 +682,7 @@ async function validateLocalLogin(username, password, done) {
 				});
 		} else {
 			// try after some time
-			done(new Error('Please try after some time'), false, {message: 'Please try after some time'});
+			done(new Error('Please try after some time'), false, { message: 'Please try after some time' });
 		}
 	} else {
 		done(new Error('Invalid Credentials'), false, { username, password });
@@ -790,18 +790,18 @@ function azureLoginCallback(req, res) {
 			response: res,
 			failureRedirect: '/'
 		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage: info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
-			}
-		})(req, res);
+			function (err, user, info) {
+				if (err) {
+					logger.error('error in azureLoginCallback ::: ', err);
+					if (info) userLog.loginFailed(info, req, res);
+					return sendAzureCallbackResponse(res, 500, { message: err.message });
+				} else if (!user) {
+					logger.error('Something went wrong in azureLoginCallback:: ', info);
+					return sendAzureCallbackResponse(res, 400, { meessage: info });
+				} else {
+					return handleSessionAndGenerateToken(req, res, user, null, true);
+				}
+			})(req, res);
 	}
 }
 
@@ -1352,10 +1352,10 @@ function init() {
 								.then(_d => {
 									logger.info('Added user :: ' + _d._id);
 								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
+									_e => {
+										logger.error('Error adding user :: ' + _c._id);
+										logger.error(_e);
+									});
 						});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());
@@ -3101,6 +3101,27 @@ function userInApp(req, res) {
 		});
 }
 
+async function userInAppShow(req, res) {
+	try {
+		const app = req.swagger.params.app.value;
+		const userId = req.swagger.params.userId.value;
+		const groups = await mongoose.model('group').aggregate([
+			{
+				$match: { app: app, users: userId }
+			}
+		]);
+		if (groups && groups.length > 0) {
+			return crudder.show(req, res);
+		}
+		return res.status(400).json({ message: 'User Not Found' });
+	} catch (err) {
+		logger.error(err.message);
+		res.status(500).json({
+			message: err.message
+		});
+	}
+}
+
 function modifyFilterForGroup(req) {
 	let filter = req.swagger.params.filter.value;
 	let group = req.swagger.params.groupId.value;
@@ -3330,6 +3351,7 @@ module.exports = {
 	addUserToApps: addUserToApps,
 	importUserToApp: importUserToApp,
 	userInApp: userInApp,
+	userInAppShow: userInAppShow,
 	userInAppCount: userInAppCount,
 	UserInGroup: UserInGroup,
 	UserInGroupCount: UserInGroupCount,

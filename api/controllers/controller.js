@@ -81,6 +81,7 @@ exports.UserImportToApp = UserController.importUserToApp;
 exports.UserInApp = UserController.userInApp;
 exports.BotInApp = UserController.botInApp;
 exports.UserInAppCount = UserController.userInAppCount;
+exports.UserInAppShow = UserController.userInAppShow;
 exports.UserInGroup = UserController.UserInGroup;
 exports.UserInGroupCount = UserController.UserInGroupCount;
 exports.distinctUserAttribute = UserController.distinctUserAttribute;

@@ -6,7 +6,6 @@ var queue = 'user-insight';
 const mongoose = require('mongoose');
 let logger = global.logger;
 const { userActivities } = require('./../../config/userInsights');
-const { data } = require('../../../ds-monitoring/api/helpers/preHooks.definition');
 
 
 let e = {};
@@ -18,7 +17,7 @@ e.login = async (data, req, res) => {
 	} else {
 		body = makeBody(data, req, res, 'BOT_LOGIN');
 	}
-	
+
 	body.data.summary = data.username + ' logged in';
 	try {
 		let apps = await getUserApps(data._id);
@@ -69,7 +68,7 @@ e.loginFailed = async (data, req, res) => {
 e.logout = async (req, res) => {
 	let user = req.headers.user;
 	var body;
-	if (data.bot) {
+	if (req.user && req.user.bot) {
 		body = makeBody({ _id: user }, req, res, 'BOT_LOGOUT');
 	} else {
 		body = makeBody({ _id: user }, req, res, 'USER_LOGOUT');
@@ -206,7 +205,7 @@ e.resetPassword = async (data, req, res) => {
 	var body;
 	if (data.bot) {
 		body = makeBody(data, req, res, 'BOT_PASSWORD_RESET');
-	}  else {
+	} else {
 		body = makeBody(data, req, res, 'USER_PASSWORD_RESET');
 	}
 	body.data.summary = req.user.username + ' reset the password for user ' + data.username;
@@ -224,7 +223,7 @@ e.resetPassword = async (data, req, res) => {
 
 e.userAddedInTeam = (req, res, data, groups) => {
 	var body;
-	if (data.bot) {
+	if (req.user && req.user.bot) {
 		body = makeBody(null, req, res, 'GROUP_BOT_ADDED');
 	} else {
 		body = makeBody(null, req, res, 'GROUP_USER_ADDED');
@@ -239,7 +238,7 @@ e.userAddedInTeam = (req, res, data, groups) => {
 
 e.userRemovedFromTeam = (req, res, groups, userId) => {
 	var body;
-	if (data.bot) {
+	if (req.user && req.user.bot) {
 		body = makeBody(null, req, res, 'GROUP_BOT_REMOVED');
 	} else {
 		body = makeBody(null, req, res, 'GROUP_USER_REMOVED');

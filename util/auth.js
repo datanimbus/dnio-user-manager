@@ -79,6 +79,8 @@ const superAdminOnlyUrls = [
 ];
 
 const commonUrls = [
+	'/rbac/app',
+	'/rbac/app/{id}',
 	'/rbac/usr/app/{app}',
 	'/rbac/usr/app/{app}/count',
 	'/rbac/usr/app/{app}/create',
@@ -198,85 +200,91 @@ function compareURL(tempUrl, url) {
 }
 
 function canAccessPath(req) {
-	if (compareURL('/usr/app/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/app/', req.path) && req.method === 'GET') {
 		return true;
 	}
-	if (compareURL('/usr/app/{app}/count', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/app/{id}', req.path) && req.method === 'GET') {
 		return true;
 	}
-	if (compareURL('/usr/app/{app}/create', req.path) && _.intersection(req.appPermissions, ['PMUBC']).length > 0) {
+	if (compareURL('/rbac/usr/app/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/app/{app}/distinctAttributes', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/usr/app/{app}/count', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/reviewpermission/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/usr/app/{app}/create', req.path) && _.intersection(req.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{username}/{app}/import', req.path) && _.intersection(req.appPermissions, ['PMUBC']).length > 0) {
+	if (compareURL('/rbac/usr/app/{app}/distinctAttributes', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{id}/closeAllSessions', req.path) && _.intersection(req.appPermissions, ['PMUA']).length > 0) {
+	if (compareURL('/rbac/usr/reviewpermission/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{id}/reset', req.path) && _.intersection(req.appPermissions, ['PMUBU']).length > 0) {
+	if (compareURL('/rbac/usr/{username}/{app}/import', req.path) && _.intersection(req.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{userId}/appAdmin/{action}', req.path) && _.intersection(req.appPermissions, ['PMUBU']).length > 0) {
+	if (compareURL('/rbac/usr/{id}/closeAllSessions', req.path) && _.intersection(req.appPermissions, ['PMUA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{usrId}/addToGroups', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/usr/{id}/reset', req.path) && _.intersection(req.appPermissions, ['PMUBU']).length > 0) {
 		return true;
 	}
-	if (compareURL('/usr/{usrId}/removeFromGroups', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/usr/{userId}/appAdmin/{action}', req.path) && _.intersection(req.appPermissions, ['PMUBU']).length > 0) {
 		return true;
 	}
-	if (compareURL('/bot/app/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+	if (compareURL('/rbac/usr/{usrId}/addToGroups', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/bot/app/{app}/count', req.path) && _.intersectionWith(req.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+	if (compareURL('/rbac/usr/{usrId}/removeFromGroups', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/bot/botKey/{_id}', req.path) && _.intersection(req.appPermissions, ['PMBA']).length > 0) {
+	if (compareURL('/rbac/bot/app/{app}', req.path) && _.intersectionWith(req.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/bot/botKey/session/{_id}', req.path) && _.intersection(req.appPermissions, ['PMBA']).length > 0) {
+	if (compareURL('/rbac/bot/app/{app}/count', req.path) && _.intersectionWith(req.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/{userType}/{_id}/status/{userState}', req.path) && _.intersection(req.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
+	if (compareURL('/rbac/bot/botKey/{_id}', req.path) && _.intersection(req.appPermissions, ['PMBA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/{usrType}/app/{app}/{groupId}/count', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/bot/botKey/session/{_id}', req.path) && _.intersection(req.appPermissions, ['PMBA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/{usrType}/app/{app}/{groupId}', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/{userType}/{_id}/status/{userState}', req.path) && _.intersection(req.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
 		return true;
 	}
-	if (compareURL('/{app}/group', req.path) && _.intersectionWith(req.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+	if (compareURL('/rbac/{usrType}/app/{app}/{groupId}/count', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/{app}/group/count', req.path) && _.intersectionWith(req.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+	if (compareURL('/rbac/{usrType}/app/{app}/{groupId}', req.path) && _.intersection(req.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	// if (compareURL('/app/{app}/bookmark/count', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
+	if (compareURL('/rbac/{app}/group', req.path) && _.intersectionWith(req.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/group/count', req.path) && _.intersectionWith(req.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		return true;
+	}
+	// if (compareURL('/rbac/app/{app}/bookmark/count', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
 	// 	return true;
 	// }
-	// if (compareURL('/app/{app}/bookmark', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
+	// if (compareURL('/rbac/app/{app}/bookmark', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
 	// 	return true;
 	// }
-	// if (compareURL('/app/{app}/bookmark/bulkDelete', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
+	// if (compareURL('/rbac/app/{app}/bookmark/bulkDelete', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
 	// 	return true;
 	// }
-	// if (compareURL('/app/{app}/bookmark/{id}', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
+	// if (compareURL('/rbac/app/{app}/bookmark/{id}', req.path) && _.intersection(req.appPermissions, ['']).length > 0) {
 	// 	return true;
 	// }
-	if (compareURL('/app/{app}/removeUsers', req.path) && _.intersectionWith(req.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/app/{app}/removeUsers', req.path) && _.intersectionWith(req.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/app/{app}/removeBots', req.path) && _.intersectionWith(req.appPermissions, ['PMB'], comparator).length > 0) {
+	if (compareURL('/rbac/app/{app}/removeBots', req.path) && _.intersectionWith(req.appPermissions, ['PMB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/app/{app}/addUsers', req.path) && _.intersectionWith(req.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/app/{app}/addUsers', req.path) && _.intersectionWith(req.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
 	return false;

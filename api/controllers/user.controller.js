@@ -884,6 +884,7 @@ function handleSessionAndGenerateToken(_req, _res, user, botKey, isHtml) {
 		if (envConfig.RBAC_USER_TO_SINGLE_SESSION && _d) return cacheUtil.removeUser(`U:${user._id}`);
 		else return Promise.resolve();
 	}).then(() => {
+		_req.authCache.client.del(`perm:${user._id}_*`);
 		userLog.login(JSON.parse(JSON.stringify(user)), _req, _res);
 		return generateToken(user, _res, null, isHtml, null, null, botKey);
 	}).catch(_err => {
@@ -1917,6 +1918,7 @@ function logout(req, res) {
 			res.status(200).json({
 				message: 'logged out successfully'
 			});
+			req.authCache.client.del(`perm:${req.user._id}_*`);
 			globalCache.unsetApp(tokenHash);
 			try {
 				jwt.verify(token, jwtKey);

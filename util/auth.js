@@ -132,7 +132,8 @@ router.use((req, res, next) => {
 	// Check if user is an app admin or super admin.
 	if (req.user) {
 		if (req.locals.app) {
-			req.user.appPermissions = req.user.allPermissions.find(e => e.app === req.locals.app) || [];
+			const temp = (req.user.allPermissions || []).find(e => e.app === req.locals.app);
+			req.user.appPermissions = temp ? temp.permissions : [];
 		} else {
 			req.user.appPermissions = [];
 		}

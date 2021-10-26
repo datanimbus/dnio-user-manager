@@ -154,6 +154,7 @@ exports.GroupUpdate = GroupController.update;
 exports.GroupDestroy = GroupController.destroy;
 exports.GroupCount = GroupController.count;
 exports.GroupInApp = GroupController.groupInApp;
+exports.GroupInAppShow = GroupController.groupInAppShow;
 exports.GroupInAppCount = GroupController.groupInAppCount;
 
 exports.ReviewPermission = RolesController.reviewPermission;

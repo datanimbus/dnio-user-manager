@@ -65,10 +65,10 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
-		logger.debug('Removing permissions from Cache')
+		logger.debug('Removing permissions from Cache');
 		users.map(usr => {
 			logger.debug('Removing permissions from Cache for User:', usr);
-			cacheUtils.unsetUserPermissions(usr + "_" + this.app);
+			cacheUtils.unsetUserPermissions(usr + '_' + this.app);
 		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
 			.then(_u => {
@@ -131,10 +131,10 @@ schema.post('save', function (doc) {
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.pre('remove', function (next, req) {
 	this._req = req;
-	logger.debug('Removing permissions from Cache')
+	logger.debug('Removing permissions from Cache');
 	this.users.map(usr => {
 		logger.debug('Removing permissions from Cache for User:', usr);
-		cacheUtils.unsetUserPermissions(usr + "_" + this.app);
+		cacheUtils.unsetUserPermissions(usr + '_' + this.app);
 	});
 	next();
 });

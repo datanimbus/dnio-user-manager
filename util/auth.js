@@ -132,6 +132,11 @@ router.use((req, res, next) => {
 	} else if (req.body.app) {
 		req.locals.app = req.body.app;
 	}
+	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
+	if (!req.locals.app && matchingPath) {
+		const params = getUrlParams(matchingPath, req.path);
+		if(params && params['{app}']) req.locals.app = params['{app}'];
+	}
 	// Check if user is an app admin or super admin.
 	if (req.user) {
 		if (req.locals.app) {
@@ -201,6 +206,21 @@ function compareURL(tempUrl, url) {
 	});
 	logger.trace(`Compare URL :: ${tempUrl}, ${url} :: ${flag}`);
 	return flag;
+}
+
+function getUrlParams(tempUrl, url) {
+	const values = {};
+	let tempUrlSegment = tempUrl.split('/').filter(_d => _d != '');
+	let urlSegment = url.split('/').filter(_d => _d != '');
+	tempUrlSegment.shift();
+	urlSegment.shift();
+	tempUrlSegment.forEach((_k, i) => {
+		if (_k.startsWith('{') && _k.endsWith('}') && urlSegment[i] != '') {
+			values[_k] = urlSegment[i];
+		}
+	});
+	logger.trace(`Params Map :: ${values}`);
+	return values;
 }
 
 function canAccessPath(req) {

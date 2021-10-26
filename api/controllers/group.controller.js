@@ -6,6 +6,7 @@ const SMCrud = require('@appveen/swagger-mongoose-crud');
 const schema = new mongoose.Schema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
+const cacheUtils = require('../../util/cache.utils').cache;
 const dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('../../util/queueMgmt');
 let groupLog = require('./insight.group.controller');
@@ -64,6 +65,11 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
+		logger.debug('Removing permissions from Cache')
+		users.map(usr => {
+			logger.debug('Removing permissions from Cache for User:', usr);
+			cacheUtils.unsetUserPermissions(usr + "_" + this.app);
+		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
 			.then(_u => {
 				if (_u.length != users.length) {
@@ -125,6 +131,11 @@ schema.post('save', function (doc) {
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.pre('remove', function (next, req) {
 	this._req = req;
+	logger.debug('Removing permissions from Cache')
+	this.users.map(usr => {
+		logger.debug('Removing permissions from Cache for User:', usr);
+		cacheUtils.unsetUserPermissions(usr + "_" + this.app);
+	});
 	next();
 });
 

@@ -73,8 +73,6 @@ const superAdminOnlyUrls = [
 	'/rbac/usr/audit',
 	'/rbac/usr/audit/count',
 	'/rbac/{idType}/roles',
-	'/rbac/group',
-	'/rbac/group/count',
 	'/rbac/usr/{userId}/superAdmin/{action}',
 ];
 
@@ -98,6 +96,8 @@ const commonUrls = [
 	'/rbac/bot/botKey/{_id}',
 	'/rbac/bot/botKey/session/{_id}',
 	'/rbac/{userType}/{_id}/status/{userState}',
+	'/rbac/group/count',
+	'/rbac/group',
 	'/rbac/group/{id}',
 	'/rbac/{app}/group',
 	'/rbac/{app}/group/count',
@@ -135,7 +135,7 @@ router.use((req, res, next) => {
 	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
 	if (!req.locals.app && matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
-		if(params && params['{app}']) req.locals.app = params['{app}'];
+		if (params && params['{app}']) req.locals.app = params['{app}'];
 	}
 	// Check if user is an app admin or super admin.
 	if (req.user) {
@@ -284,10 +284,56 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{usrType}/app/{app}/{groupId}', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
+	if (compareURL('/rbac/group/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/group', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (compareURL('/rbac/group/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		if ((req.method === 'PUT' || req.method === 'DELETE')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
 	if (compareURL('/rbac/{app}/group', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (compareURL('/rbac/{app}/group/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		if ((req.method === 'PUT' || req.method === 'DELETE')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
 		return true;
 	}
 	if (compareURL('/rbac/{app}/group/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/group/{groupId}/{usrType}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/group/{groupId}/{usrType}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
 	// if (compareURL('/rbac/app/{app}/bookmark/count', req.path) && _.intersection(req.user.appPermissions, ['']).length > 0) {

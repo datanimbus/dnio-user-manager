@@ -183,6 +183,13 @@ router.use((req, res, next) => {
 			return next();
 		}
 
+		if (compareURL('/rbac/app/', req.path) && req.method === 'GET') {
+			return next();
+		}
+		if (compareURL('/rbac/app/{id}', req.path) && req.method === 'GET') {
+			return next();
+		}
+
 		if (!req.locals.app) {
 			return res.status(400).json({ message: 'App value needed for this API' });
 		}
@@ -228,12 +235,6 @@ function getUrlParams(tempUrl, url) {
 }
 
 function canAccessPath(req) {
-	if (compareURL('/rbac/app/', req.path) && req.method === 'GET') {
-		return true;
-	}
-	if (compareURL('/rbac/app/{id}', req.path) && req.method === 'GET') {
-		return true;
-	}
 	if (compareURL('/rbac/usr/app/{app}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}

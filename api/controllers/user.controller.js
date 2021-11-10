@@ -327,6 +327,21 @@ schema.pre('save', function (next) {
 
 schema.pre('save', utils.counter.getIdGenerator('USR', 'User', null, null, 1000));
 
+schema.pre('save', function (next, req) {
+	let self = this;
+	this._req = req;
+	if (self._metadata.version) {
+		self._metadata.version.release = process.env.RELEASE;
+	}
+	const headers = {};
+	const headersLen = req.rawHeaders.length;
+	for (let index = 0; index < headersLen; index += 2) {
+		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+	}
+	this._req.headers = headers;
+	next();
+});
+
 schema.pre('save', function (next) {
 	if (this.auth && !this.bot && (this.auth.authType === 'azure' || this.auth.authType === 'ldap')) return next();
 	var self = this;
@@ -394,6 +409,21 @@ schema.post('save', function (doc) {
 	} else if (doc.wasNew) {
 		dataStackUtils.eventsUtil.publishEvent('EVENT_USER_CREATE', 'user', doc._req, doc);
 	}
+});
+
+schema.pre('remove', function (next, req) {
+	let self = this;
+	this._req = req;
+	if (self._metadata.version) {
+		self._metadata.version.release = process.env.RELEASE;
+	}
+	const headers = {};
+	const headersLen = req.rawHeaders.length;
+	for (let index = 0; index < headersLen; index += 2) {
+		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+	}
+	this._req.headers = headers;
+	next();
 });
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
@@ -2164,7 +2194,6 @@ function createUserinGroups(req, res) {
 			if (_d) {
 				delete createdUser.salt;
 				delete createdUser.password;
-				userLog.addUserToApp(req, res, createdUser);
 				res.json({
 					user: createdUser,
 					groups: _d.map(_o => _o._id)

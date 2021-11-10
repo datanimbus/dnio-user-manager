@@ -123,7 +123,7 @@ e.refreshToken = async (data, req, res) => {
 	} else {
 		body = makeBody(data, req, res, 'USER_TOKEN_REFRESH');
 	}
-	body.data.summary = data.username + ' refreshed token';
+	body.data.summary = data._id + ' refreshed token';
 	try {
 		let apps = await getUserApps(data._id);
 		if (data.isSuperAdmin) {
@@ -148,7 +148,7 @@ e.addUserToApp = (req, res, data) => {
 		body = makeBody(null, req, res, 'APP_USER_ADDED');
 	}
 	body.data.app = req.swagger.params.app.value;
-	body.data.summary = data.bot ? req.user.username + ' added a new bot ' + data.username : req.user.username + ' added a new user ' + data.username;
+	body.data.summary = data.bot ? req.user.username || req.user._id + ' imported a new bot ' + data.username : req.user.username || req.user._id + ' imported user ' + data.username;
 	client.publish(queue, JSON.stringify(body.data));
 };
 
@@ -161,7 +161,7 @@ e.removeUser = (req, res, data) => {
 		body = makeBody(null, req, res, 'APP_USER_REMOVED');
 	}
 	body.data.app = req.swagger.params.app.value;
-	body.data.summary = data.bot ? req.user.username + ' removed bot ' + data.username : req.user.username + ' removed user ' + data.username;
+	body.data.summary = data.bot ? req.user._id + ' removed bot ' + data.username : req.user._id + ' removed user ' + data.username;
 	client.publish(queue, JSON.stringify(body.data));
 };
 

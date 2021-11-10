@@ -74,7 +74,6 @@ const superAdminOnlyUrls = [
 	'/rbac/usr/audit/count',
 	'/rbac/{idType}/roles',
 	'/rbac/group',
-	'/rbac/group/{id}',
 	'/rbac/group/count',
 	'/rbac/usr/{userId}/superAdmin/{action}',
 ];
@@ -99,6 +98,7 @@ const commonUrls = [
 	'/rbac/bot/botKey/{_id}',
 	'/rbac/bot/botKey/session/{_id}',
 	'/rbac/{userType}/{_id}/status/{userState}',
+	'/rbac/group/{id}',
 	'/rbac/{app}/group',
 	'/rbac/{app}/group/count',
 	'/rbac/{app}/group/{id}',

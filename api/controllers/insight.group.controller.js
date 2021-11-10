@@ -9,6 +9,7 @@ function create() {
 	return function (doc) {
 		let mainData = doc._auditData;
 		let newData = doc;
+		let req = doc._req;
 		let app = [];
 		let body = null;
 		if (isEmpty(mainData.data.old)) {
@@ -18,13 +19,13 @@ function create() {
 					txnid: mainData.txnId,
 					_metadata: { 'deleted': false, 'createdAt': new Date(), 'lastUpdated': new Date() },
 					resStatusCode: 200,
-					userId: mainData.user,
+					userId: req ? req.user._id : mainData.user,
 					apps: app
 				}
 			};
-			return getUserDetails(doc._auditData.user)
+			return getUserDetails(req ? req.user._id : mainData.user)
 				.then(data => {
-					if (newData.name != '#') {
+					if (newData.name != '#' && data) {
 						logger.info('pushing in queue');
 						body.data.summary = data._id + ' created a new team ' + newData.name;
 						client.publish(queue, JSON.stringify(body.data));
@@ -39,6 +40,7 @@ function deleteGroup() {
 	return function (doc) {
 		let mainData = doc._auditData;
 		let newData = doc;
+		let req = doc._req;
 		let app = [];
 		let body = null;
 		if (mainData.data.new == null) {
@@ -48,14 +50,16 @@ function deleteGroup() {
 					txnid: mainData.txnId,
 					_metadata: { 'deleted': false, 'createdAt': new Date(), 'lastUpdated': new Date() },
 					resStatusCode: 200,
-					userId: mainData.user,
+					userId: req ? req.user._id : mainData.user,
 					apps: app
 				}
 			};
-			return getUserDetails(doc._auditData.user)
+			return getUserDetails(req ? req.user._id : mainData.user)
 				.then(data => {
-					body.data.summary = data._id + ' deleted team ' + newData.name;
-					client.publish(queue, JSON.stringify(body.data));
+					if (data) {
+						body.data.summary = data._id + ' deleted team ' + newData.name;
+						client.publish(queue, JSON.stringify(body.data));
+					}
 				});
 
 		}

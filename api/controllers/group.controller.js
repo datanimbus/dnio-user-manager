@@ -6,6 +6,7 @@ const SMCrud = require('@appveen/swagger-mongoose-crud');
 const schema = new mongoose.Schema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
+const cacheUtils = require('../../util/cache.utils').cache;
 const dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('../../util/queueMgmt');
 let groupLog = require('./insight.group.controller');
@@ -64,6 +65,11 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
+		logger.debug('Removing permissions from Cache');
+		users.map(usr => {
+			logger.debug('Removing permissions from Cache for User:', usr);
+			cacheUtils.unsetUserPermissions(usr + '_' + this.app);
+		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
 			.then(_u => {
 				if (_u.length != users.length) {
@@ -96,6 +102,12 @@ schema.pre('save', function (next, req) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
+	const headers = {};
+	const headersLen = req.rawHeaders.length;
+	for (let index = 0; index < headersLen; index += 2) {
+		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+	}
+	this._req.headers = headers;
 	next();
 });
 
@@ -107,9 +119,9 @@ schema.post('save', groupLog.create());
 
 schema.post('save', groupLog.updateGroup());
 
-schema.post('save', function(doc) {
+schema.post('save', function (doc) {
 	let eventId;
-	if(doc.wasNew)
+	if (doc.wasNew)
 		eventId = 'EVENT_GROUP_CREATE';
 	else
 		eventId = 'EVENT_GROUP_UPDATE';
@@ -117,8 +129,13 @@ schema.post('save', function(doc) {
 
 });
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
-schema.pre('remove', function(next, req) {
+schema.pre('remove', function (next, req) {
 	this._req = req;
+	logger.debug('Removing permissions from Cache');
+	this.users.map(usr => {
+		logger.debug('Removing permissions from Cache for User:', usr);
+		cacheUtils.unsetUserPermissions(usr + '_' + this.app);
+	});
 	next();
 });
 
@@ -126,7 +143,7 @@ schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt
 
 schema.post('remove', groupLog.deleteGroup());
 
-schema.post('remove', function(doc) {
+schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_GROUP_DELETE', 'group', doc._req, doc);
 });
 
@@ -156,6 +173,11 @@ schema.post('remove', function (doc) {
 
 var crudder = new SMCrud(schema, 'group', options);
 
+
+function customCreate(req, res) {
+	crudder.create(req, res);
+}
+
 function customUpdate(req, res) {
 	delete req.body.app;
 	logger.debug('Update Group ' + JSON.stringify(req.body));
@@ -180,18 +202,24 @@ function groupInApp(req, res) {
 	modifyFilterForApp(req);
 	crudder.index(req, res);
 }
+
+function groupInAppShow(req, res) {
+	modifyFilterForApp(req);
+	crudder.show(req, res);
+}
 function groupInAppCount(req, res) {
 	modifyFilterForApp(req);
 	crudder.count(req, res);
 }
 
 module.exports = {
-	create: crudder.create,
+	create: customCreate,
 	index: crudder.index,
 	show: crudder.show,
 	destroy: crudder.destroy,
 	update: customUpdate,
 	count: crudder.count,
 	groupInApp: groupInApp,
-	groupInAppCount: groupInAppCount
+	groupInAppCount: groupInAppCount,
+	groupInAppShow: groupInAppShow
 };

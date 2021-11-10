@@ -106,23 +106,23 @@ dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
 //app.use(logToQueue);
 
 // Adds user info to req object.
-let userInfoMiddleware = (req, res, next) => {
-	let user = req.get('User');
-	if (user) {
-		mongoose.model('user').findOne({ _id: user })
-			.then(usr => {
-				req.user = usr;
-				next();
-			})
-			.catch(err => {
-				logger.error(err.message);
-				next();
-			});
-	} else {
-		next();
-	}
-};
-app.use(userInfoMiddleware);
+// let userInfoMiddleware = (req, res, next) => {
+// 	let user = req.get('User');
+// 	if (user) {
+// 		mongoose.model('user').findOne({ _id: user })
+// 			.then(usr => {
+// 				req.user = usr;
+// 				next();
+// 			})
+// 			.catch(err => {
+// 				logger.error(err.message);
+// 				next();
+// 			});
+// 	} else {
+// 		next();
+// 	}
+// };
+// app.use(userInfoMiddleware);
 
 // swaggerRouter configuration
 var options = {

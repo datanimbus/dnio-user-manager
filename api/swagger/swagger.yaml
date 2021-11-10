@@ -903,47 +903,11 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  /{usrType}/app/{app}/{groupId}/count:
+  '/usr/app/{app}/{id}':
     x-swagger-router-controller: controller
     get:
-      description: Retrieve the count of bot in app
-      operationId: UserInGroupCount
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: filter
-        in: query
-        type: string
-        description: Filter results based on certain fields
-      - name: usrType
-        in: path
-        required: true
-        type: string
-        description: bot or usr     
-      - name: groupId
-        in: path
-        required: true
-        type: string
-        description: group Id against which we db will be querried   
-      - name: app
-        in: path
-        required: true
-        type: string
-        description: App name against which we db will be querried
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '500':
-          description: Internal server error
-  /{usrType}/app/{app}/{groupId}:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve a list of User in the app
-      operationId: UserInGroup
+      description: Retrieve a User in the app
+      operationId: UserInAppShow
       parameters:
       - name: authorization
         in: header
@@ -973,17 +937,12 @@ paths:
         in: path
         required: true
         type: string
-        description: App name against which we db will be querried
-      - name: groupId
+        description: App name against which we db will be querried  
+      - name: id
         in: path
         required: true
         type: string
-        description: groupId against which we db will be querried
-      - name: usrType
-        in: path
-        required: true
-        type: string
-        description: bot or usr     
+        description: User Id to fetch details of that user
       responses:
         '200':
           description: List of the entites
@@ -1333,6 +1292,129 @@ paths:
           description: Bad parameters
         '500':
           description: Internal server error                        
+  /{app}/group/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of group in the app
+      operationId: GroupInAppShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried  
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Group ID against which we db will be querried
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                
+  /{app}/group/{groupId}/{usrType}/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve the count of bot in app
+      operationId: UserInGroupCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: usrType
+        in: path
+        required: true
+        type: string
+        description: bot or usr     
+      - name: groupId
+        in: path
+        required: true
+        type: string
+        description: group Id against which we db will be querried   
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /{app}/group/{groupId}/{usrType}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User in the app
+      operationId: UserInGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: page
+        in: query
+        type: integer
+        description: Page number of the request
+      - name: count
+        in: query
+        type: integer
+        description: Number of results per page
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: sort
+        in: query
+        type: string
+        description: sort parameter
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried
+      - name: groupId
+        in: path
+        required: true
+        type: string
+        description: groupId against which we db will be querried
+      - name: usrType
+        in: path
+        required: true
+        type: string
+        description: bot or usr     
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
   /preferences:
     x-swagger-router-controller: controller
     get:

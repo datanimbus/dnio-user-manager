@@ -81,6 +81,7 @@ exports.UserImportToApp = UserController.importUserToApp;
 exports.UserInApp = UserController.userInApp;
 exports.BotInApp = UserController.botInApp;
 exports.UserInAppCount = UserController.userInAppCount;
+exports.UserInAppShow = UserController.userInAppShow;
 exports.UserInGroup = UserController.UserInGroup;
 exports.UserInGroupCount = UserController.UserInGroupCount;
 exports.distinctUserAttribute = UserController.distinctUserAttribute;
@@ -153,6 +154,7 @@ exports.GroupUpdate = GroupController.update;
 exports.GroupDestroy = GroupController.destroy;
 exports.GroupCount = GroupController.count;
 exports.GroupInApp = GroupController.groupInApp;
+exports.GroupInAppShow = GroupController.groupInAppShow;
 exports.GroupInAppCount = GroupController.groupInAppCount;
 
 exports.ReviewPermission = RolesController.reviewPermission;

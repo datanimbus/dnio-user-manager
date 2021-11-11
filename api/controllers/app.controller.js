@@ -16,6 +16,7 @@ const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
 var userLog = require('./insight.log.controller');
 const dataStackNS = config.dataStackNS;
+const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
@@ -57,9 +58,10 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function(next, req) {
-	if (this._id == 'appAdmin' || this._id == 'superAdmin') {
-		next(new Error('App name is not allowed.'));
+schema.pre('save', function(next) {
+	logger.info('Blocked Apps List - ', blockedAppNames);
+	if (blockedAppNames.includes(this._id)) {
+		return next(new Error('App name is not allowed.'));
 	}
 	next();
 });

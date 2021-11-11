@@ -57,6 +57,13 @@ schema.pre('save', function (next) {
 	}
 });
 
+schema.pre('save', function(next, req) {
+	if (this._id == 'appAdmin' || this._id == 'superAdmin') {
+		next(new Error('App name is not allowed.'));
+	}
+	next();
+});
+
 schema.pre('save', function (next, req) {
 	this._req = req;
 	this._wasNew = this.isNew;

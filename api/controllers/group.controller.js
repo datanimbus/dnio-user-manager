@@ -71,14 +71,14 @@ schema.pre('save', function (next) {
 			await cacheUtils.unsetUserPermissions(userId + '_' + this.app);
 			const permissions = await crudder.model.aggregate([
 				{ $match: { users: userId } },
-				{ $unwind: "$roles" },
+				{ $unwind: '$roles' },
 				// { $match: { 'roles.type': 'appcenter' } },
-				{ $group: { _id: "$roles.app", perms: { $addToSet: "$roles.id" } } }
+				{ $group: { _id: '$roles.app', perms: { $addToSet: '$roles.id' } } }
 			]);
 			if (permissions && permissions.length > 0) {
 				for (let index = 0; index < permissions.length; index++) {
 					const element = permissions[index];
-					await cacheUtils.setUserPermissions(userId + "_" + element._id, element.perms);
+					await cacheUtils.setUserPermissions(userId + '_' + element._id, element.perms);
 				}
 			}
 		});

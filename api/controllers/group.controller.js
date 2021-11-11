@@ -76,10 +76,10 @@ schema.pre('save', function (next) {
 				{ $group: { _id: '$roles.app', perms: { $addToSet: '$roles.id' } } }
 			]);
 			if (permissions && permissions.length > 0) {
-				for (let index = 0; index < permissions.length; index++) {
-					const element = permissions[index];
-					await cacheUtils.setUserPermissions(userId + '_' + element._id, element.perms);
-				}
+				let promises = permissions.map(async (element) => {
+					return await cacheUtils.setUserPermissions(userId + '_' + element._id, element.perms);
+				});
+				await Promise.all(promises);
 			}
 		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')

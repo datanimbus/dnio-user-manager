@@ -6,7 +6,7 @@ let logger = global.logger;
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
 logger.debug(`DATA_STACK_NAMESPACE : ${process.env.DATA_STACK_NAMESPACE}`);
 
-let blockedAppNames = process.env.BLOCKED_APP_NAMES || ['appAdmin', 'superAdmin'];
+let blockedAppNames = process.env.BLOCKED_APP_NAMES ? process.env.BLOCKED_APP_NAMES.split(',') : ['appAdmin', 'superAdmin'];
 
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
 	dataStackUtils.kubeutil.check()

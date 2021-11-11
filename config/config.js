@@ -6,6 +6,8 @@ let logger = global.logger;
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
 logger.debug(`DATA_STACK_NAMESPACE : ${process.env.DATA_STACK_NAMESPACE}`);
 
+let blockedAppNames = process.env.BLOCKED_APP_NAMES ? process.env.BLOCKED_APP_NAMES.split(',') : ['appAdmin', 'superAdmin'];
+
 if (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT) {
 	dataStackUtils.kubeutil.check()
 		.then(
@@ -109,6 +111,7 @@ module.exports = {
 	},
 	logQueueName: 'systemService',
 	dataStackNS: dataStackNS,
+	blockedAppNames: blockedAppNames,
 	mongoUrlAppcenter: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost',
 	streamingConfig: {
 		url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',

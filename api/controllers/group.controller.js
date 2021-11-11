@@ -66,9 +66,21 @@ schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
 		logger.debug('Removing permissions from Cache');
-		users.map(usr => {
-			logger.debug('Removing permissions from Cache for User:', usr);
-			cacheUtils.unsetUserPermissions(usr + '_' + this.app);
+		users.map(async (userId) => {
+			logger.debug('Removing permissions from Cache for User:', userId);
+			await cacheUtils.unsetUserPermissions(userId + '_' + this.app);
+			const permissions = await crudder.model.aggregate([
+				{ $match: { users: userId } },
+				{ $unwind: "$roles" },
+				// { $match: { 'roles.type': 'appcenter' } },
+				{ $group: { _id: "$roles.app", perms: { $addToSet: "$roles.id" } } }
+			]);
+			if (permissions && permissions.length > 0) {
+				for (let index = 0; index < permissions.length; index++) {
+					const element = permissions[index];
+					await cacheUtils.setUserPermissions(userId + "_" + element._id, element.perms);
+				}
+			}
 		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
 			.then(_u => {

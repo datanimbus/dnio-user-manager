@@ -108,12 +108,11 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function (next) {
+schema.pre('save', function (next, req) {
 	const users = _.uniq(this.users);
-	const req = this._req;
-	if (req.user && req.user._id) {
+	if (req && req.user && req.user._id) {
 		if (users.indexOf(req.user._id) > -1) {
-			next(new Error('Cannot manipulate a group, which you are part of.'));
+			return next(new Error('Cannot manipulate a group, which you are part of.'));
 		}
 	}
 	next();

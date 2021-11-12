@@ -65,7 +65,6 @@ const superAdminOnlyUrls = [
 	'/rbac/usr/bulkCreate/{fileId}/download',
 	'/rbac/usr/bulkCreate/{fileId}/count',
 	'/rbac/usr/bulkCreate/{fileId}/userList',
-	'/rbac/usr/{id}',
 	'/rbac/usr/{usrId}/appList',
 	'/rbac/usr/{id}/password',
 	'/rbac/usr/{usrId}/addToApps',
@@ -86,6 +85,7 @@ const commonUrls = [
 	'/rbac/usr/app/{app}/distinctAttributes',
 	'/rbac/usr/reviewpermission/{app}',
 	'/rbac/usr/{username}/{app}/import',
+	'/rbac/usr/{id}',
 	'/rbac/usr/{id}/closeAllSessions',
 	'/rbac/usr/{id}/reset',
 	'/rbac/usr/{userId}/appAdmin/{action}',
@@ -254,6 +254,9 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/usr/{id}/closeAllSessions', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/usr/{id}', req.path) && _.intersection(req.user.appPermissions, ['PVU']).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/usr/{id}/reset', req.path) && _.intersection(req.user.appPermissions, ['PMUBU']).length > 0) {

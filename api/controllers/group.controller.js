@@ -108,6 +108,17 @@ schema.pre('save', function (next) {
 	}
 });
 
+schema.pre('save', function (next) {
+	const users = _.uniq(this.users);
+	const req = this._req;
+	if (req.user && req.user._id) {
+		if (users.indexOf(req.user._id) > -1) {
+			next(new Error('Cannot manipulate a group, which you are part of.'));
+		}
+	}
+	next();
+});
+
 schema.pre('save', function (next, req) {
 	let self = this;
 	this._req = req;

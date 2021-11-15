@@ -110,6 +110,9 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next, req) {
 	const users = _.uniq(this.users);
+	if (this.name == '#') {
+		return next();
+	}
 	if (req && req.user && req.user._id) {
 		if (users.indexOf(req.user._id) > -1) {
 			return next(new Error('Cannot manipulate a group, which you are part of.'));

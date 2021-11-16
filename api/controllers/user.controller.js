@@ -104,6 +104,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('RBAC_USER_CLOSE_WINDOW_TO_LOGOUT')] = envConfig.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT;
 			resObj[_.camelCase('RBAC_BOT_TOKEN_DURATION')] = envConfig.RBAC_BOT_TOKEN_DURATION;
 			resObj[_.camelCase('RBAC_HB_INTERVAL')] = envConfig.RBAC_HB_INTERVAL;
+			resObj[_.camelCase('RBAC_PASSWORD_LENGTH')] = envConfig.RBAC_PASSWORD_LENGTH;
+			resObj[_.camelCase('RBAC_PASSWORD_COMPLEXITY')] = envConfig.RBAC_PASSWORD_COMPLEXITY;
 			resObj[_.camelCase('PRIVATE_FILTER')] = envConfig.PRIVATE_FILTER;
 			resObj[_.camelCase('GOOGLE_API_KEY')] = envConfig.GOOGLE_API_KEY;
 			resObj[_.camelCase('b2BAgentMaxFileSize')] = envConfig.B2B_AGENT_MAX_FILE_SIZE;
@@ -119,6 +121,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
 			resObj['allowedFileExt'] = envConfig.allowedFileExt;
 			resObj['transactionsEnabled'] = global.isTransactionAllowed;
+
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
 			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;

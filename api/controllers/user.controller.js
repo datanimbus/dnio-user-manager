@@ -121,7 +121,6 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
 			resObj['allowedFileExt'] = envConfig.allowedFileExt;
 			resObj['transactionsEnabled'] = global.isTransactionAllowed;
-
 			let uuid = cacheUtil.uuid();
 			resObj['uuid'] = uuid;
 			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;

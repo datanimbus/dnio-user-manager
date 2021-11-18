@@ -57,7 +57,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		bot: resObj.bot,
 		keyId: _botKey,
 		isSuperAdmin: resObj.isSuperAdmin,
-		apps: (resObj.accessControl.apps || []).map(e=>e._id)
+		apps: (resObj.accessControl.apps || []).map(e => e._id)
 	};
 	const deleteKeys = ['password', '_metadata', 'salt', '_v', 'roles', 'botKeys'];
 	deleteKeys.forEach(_k => delete resObj[_k]);
@@ -2223,22 +2223,27 @@ function addUserToGroups(req, res) {
 	let groups = req.body.groups;
 	let groupDocs = null;
 	let data = null;
-
-	return mongoose.model('group').find({
-		_id: {
-			'$in': groups
-		}
-	})
+	let app;
+	return mongoose.model('group').find({ _id: { '$in': groups } })
 		.then(_grps => {
 			groupDocs = _grps;
 			let promises = _grps.map(_grp => {
+				app = _grp.app;
 				_grp.users.push(usrId);
 				return _grp.save(req);
 			});
 			return Promise.all(promises);
 		})
-		.then(_d => {
+		.then(async (_d) => {
 			data = _d;
+			const hashGroup = await mongoose.model('group').findOne({ name: '#', app: app });
+			if (hashGroup) {
+				hashGroup.users.push(usrId);
+				return await hashGroup.save(req);
+			}
+			return;
+		})
+		.then(() => {
 			return crudder.model.findOne({
 				_id: usrId
 			});

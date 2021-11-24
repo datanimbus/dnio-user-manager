@@ -65,23 +65,6 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
-		logger.debug('Removing permissions from Cache');
-		users.map(async (userId) => {
-			logger.debug('Removing permissions from Cache for User:', userId);
-			await cacheUtils.unsetUserPermissions(userId + '_' + this.app);
-			const permissions = await crudder.model.aggregate([
-				{ $match: { users: userId } },
-				{ $unwind: '$roles' },
-				// { $match: { 'roles.type': 'appcenter' } },
-				{ $group: { _id: '$roles.app', perms: { $addToSet: '$roles.id' } } }
-			]);
-			if (permissions && permissions.length > 0) {
-				let promises = permissions.map(async (element) => {
-					return await cacheUtils.setUserPermissions(userId + '_' + element._id, element.perms);
-				});
-				await Promise.all(promises);
-			}
-		});
 		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
 			.then(_u => {
 				if (_u.length != users.length) {
@@ -138,6 +121,22 @@ schema.pre('save', function (next, req) {
 
 schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.groups'));
 
+
+schema.pre('save', function (next) {
+	let users = _.uniq(_.concat(this.users, this._auditData.data.old.users));
+	logger.debug('Removing permissions from Cache');
+	users.map(async (userId) => {
+		logger.debug('Removing permissions from Cache for User:', userId);
+		const keys = await cacheUtils.client.keys(`perm:${userId}_*`);
+		const promises = keys.map(async (key) => {
+			await cacheUtils.client.del(`${key}`);
+		});
+		return await Promise.all(promises);
+	});
+	next();
+});
+
+
 schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.groups.audit', client, 'auditQueue'));
 
 schema.post('save', groupLog.create());
@@ -151,8 +150,9 @@ schema.post('save', function (doc) {
 	else
 		eventId = 'EVENT_GROUP_UPDATE';
 	dataStackUtils.eventsUtil.publishEvent(eventId, 'group', doc._req, doc);
-
 });
+
+
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.pre('remove', function (next, req) {
 	this._req = req;

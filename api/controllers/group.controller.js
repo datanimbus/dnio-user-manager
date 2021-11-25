@@ -123,7 +123,12 @@ schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.group
 
 
 schema.pre('save', function (next) {
-	let users = _.uniq(_.concat(this.users, this._auditData.data.old.users));
+	let users = [];
+	if (this.isNew) {
+		users = _.uniq(this.users);
+	} else {
+		users = _.uniq(_.concat(this.users, this._auditData.data.old.users));
+	}
 	logger.debug('Removing permissions from Cache');
 	users.map(async (userId) => {
 		logger.debug('Removing permissions from Cache for User:', userId);

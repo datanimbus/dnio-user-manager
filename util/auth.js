@@ -137,6 +137,11 @@ router.use((req, res, next) => {
 		const params = getUrlParams(matchingPath, req.path);
 		if (params && params['{app}']) req.locals.app = params['{app}'];
 	}
+
+	if (!req.locals.app && compareURL('/rbac/usr/{userId}/appAdmin/{action}', req.path) && req.body.apps) {
+		req.locals.app = req.body.apps[0];
+	}
+
 	// Check if user is an app admin or super admin.
 	if (req.user) {
 		if (req.locals.app) {

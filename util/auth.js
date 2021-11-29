@@ -262,8 +262,11 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/usr/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {
-		if ((req.method === 'PUT' || req.method === 'POST' || req.method === 'DELETE') && _.intersectionWith(req.user.appPermissions, ['PMU', 'PMB'], comparator).length > 0) {
-			return true;
+		if (req.method === 'PUT' || req.method === 'POST' || req.method === 'DELETE') {
+			if (_.intersectionWith(req.user.appPermissions, ['PMU', 'PMB'], comparator).length > 0) {
+				return true;
+			}
+			return false;
 		}
 		return true;
 	}

@@ -1464,7 +1464,7 @@ function customCount(_req, _res) {
 
 function customUpdate(req, res) {
 	let isBot = req.body.bot;
-	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKeys', 'auth'];
+	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKeys', 'auth', '__v'];
 	arr.forEach(_k => {
 		delete req.body[_k];
 	});

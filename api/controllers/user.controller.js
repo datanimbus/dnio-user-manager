@@ -823,18 +823,18 @@ function azureLoginCallback(req, res) {
 			response: res,
 			failureRedirect: '/'
 		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage: info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
-			}
-		})(req, res);
+			function (err, user, info) {
+				if (err) {
+					logger.error('error in azureLoginCallback ::: ', err);
+					if (info) userLog.loginFailed(info, req, res);
+					return sendAzureCallbackResponse(res, 500, { message: err.message });
+				} else if (!user) {
+					logger.error('Something went wrong in azureLoginCallback:: ', info);
+					return sendAzureCallbackResponse(res, 400, { meessage: info });
+				} else {
+					return handleSessionAndGenerateToken(req, res, user, null, true);
+				}
+			})(req, res);
 	}
 }
 
@@ -1384,10 +1384,10 @@ function init() {
 								.then(_d => {
 									logger.info('Added user :: ' + _d._id);
 								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
+									_e => {
+										logger.error('Error adding user :: ' + _c._id);
+										logger.error(_e);
+									});
 						});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());
@@ -1464,7 +1464,7 @@ function customCount(_req, _res) {
 
 function customUpdate(req, res) {
 	let isBot = req.body.bot;
-	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKey'];
+	let arr = ['password', 'accessControl', 'isSuperAdmin', 'salt', '_metadata', 'bot', 'lastLogin', 'botKeys', 'auth'];
 	arr.forEach(_k => {
 		delete req.body[_k];
 	});
@@ -1502,6 +1502,7 @@ function customUpdate(req, res) {
 			return res.status(200).json(updated);
 		})
 		.catch(err => {
+			logger.error(err);
 			res.status(500).json({
 				message: err.message
 			});

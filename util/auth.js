@@ -188,10 +188,10 @@ router.use((req, res, next) => {
 			return next();
 		}
 
-		if (compareURL('/rbac/app/', req.path) && req.method === 'GET') {
+		if (compareURL('/rbac/app/', req.path)) {
 			return next();
 		}
-		if (compareURL('/rbac/app/{id}', req.path) && req.method === 'GET') {
+		if (compareURL('/rbac/app/{id}', req.path)) {
 			return next();
 		}
 

@@ -179,7 +179,7 @@ schema.post('save', function (doc) {
 				})
 				.then(() => {
 					var body = { app: doc._id };
-					return appHook.sendRequest(config.baseUrlSEC + `/${doc._id}/initialize`, 'post', null, body, doc._req);
+					return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
 				})
 				.then(
 					() => {
@@ -366,7 +366,7 @@ e.init = () => {
 							.then((_grp) => {
 								logger.debug(_grp);
 								var body = { app: _c._id };
-								return appHook.sendRequest(config.baseUrlSEC + `/${_c._id}/initialize`, 'post', null, body);
+								return appHook.sendRequest(config.baseUrlSEC + `/app/${_c._id}`, 'post', null, body);
 							})
 							.then(
 								() => {

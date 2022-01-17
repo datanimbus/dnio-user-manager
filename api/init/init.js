@@ -45,7 +45,7 @@ function createSecurityKeys() {
 		.then(apps => {
 			let promises = apps.map(doc => {
 				let body = { app: doc._id };
-				return appHook.sendRequest(config.baseUrlSEC + `/${doc._id}/initialize`, 'post', null, body, null)
+				return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, null)
 					.catch(err => logger.debug(err.message));
 			});
 			return Promise.all(promises);

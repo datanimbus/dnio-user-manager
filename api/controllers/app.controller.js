@@ -58,7 +58,7 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function(next) {
+schema.pre('save', function (next) {
 	logger.info('Blocked Apps List - ', blockedAppNames);
 	if (blockedAppNames.includes(this._id)) {
 		return next(new Error('App name is not allowed.'));
@@ -209,18 +209,6 @@ schema.pre('remove', appHook.preRemovePMFlows());
 
 schema.post('remove', appHook.getPostRemoveHook());
 
-schema.post('remove', (doc) => {
-	let appName = doc._id;
-	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-	}).catch(err => {
-		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-	});
-});
-schema.post('remove', function (doc) {
-	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
-});
-
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {
 		const ns = dataStackNS + '-' + _doc._id.toLowerCase();
@@ -265,6 +253,19 @@ schema.post('remove', (_doc) => {
 		});
 });
 
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App Security Credentials Are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
+	});
+});
+
+schema.post('remove', function (doc) {
+	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
+});
+
 // Update ipWhiteList in agents
 schema.post('save', function (doc) {
 	let oldData = doc._auditData.data.old;
@@ -275,7 +276,7 @@ schema.post('save', function (doc) {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId']: null,
+				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
 				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
 			json: true,
@@ -421,7 +422,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					logger.debug('Remove user from app');
 					logger.debug(_d);
 					if (usrIdArray.length > 0) {
-						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
+						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app' });
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
@@ -621,7 +622,7 @@ e.customAppIndex = (_req, _res) => {
 	mongoose.model('user').findOne({ _id: _req.headers.user })
 		.select('isSuperAdmin accessControl.apps._id')
 		.then(_user => {
-			if(_user) {
+			if (_user) {
 				logger.debug(`Is superadmin? [${_user.isSuperAdmin}]`);
 				logger.debug(JSON.stringify(_user));
 				user = _user;
@@ -629,7 +630,7 @@ e.customAppIndex = (_req, _res) => {
 			return user;
 		})
 		.then(_user => {
-			if(_user && _user.isSuperAdmin) {
+			if (_user && _user.isSuperAdmin) {
 				logger.debug('Apps = [] because user is superadmin');
 				return [];
 			}
@@ -647,22 +648,22 @@ e.customAppIndex = (_req, _res) => {
 			let filter = _req.swagger.params.filter.value;
 			logger.debug(`Incoming filter :: ${filter}`);
 
-			if(user.isSuperAdmin) return crudder.index(_req, _res);
-			
+			if (user.isSuperAdmin) return crudder.index(_req, _res);
+
 			if (typeof filter == 'string') filter = JSON.parse(filter);
 			else filter = {};
 
 			logger.debug(`Filter :: ${JSON.stringify(filter)}`);
 			logger.debug(`Apps : ${JSON.stringify(_apps)}`);
-			
+
 			let apps = user.accessControl && user.accessControl.apps ? _apps.concat(user.accessControl.apps) : _apps;
 			apps = _.uniq(apps);
 			apps = apps.map(_app => _app._id);
 			logger.debug(`Apps array :: ${apps}`);
 
-			if(filter._id) filter = { '$and' :[ {'_id': {'$in': apps}}, filter ] };
-			else filter['_id']= {'$in': apps};
-			
+			if (filter._id) filter = { '$and': [{ '_id': { '$in': apps } }, filter] };
+			else filter['_id'] = { '$in': apps };
+
 			logger.info(`Updated filter :: ${JSON.stringify(filter)}`);
 			_req.swagger.params.filter.value = JSON.stringify(filter);
 

@@ -275,8 +275,8 @@ schema.post('save', function (doc) {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.headers['txnId']: null,
-				'User': doc._req ? doc._req.headers['user'] : null
+				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId']: null,
+				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -303,8 +303,8 @@ schema.post('save', function (doc) {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.headers['txnId'] : null,
-				'User': doc._req ? doc._req.headers['user'] : null
+				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
+				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -460,8 +460,8 @@ e.customDestroy = (req, res) => {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': req ? req.headers['txnId'] : null,
-			'User': req ? req.headers['user'] : null
+			'TxnId': req && req.headers ? req.headers['txnId'] : null,
+			'User': req && req.headers ? req.headers['user'] : null
 		},
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }

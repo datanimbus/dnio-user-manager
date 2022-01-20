@@ -15,8 +15,7 @@ const permittedUrls = [
 	'/rbac/azure/userFetch/callback',
 	'/rbac/authType/{userName}',
 	'/rbac/health/live',
-	'/rbac/health/ready',
-	'/rbac/{app}/keys'
+	'/rbac/health/ready'
 ];
 
 const onlyAuthUrls = [
@@ -47,7 +46,8 @@ const internalUrls = [
 	'/rbac/role',
 	'/rbac/role/{id}',
 	'/rbac/role/updateDefinition/{id}',
-	'/rbac/role/name/{id}'
+	'/rbac/role/name/{id}',
+	'/rbac/{app}/keys'
 ];
 
 const adminOnlyUrls = [

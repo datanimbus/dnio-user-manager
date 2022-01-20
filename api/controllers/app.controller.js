@@ -373,7 +373,10 @@ e.init = () => {
 							.then((_grp) => {
 								logger.debug(_grp);
 								var body = { app: _c._id };
-								return appHook.sendRequest(config.baseUrlSEC + `/app/${_c._id}`, 'post', null, body);
+								// return appHook.sendRequest(config.baseUrlSEC + `/app/${_c._id}`, 'post', null, body);
+								const keysModel = mongoose.model('keys');
+								const keyDoc = new keysModel(body);
+								return keyDoc.save();
 							})
 							.then(
 								() => {
@@ -498,7 +501,7 @@ e.customDestroy = (req, res) => {
 					.then(() => {
 						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
 						return global.mongoConnection.db(dbName).dropDatabase();
-					}).catch(err=>{
+					}).catch(err => {
 						logger.error(err);
 					});
 			}

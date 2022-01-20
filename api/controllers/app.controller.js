@@ -179,7 +179,10 @@ schema.post('save', function (doc) {
 				})
 				.then(() => {
 					var body = { app: doc._id };
-					return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
+					// return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
+					const keysModel = mongoose.model('keys');
+					const keyDoc = new keysModel(body);
+					return keyDoc.save();
 				})
 				.then(
 					() => {
@@ -231,6 +234,10 @@ schema.post('remove', (_doc) => {
 	mongoose.model('roles').remove({ app: _doc._id }).then(_d => {
 		logger.info('App deleted removing related roles');
 		logger.debug(_d);
+	});
+	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
+		logger.info('Sec Keys Deleted');
+		logger.debug(_d);
 	})
 		.catch(err => {
 			logger.error(err.message);
@@ -253,14 +260,14 @@ schema.post('remove', (_doc) => {
 		});
 });
 
-schema.post('remove', (doc) => {
-	let appName = doc._id;
-	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-	}).catch(err => {
-		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-	});
-});
+// schema.post('remove', (doc) => {
+// 	let appName = doc._id;
+// 	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+// 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
+// 	}).catch(err => {
+// 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
+// 	});
+// });
 
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
@@ -491,6 +498,8 @@ e.customDestroy = (req, res) => {
 					.then(() => {
 						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
 						return global.mongoConnection.db(dbName).dropDatabase();
+					}).catch(err=>{
+						logger.error(err);
 					});
 			}
 		}

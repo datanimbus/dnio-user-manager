@@ -1415,6 +1415,30 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error 
+  /{app}/keys:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User in the app
+      operationId: GetKeysOfApp
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        required: true
+        type: string
+        description: App name against which we db will be querried 
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
   /preferences:
     x-swagger-router-controller: controller
     get:

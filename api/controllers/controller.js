@@ -1,5 +1,6 @@
 'use strict';
 //controllers
+const KeyController = require('./keys.controller');
 const UserController = require('./user.controller.js');
 const AppController = require('./app.controller.js');
 const RolesController = require('./roles.controller.js');
@@ -165,4 +166,5 @@ exports.updateBotKey = UserController.updateBotKey;
 exports.deleteBotKey = UserController.deleteBotKey;
 exports.endBotKeySession = UserController.endBotKeySession;
 exports.disableUser = UserController.disableUser;
+exports.GetKeysOfApp = KeyController.GetKeysOfApp;
 module.exports = exports;

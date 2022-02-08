@@ -474,8 +474,8 @@ e.customDestroy = (req, res) => {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': req ? req.headers['txnId'] : null,
-			'User': req ? req.headers['user'] : null,
+			'TxnId': req && req.headers ? req.headers['txnId'] : null,
+			'User': req && req.headers ? req.headers['user'] : null,
 			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,

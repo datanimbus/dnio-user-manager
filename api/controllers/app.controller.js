@@ -464,15 +464,19 @@ e.removeBotFromApp = (req, res) => {
 };
 
 e.customDestroy = (req, res) => {
+	let txnId = req.get('txnId');
 	let appName = req.swagger.params.id.value;
+	logger.info(`[${txnId}] App delete request received for ${appName}`);
+
 	if (!req.user.isSuperAdmin) return res.status(403).json({ message: 'Current user does not have permission to delete app' });
 	var options = {
 		url: config.baseUrlSM + '/service',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': req && req.headers ? req.headers['txnId'] : null,
-			'User': req && req.headers ? req.headers['user'] : null
+			'TxnId': req ? req.headers['txnId'] : null,
+			'User': req ? req.headers['user'] : null,
+			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }

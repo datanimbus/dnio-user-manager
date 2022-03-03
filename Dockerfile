@@ -1,6 +1,6 @@
 FROM node:12-alpine
 
-RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar git ;
+RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar git openssl ;
 
 WORKDIR /app
 

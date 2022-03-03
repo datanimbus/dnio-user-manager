@@ -6,13 +6,21 @@ let logger = global.logger;
 let e = {};
 
 e.sendRequest = (url, method, qs, body, _req) => {
+	if (_req && !_req.headers) {
+		const headers = {};
+		const headersLen = _req.rawHeaders.length;
+		for (let index = 0; index < headersLen; index += 2) {
+			headers[_req.rawHeaders[index]] = _req.rawHeaders[index + 1];
+		}
+		_req.headers = headers;
+	}
 	var options = {
 		url: url,
 		method: method,
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': _req ? _req.headers['txnId'] : null,
-			'User': _req ? _req.headers['user'] : null,
+			'TxnId': _req && _req.headers ? _req.headers['txnId'] : null,
+			'User': _req && _req.headers ? _req.headers['user'] : null,
 			'Authorization': `JWT ${global.USER_TOKEN}`
 		},
 		json: true

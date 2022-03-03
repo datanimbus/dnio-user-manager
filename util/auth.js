@@ -47,6 +47,7 @@ const internalUrls = [
 	'/rbac/role/{id}',
 	'/rbac/role/updateDefinition/{id}',
 	'/rbac/role/name/{id}',
+	'/rbac/{app}/keys'
 ];
 
 const adminOnlyUrls = [

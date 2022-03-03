@@ -337,7 +337,7 @@ schema.pre('save', function (next, req) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
 	const headers = {};
-	const headersLen = req.rawHeaders.length;
+	const headersLen = req && req.rawHeaders ? req.rawHeaders.length : 0;
 	for (let index = 0; index < headersLen; index += 2) {
 		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
 	}
@@ -421,7 +421,7 @@ schema.pre('remove', function (next, req) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
 	const headers = {};
-	const headersLen = req.rawHeaders.length;
+	const headersLen = req && req.rawHeaders ? req.rawHeaders.length : 0;
 	for (let index = 0; index < headersLen; index += 2) {
 		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
 	}

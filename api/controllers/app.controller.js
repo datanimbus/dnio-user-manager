@@ -58,7 +58,7 @@ schema.pre('save', function (next) {
 	}
 });
 
-schema.pre('save', function(next) {
+schema.pre('save', function (next) {
 	logger.info('Blocked Apps List - ', blockedAppNames);
 	if (blockedAppNames.includes(this._id)) {
 		return next(new Error('App name is not allowed.'));
@@ -179,7 +179,10 @@ schema.post('save', function (doc) {
 				})
 				.then(() => {
 					var body = { app: doc._id };
-					return appHook.sendRequest(config.baseUrlSEC + `/${doc._id}/initialize`, 'post', null, body, doc._req);
+					// return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
+					const keysModel = mongoose.model('keys');
+					const keyDoc = new keysModel(body);
+					return keyDoc.save();
 				})
 				.then(
 					() => {
@@ -209,18 +212,6 @@ schema.pre('remove', appHook.preRemovePMFlows());
 
 schema.post('remove', appHook.getPostRemoveHook());
 
-schema.post('remove', (doc) => {
-	let appName = doc._id;
-	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-	}).catch(err => {
-		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-	});
-});
-schema.post('remove', function (doc) {
-	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
-});
-
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {
 		const ns = dataStackNS + '-' + _doc._id.toLowerCase();
@@ -242,6 +233,10 @@ schema.post('remove', (_doc) => {
 		});
 	mongoose.model('roles').remove({ app: _doc._id }).then(_d => {
 		logger.info('App deleted removing related roles');
+		logger.debug(_d);
+	});
+	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
+		logger.info('Sec Keys Deleted');
 		logger.debug(_d);
 	})
 		.catch(err => {
@@ -265,6 +260,19 @@ schema.post('remove', (_doc) => {
 		});
 });
 
+// schema.post('remove', (doc) => {
+// 	let appName = doc._id;
+// 	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+// 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
+// 	}).catch(err => {
+// 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
+// 	});
+// });
+
+schema.post('remove', function (doc) {
+	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
+});
+
 // Update ipWhiteList in agents
 schema.post('save', function (doc) {
 	let oldData = doc._auditData.data.old;
@@ -275,8 +283,8 @@ schema.post('save', function (doc) {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.headers['txnId']: null,
-				'User': doc._req ? doc._req.headers['user'] : null
+				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
+				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -303,8 +311,8 @@ schema.post('save', function (doc) {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'TxnId': doc._req ? doc._req.headers['txnId'] : null,
-				'User': doc._req ? doc._req.headers['user'] : null
+				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
+				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
 			json: true,
 			body: {
@@ -365,7 +373,10 @@ e.init = () => {
 							.then((_grp) => {
 								logger.debug(_grp);
 								var body = { app: _c._id };
-								return appHook.sendRequest(config.baseUrlSEC + `/${_c._id}/initialize`, 'post', null, body);
+								// return appHook.sendRequest(config.baseUrlSEC + `/app/${_c._id}`, 'post', null, body);
+								const keysModel = mongoose.model('keys');
+								const keyDoc = new keysModel(body);
+								return keyDoc.save();
 							})
 							.then(
 								() => {
@@ -421,7 +432,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 					logger.debug('Remove user from app');
 					logger.debug(_d);
 					if (usrIdArray.length > 0) {
-						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app'});
+						res.status(400).json({ message: 'Can not detete ' + usrIdArray + ' from ' + app + ' app' });
 					} else {
 						let eventId = isBot ? 'EVENT_BOT_DELETE' : 'EVENT_APP_USER_REMOVED';
 						let userType = isBot ? 'bot' : 'user';
@@ -453,15 +464,19 @@ e.removeBotFromApp = (req, res) => {
 };
 
 e.customDestroy = (req, res) => {
+	let txnId = req.get('txnId');
 	let appName = req.swagger.params.id.value;
+	logger.info(`[${txnId}] App delete request received for ${appName}`);
+
 	if (!req.user.isSuperAdmin) return res.status(403).json({ message: 'Current user does not have permission to delete app' });
 	var options = {
 		url: config.baseUrlSM + '/service',
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			'TxnId': req ? req.headers['txnId'] : null,
-			'User': req ? req.headers['user'] : null
+			'TxnId': req && req.headers ? req.headers['txnId'] : null,
+			'User': req && req.headers ? req.headers['user'] : null,
+			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
@@ -490,6 +505,8 @@ e.customDestroy = (req, res) => {
 					.then(() => {
 						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
 						return global.mongoConnection.db(dbName).dropDatabase();
+					}).catch(err => {
+						logger.error(err);
 					});
 			}
 		}
@@ -621,7 +638,7 @@ e.customAppIndex = (_req, _res) => {
 	mongoose.model('user').findOne({ _id: _req.headers.user })
 		.select('isSuperAdmin accessControl.apps._id')
 		.then(_user => {
-			if(_user) {
+			if (_user) {
 				logger.debug(`Is superadmin? [${_user.isSuperAdmin}]`);
 				logger.debug(JSON.stringify(_user));
 				user = _user;
@@ -629,7 +646,7 @@ e.customAppIndex = (_req, _res) => {
 			return user;
 		})
 		.then(_user => {
-			if(_user && _user.isSuperAdmin) {
+			if (_user && _user.isSuperAdmin) {
 				logger.debug('Apps = [] because user is superadmin');
 				return [];
 			}
@@ -647,22 +664,22 @@ e.customAppIndex = (_req, _res) => {
 			let filter = _req.swagger.params.filter.value;
 			logger.debug(`Incoming filter :: ${filter}`);
 
-			if(user.isSuperAdmin) return crudder.index(_req, _res);
-			
+			if (user.isSuperAdmin) return crudder.index(_req, _res);
+
 			if (typeof filter == 'string') filter = JSON.parse(filter);
 			else filter = {};
 
 			logger.debug(`Filter :: ${JSON.stringify(filter)}`);
 			logger.debug(`Apps : ${JSON.stringify(_apps)}`);
-			
+
 			let apps = user.accessControl && user.accessControl.apps ? _apps.concat(user.accessControl.apps) : _apps;
 			apps = _.uniq(apps);
 			apps = apps.map(_app => _app._id);
 			logger.debug(`Apps array :: ${apps}`);
 
-			if(filter._id) filter = { '$and' :[ {'_id': {'$in': apps}}, filter ] };
-			else filter['_id']= {'$in': apps};
-			
+			if (filter._id) filter = { '$and': [{ '_id': { '$in': apps } }, filter] };
+			else filter['_id'] = { '$in': apps };
+
 			logger.info(`Updated filter :: ${JSON.stringify(filter)}`);
 			_req.swagger.params.filter.value = JSON.stringify(filter);
 

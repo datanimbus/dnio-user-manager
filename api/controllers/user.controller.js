@@ -1565,7 +1565,7 @@ function customCreate(req, res) {
 function createBotKey(req, res) {
 	let data = req.body;
 	let uuid = cacheUtil.uuid();
-	let botId = req.swagger.params._id.value;
+	let botId = req.swagger.params.id.value;
 	let resKeyValue = '';
 	let botData;
 	//condition based -
@@ -1622,7 +1622,7 @@ function endSessionForBotKey(botId, keyId) {
 }
 
 function endBotKeySession(req, res) {
-	let botId = req.swagger.params._id.value;
+	let botId = req.swagger.params.id.value;
 	let data = req.body;
 	if (!data || !data.keyId) return res.status(500).json({
 		message: 'Please provide the Bot\'s keyId'
@@ -1656,7 +1656,7 @@ function endSessionForUser(userObject) {
 
 function updateBotKey(req, res) {
 	let data = req.body;
-	let botId = req.swagger.params._id.value;
+	let botId = req.swagger.params.id.value;
 	let responseObj = null;
 	let endSessionFlag = false;
 	if (data.keyValue) {
@@ -1706,7 +1706,7 @@ function updateBotKey(req, res) {
 }
 
 function disableUser(req, res) {
-	let botId = req.swagger.params._id.value;
+	let botId = req.swagger.params.id.value;
 	let status = (req.swagger.params.userState.value === 'enable') ? true : false;
 	let isBot = (req.swagger.params.userType.value === 'bot') ? true : false;
 	let responseObj = null;
@@ -1753,7 +1753,7 @@ botId - path
 }
 */
 function deleteBotKey(req, res) {
-	let botId = req.swagger.params._id.value;
+	let botId = req.swagger.params.id.value;
 	return crudder.model.findOne({
 		'_id': botId,
 		'bot': true,
@@ -1876,7 +1876,7 @@ function getRolesList(req, res) {
 }
 
 function getRolesType(req, res) {
-	let usrId = req.swagger.params.userId.value;
+	let usrId = req.swagger.params.id.value;
 	let oprtns;
 	let CUD = 0,
 		view = 0;
@@ -2046,7 +2046,7 @@ function getAllRolesofUser(req, res) {
 }
 
 function authType(req, res) {
-	let name = req.swagger.params.userName.value;
+	let name = req.swagger.params.id.value;
 	let authType = null;
 	let resObj = {};
 	let usrObj = null;
@@ -2102,7 +2102,7 @@ function getAppList(usrId) {
 }
 
 function getUserAppList(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.swagger.params.id.value;
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
 	if (req.user.isSuperAdmin) {
@@ -2222,7 +2222,7 @@ function createUserinGroups(req, res) {
 }
 
 function addUserToGroups(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.swagger.params.id.value;
 	let groups = req.body.groups;
 	let groupDocs = null;
 	let data = null;
@@ -2269,7 +2269,7 @@ function addUserToGroups(req, res) {
 }
 
 function removeUserFromGroups(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.swagger.params.id.value;
 	let groups = req.body.groups;
 	return mongoose.model('group').find({
 		_id: {
@@ -2302,7 +2302,7 @@ function removeUserFromGroups(req, res) {
 }
 
 function editAppAdmin(req, res) {
-	let userId = req.swagger.params.userId.value;
+	let userId = req.swagger.params.id.value;
 	logger.debug(`Requested userID : ${userId}`);
 	if (req.user._id === userId) {
 		return res.status(400).json({
@@ -2365,7 +2365,7 @@ function editAppAdmin(req, res) {
 		.then(_d => {
 			docs = _d;
 			return crudder.model.findOne({
-				_id: req.swagger.params.userId.value
+				_id: req.swagger.params.id.value
 			});
 		})
 		.then(data => {
@@ -2390,7 +2390,7 @@ function editAppAdmin(req, res) {
 }
 
 function editSuperAdmin(req, res) {
-	let userId = req.swagger.params.userId.value;
+	let userId = req.swagger.params.id.value;
 	let action = req.swagger.params.action.value;
 	let allApps = [];
 	let diff = [];
@@ -2466,7 +2466,7 @@ function editSuperAdmin(req, res) {
 		})
 		.then(() => {
 			return crudder.model.findOne({
-				_id: req.swagger.params.userId.value
+				_id: req.swagger.params.id.value
 			});
 		})
 		.then(data => {
@@ -2609,7 +2609,7 @@ function closeAllSessionForUser(req, res) {
 }
 
 function addUserToApps(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.swagger.params.id.value;
 	let apps = req.body.apps;
 	crudder.model.findOne({
 		_id: usrId

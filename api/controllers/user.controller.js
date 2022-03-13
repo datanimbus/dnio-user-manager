@@ -3157,7 +3157,7 @@ function userInAppShow(req, res) {
 
 function modifyFilterForGroup(req) {
 	let filter = req.swagger.params.filter.value;
-	let group = req.swagger.params.groupId.value;
+	let group = req.swagger.params.id.value;
 	let app = req.swagger.params.app.value;
 	let botFlag = req.swagger.params.usrType.value == 'bot' ? true : false;
 	if (filter && typeof filter === 'string') {

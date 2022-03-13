@@ -228,6 +228,11 @@ function modifyFilterForApp(req) {
 	req.swagger.params.filter.value = JSON.stringify(filter);
 }
 
+function modifyBodyForApp(req) {
+	let app = req.swagger.params.app.value;
+	req.body.app = app;
+}
+
 function groupInApp(req, res) {
 	modifyFilterForApp(req);
 	crudder.index(req, res);
@@ -242,6 +247,21 @@ function groupInAppCount(req, res) {
 	crudder.count(req, res);
 }
 
+
+function groupInAppCreate(req, res) {
+	modifyBodyForApp(req);
+	crudder.create(req, res);
+}
+
+function groupInAppUpdate(req, res) {
+	modifyBodyForApp(req);
+	crudder.update(req, res);
+}
+function groupInAppDestroy(req, res) {
+	modifyBodyForApp(req);
+	crudder.destroy(req, res);
+}
+
 module.exports = {
 	create: customCreate,
 	index: crudder.index,
@@ -249,7 +269,10 @@ module.exports = {
 	destroy: crudder.destroy,
 	update: customUpdate,
 	count: crudder.count,
-	groupInApp: groupInApp,
-	groupInAppCount: groupInAppCount,
-	groupInAppShow: groupInAppShow
+	groupInApp,
+	groupInAppCount,
+	groupInAppShow,
+	groupInAppCreate,
+	groupInAppUpdate,
+	groupInAppDestroy
 };

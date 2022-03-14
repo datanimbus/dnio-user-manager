@@ -8,110 +8,87 @@ const logger = global.logger;
 global.USER_TOKEN = JWT.sign({ name: 'USER', _id: 'admin', isSuperAdmin: true }, config.TOKEN_SECRET);
 
 const permittedUrls = [
-	'/rbac/login',
-	'/rbac/ldap/login',
-	'/rbac/azure/login',
-	'/rbac/azure/login/callback',
-	'/rbac/azure/userFetch/callback',
-	'/rbac/authType/{userName}',
-	'/rbac/health/live',
-	'/rbac/health/ready'
+	'/rbac/auth/authType/{id}',
+	'/rbac/auth/login',
+	'/rbac/auth/azure/login/callback',
+	'/rbac/auth/azure/login',
+	'/rbac/auth/ldap/login',
+	'/rbac/auth/authType/{id}',
+	'/rbac/internal/health/live',
+	'/rbac/internal/health/ready',
 ];
 
 const onlyAuthUrls = [
-	'/rbac/usr/app/{app}/{userId}',
-	'/rbac/usr/{id}/allRoles',
-	'/rbac/usr/hb',
-	'/rbac/filter',
-	'/rbac/filter/{id}',
-	'/rbac/preferences',
-	'/rbac/preferences/{id}',
-	'/rbac/preferences/audit',
-	'/rbac/preferences/audit/count',
-	'/rbac/logout',
-	'/rbac/validate',
-	'/rbac/check',
-	'/rbac/extend',
-	'/rbac/refresh',
-	'/rbac/usr/reviewpermissionservice/{entity}',
+	'/rbac/data/{id}/allRoles',
+	'/rbac/data/{id}/appList',
+	'/rbac/data/preferences',
+	'/rbac/data/preferences/{id}',
+	'/rbac/data/filter',
+	'/rbac/data/filter/{id}',
+	'/rbac/auth/logout',
+	'/rbac/auth/change-password',
+	'/rbac/auth/validate',
+	'/rbac/auth/check',
+	'/rbac/auth/extend',
+	'/rbac/auth/refresh',
+	'/rbac/auth/hb',
 ];
 
 const internalUrls = [
-	'/rbac/service/{id}',
-	'/rbac/library/{id}',
-	'/rbac/partner/{id}',
-	'/rbac/flow/{id}',
-	'/rbac/nanoservice/{id}',
-	'/rbac/dataformat/{id}',
-	'/rbac/role',
-	'/rbac/role/{id}',
-	'/rbac/role/updateDefinition/{id}',
-	'/rbac/role/name/{id}',
-	'/rbac/{app}/keys'
+
 ];
 
 const adminOnlyUrls = [
-	'/rbac/app/{id}',
-	'/rbac/app',
+	'/rbac/{app}/keys',
+	'/rbac/{app}/app/{id}',
+	'/rbac/{app}/app',
+	'/rbac/{app}/app/ipwhitelisting',
 ];
 
 const superAdminOnlyUrls = [
-	'/rbac/app/audit',
-	'/rbac/app/audit/count',
-	'/rbac/app/ipwhitelisting',
-	'/rbac/usr/count',
-	'/rbac/usr',
-	'/rbac/usr/bulkCreate/{fileId}/validate',
-	'/rbac/usr/bulkCreate/{fileId}',
-	'/rbac/usr/bulkCreate/{fileId}/download',
-	'/rbac/usr/bulkCreate/{fileId}/count',
-	'/rbac/usr/bulkCreate/{fileId}/userList',
-	'/rbac/usr/{usrId}/appList',
-	'/rbac/usr/{id}/password',
-	'/rbac/usr/{usrId}/addToApps',
-	'/rbac/usr/{userId}/operations',
-	'/rbac/usr/audit',
-	'/rbac/usr/audit/count',
-	'/rbac/{idType}/roles',
-	'/rbac/usr/{userId}/superAdmin/{action}',
+	'/rbac/admin/app',
+	'/rbac/admin/app/{id}',
+	'/rbac/admin/user',
+	'/rbac/admin/user/utils/count',
+	'/rbac/admin/user/{id}',
+	'/rbac/admin/user/{id}/superAdmin/{action}',
+	'/rbac/admin/group/count',
+	'/rbac/admin/group',
+	'/rbac/admin/group/{id}'
 ];
 
 const commonUrls = [
-	'/rbac/app',
-	'/rbac/app/{id}',
-	'/rbac/usr/app/{app}',
-	'/rbac/usr/app/{app}/{userId}',
-	'/rbac/usr/app/{app}/count',
-	'/rbac/usr/app/{app}/create',
-	'/rbac/usr/app/{app}/distinctAttributes',
-	'/rbac/usr/reviewpermission/{app}',
-	'/rbac/usr/{username}/{app}/import',
-	'/rbac/usr/{id}',
-	'/rbac/usr/{id}/closeAllSessions',
-	'/rbac/usr/{id}/reset',
-	'/rbac/usr/{userId}/appAdmin/{action}',
-	'/rbac/usr/{usrId}/addToGroups',
-	'/rbac/usr/{usrId}/removeFromGroups',
-	'/rbac/bot/app/{app}',
-	'/rbac/bot/app/{app}/count',
-	'/rbac/bot/botKey/{_id}',
-	'/rbac/bot/botKey/session/{_id}',
-	'/rbac/{userType}/{_id}/status/{userState}',
-	'/rbac/group/count',
-	'/rbac/group',
-	'/rbac/group/{id}',
-	'/rbac/{app}/group',
+	'/rbac/{app}/user',
+	'/rbac/{app}/user/utils/count',
+	'/rbac/{app}/user/{id}',
+	'/rbac/{app}/user/utils/bulkCreate/{fileId}/validate',
+	'/rbac/{app}/user/utils/bulkCreate/{fileId}',
+	'/rbac/{app}/user/utils/bulkCreate/{fileId}/download',
+	'/rbac/{app}/user/utils/bulkCreate/{fileId}/count',
+	'/rbac/{app}/user/utils/bulkCreate/{fileId}/userList',
+	'/rbac/{app}/user/utils/distinctAttributes/{id}',
+	'/rbac/{app}/user/utils/closeAllSessions/{id}',
+	'/rbac/{app}/user/utils/appAdmin/{id}/{action}',
+	'/rbac/{app}/user/utils/reset/{id}',
+	'/rbac/{app}/user/utils/addToGroups/{id}',
+	'/rbac/{app}/user/utils/removeFromGroups/{id}',
+	'/rbac/{app}/user/utils/addToApps/{id}',
+	'/rbac/{app}/user/utils/import/{id}',
+	'/rbac/{app}/{userType}/{id}/status/{userState}',
+	'/rbac/{app}/bot',
+	'/rbac/{app}/bot/utils/count',
+	'/rbac/{app}/bot/{id}',
+	'/rbac/{app}/bot/utils/botKey/{id}',
+	'/rbac/{app}/bot/utils/botKey/session/{id}',
 	'/rbac/{app}/group/count',
+	'/rbac/{app}/group',
 	'/rbac/{app}/group/{id}',
-	'/rbac/{app}/group/{groupId}/{usrType}/count',
-	'/rbac/{app}/group/{groupId}/{usrType}',
-	'/rbac/app/{app}/bookmark/count',
-	'/rbac/app/{app}/bookmark',
-	'/rbac/app/{app}/bookmark/bulkDelete',
-	'/rbac/app/{app}/bookmark/{id}',
-	'/rbac/app/{app}/removeUsers',
-	'/rbac/app/{app}/removeBots',
-	'/rbac/app/{app}/addUsers',
+	'/rbac/{app}/group/{id}/{usrType}/count',
+	'/rbac/{app}/group/{id}/{usrType}',
+	'/rbac/{app}/bookmark/count',
+	'/rbac/{app}/bookmark',
+	'/rbac/{app}/bookmark/bulkDelete',
+	'/rbac/{app}/bookmark/{id}',
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
@@ -137,10 +114,6 @@ router.use((req, res, next) => {
 	if (!req.locals.app && matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
 		if (params && params['{app}']) req.locals.app = params['{app}'];
-	}
-
-	if (!req.locals.app && compareURL('/rbac/usr/{userId}/appAdmin/{action}', req.path) && req.body.apps) {
-		req.locals.app = req.body.apps[0];
 	}
 
 	// Check if user is an app admin or super admin.
@@ -189,13 +162,6 @@ router.use((req, res, next) => {
 			return next();
 		}
 
-		if (compareURL('/rbac/app/', req.path)) {
-			return next();
-		}
-		if (compareURL('/rbac/app/{id}', req.path)) {
-			return next();
-		}
-
 		if (!req.locals.app) {
 			return res.status(400).json({ message: 'App value needed for this API' });
 		}
@@ -241,28 +207,25 @@ function getUrlParams(tempUrl, url) {
 }
 
 function canAccessPath(req) {
-	if (compareURL('/rbac/usr/app/{app}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/app/{app}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/app/{app}/create', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/create', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/app/{app}/distinctAttributes', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/distinctAttributes', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/reviewpermission/{app}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/import/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/{username}/{app}/import', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/{id}/closeAllSessions', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
-		return true;
-	}
-	if (compareURL('/rbac/usr/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {
 		if (req.method === 'PUT' || req.method === 'POST' || req.method === 'DELETE') {
 			if (_.intersectionWith(req.user.appPermissions, ['PMU', 'PMB'], comparator).length > 0) {
 				return true;
@@ -271,60 +234,43 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/rbac/usr/{id}/reset', req.path) && _.intersection(req.user.appPermissions, ['PMUBU']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/reset/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/{userId}/appAdmin/{action}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/appAdmin/{id}/{action}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/{usrId}/addToGroups', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/addToGroups/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/usr/{usrId}/removeFromGroups', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/removeFromGroups/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/bot/app/{app}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/bot', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/bot/app/{app}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/bot/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/bot/botKey/{_id}', req.path) && _.intersection(req.user.appPermissions, ['PMBA']).length > 0) {
+	if (compareURL('/rbac/{app}/bot/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/bot/botKey/session/{_id}', req.path) && _.intersection(req.user.appPermissions, ['PMBA']).length > 0) {
+	if (compareURL('/rbac/{app}/bot/utils/botKey/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMBA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{userType}/{_id}/status/{userState}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
+	if (compareURL('/rbac/{app}/bot/utils/botKey/session/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMBA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{usrType}/app/{app}/{groupId}/count', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
+	if (compareURL('/rbac/{app}/{userType}/{id}/status/{userState}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/group/{usrType}/{groupId}/count', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{usrType}/app/{app}/{groupId}', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/group/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
-		return true;
-	}
-	if (compareURL('/rbac/group', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
-		if ((req.method === 'POST')) {
-			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return true;
-	}
-	if (compareURL('/rbac/group/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
-		if ((req.method === 'PUT' || req.method === 'DELETE')) {
-			if (_.intersectionWith(req.user.appPermissions, ['PMG'], comparator).length > 0) {
-				return true;
-			} else {
-				return false;
-			}
-		}
+	if (compareURL('/rbac/{app}/group/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/group', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
@@ -347,34 +293,10 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/rbac/{app}/group/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/group/{id}/{usrType}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/group/{groupId}/{usrType}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
-		return true;
-	}
-	if (compareURL('/rbac/{app}/group/{groupId}/{usrType}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
-		return true;
-	}
-	// if (compareURL('/rbac/app/{app}/bookmark/count', req.path) && _.intersection(req.user.appPermissions, ['']).length > 0) {
-	// 	return true;
-	// }
-	// if (compareURL('/rbac/app/{app}/bookmark', req.path) && _.intersection(req.user.appPermissions, ['']).length > 0) {
-	// 	return true;
-	// }
-	// if (compareURL('/rbac/app/{app}/bookmark/bulkDelete', req.path) && _.intersection(req.user.appPermissions, ['']).length > 0) {
-	// 	return true;
-	// }
-	// if (compareURL('/rbac/app/{app}/bookmark/{id}', req.path) && _.intersection(req.user.appPermissions, ['']).length > 0) {
-	// 	return true;
-	// }
-	if (compareURL('/rbac/app/{app}/removeUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
-		return true;
-	}
-	if (compareURL('/rbac/app/{app}/removeBots', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
-		return true;
-	}
-	if (compareURL('/rbac/app/{app}/addUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/group/{id}/{usrType}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
 	return false;

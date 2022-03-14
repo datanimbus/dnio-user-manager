@@ -1868,68 +1868,6 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  /data/preferences/audit:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve the audit logs of preferences
-      operationId: PreferencesAudit
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: page
-        in: query
-        type: integer
-        description: Page number of the request
-      - name: count
-        in: query
-        type: integer
-        description: Number of records per page
-      - name: filter
-        in: query
-        type: string
-        description: Filter records based on certain fields
-      - name: select
-        in: query
-        type: string
-        description: Comma seperated fields to be displayed
-      - name: sort
-        in: query
-        type: string
-        description: sort parameter
-      - name: search
-        in: query
-        type: string
-        description: String to search across all field
-      responses:
-        '200':
-          description: audit of document
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
-  /data/preferences/audit/count:
-    x-swagger-router-controller: controller
-    get:
-      description: Retrieve the count of audit logs of preferences
-      operationId: PreferencesAuditCount
-      parameters:
-      - name: filter
-        in: query
-        type: string
-        description: Filter records based on certain fields
-      responses:
-        '200':
-          description: count of audit logs
-        '400':
-          description: Bad parameters
-        '404':
-          description: No records to list with the given parameter set.
-        '500':
-          description: Internal server error
   /data/filter:
     x-swagger-router-controller: controller
     get:
@@ -2773,7 +2711,7 @@ definitions:
         type: string
       fileId:
         type: string
-  BookmarkCreate:
+  BookmarkCreate: 
     required:
       - name
       - url

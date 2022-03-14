@@ -7,7 +7,6 @@ const PerferencesController = require('./preferences.controller.js');
 const GroupController = require('./group.controller.js');
 const ConfigController = require('./config.controller');
 const FilterController = require('./filter.controller');
-const PerferencesAuditController = require('./preferences.audit.controller.js');
 const BulkCreateController = require('./bulkCreate.controller.js');
 const BookmarkController=require('./bookmark.controller.js');
 
@@ -105,8 +104,6 @@ exports.PreferencesList = PerferencesController.index;
 exports.PreferencesShow = PerferencesController.show;
 exports.PreferencesUpdate = PerferencesController.update;
 exports.PreferencesDestroy = PerferencesController.destroy;
-exports.PreferencesAudit = PerferencesAuditController.index;
-exports.PreferencesAuditCount = PerferencesAuditController.count;
 
 //Data Filter API
 exports.FilterCreate = FilterController.create;

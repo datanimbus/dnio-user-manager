@@ -41,17 +41,61 @@ schema.pre('save', function (next) {
 
 schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.preferences'));
 
-schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.preferences.audit',client,'auditQueue'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.preferences.audit', client, 'auditQueue'));
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit',client,'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
 
 var crudder = new SMCrud(schema, 'preference', options);
+
+
+function modifyFilterForApp(req) {
+	let filter = req.swagger.params.filter.value;
+	let app = req.swagger.params.app.value;
+	if (filter && typeof filter === 'string') {
+		filter = JSON.parse(filter);
+	}
+	if (filter && typeof filter === 'object') {
+		filter.app = app;
+	} else {
+		filter = { app };
+	}
+	req.swagger.params.filter.value = JSON.stringify(filter);
+}
+
+function modifyBodyForApp(req) {
+	let app = req.swagger.params.app.value;
+	req.body.app = app;
+}
+
+
+function customCreate(req, res) {
+	modifyBodyForApp(req);
+	crudder.create(req, res);
+}
+function customIndex(req, res) {
+	modifyFilterForApp(req);
+	crudder.index(req, res);
+}
+function customShow(req, res) {
+	modifyFilterForApp(req);
+	crudder.show(req, res);
+}
+function customDestroy(req, res) {
+	modifyBodyForApp(req);
+	crudder.destroy(req, res);
+}
+function customUpdate(req, res) {
+	modifyBodyForApp(req);
+	crudder.update(req, res);
+}
+
+
 module.exports = {
-	create: crudder.create,
-	index: crudder.index,
-	show: crudder.show,
-	destroy: crudder.destroy,
-	update: crudder.update
+	create: customCreate,
+	index: customIndex,
+	show: customShow,
+	destroy: customDestroy,
+	update: customUpdate
 };

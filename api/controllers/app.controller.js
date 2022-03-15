@@ -10,8 +10,6 @@ const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const appInit = require('../../config/apps');
-const appIdMDM = appInit.find(obj => obj.type === 'Management')._id;
-const rolesInit = require('../../config/roles');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
 var userLog = require('./insight.log.controller');
@@ -131,42 +129,25 @@ schema.post('save', function (doc) {
 		const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 		const appInitList = appInit.map(obj => obj._id);
 		if (appInitList.indexOf(doc._id) == -1) {
-			let rolesList = null;
-			if (doc.type === 'Management') rolesList = rolesInit.filter(ob => ob.app == appIdMDM);
-			rolesList = JSON.parse(JSON.stringify(rolesList));
-			let RolesModel = mongoose.model('roles');
-			//Create roles for APP
-			let promiseArr = rolesList.map(obj => {
-				obj.app = doc._id;
-				obj.fields = JSON.stringify(obj.fields);
-				let roleDoc = new RolesModel(obj);
-				return roleDoc.save(doc._req);
+			let GroupModel = mongoose.model('group');
+			let groupDoc = new GroupModel({
+				name: '#',
+				description: 'Default Group for ' + doc._id,
+				app: doc._id,
+				users: [],
+				roles: []
 			});
-			return Promise.all(promiseArr)
-				.then(roles => {
-					roles.forEach(role => logger.info('Roles ' + role.entityName + ' created' + ' on App ' + doc._id));
-					// Create default Group
-					let GroupModel = mongoose.model('group');
-					let groupDoc = new GroupModel({
-						name: '#',
-						description: 'Default Group for ' + doc._id,
-						app: doc._id,
-						users: [],
-						roles: []
+			return groupDoc.save(doc._req).then(() => {
+				if (isK8sEnv) kubeutil.namespace.createNamespace(ns, release)
+					.then(_ => {
+						if (_.statusCode != 200 || _.statusCode != 202) {
+							logger.error(_.message);
+							logger.debug(JSON.stringify(_));
+							return Error(_.message);
+						}
+						return _;
 					});
-					return groupDoc.save(doc._req);
-				})
-				.then(() => {
-					if (isK8sEnv) kubeutil.namespace.createNamespace(ns, release)
-						.then(_ => {
-							if (_.statusCode != 200 || _.statusCode != 202) {
-								logger.error(_.message);
-								logger.debug(JSON.stringify(_));
-								return Error(_.message);
-							}
-							return _;
-						});
-				})
+			})
 				.then(_ => {
 					if (isK8sEnv) {
 						logger.debug(_);
@@ -231,10 +212,6 @@ schema.post('remove', (_doc) => {
 		.catch(err => {
 			logger.error(err.message);
 		});
-	mongoose.model('roles').remove({ app: _doc._id }).then(_d => {
-		logger.info('App deleted removing related roles');
-		logger.debug(_d);
-	});
 	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
 		logger.info('Sec Keys Deleted');
 		logger.debug(_d);

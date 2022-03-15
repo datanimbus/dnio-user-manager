@@ -372,11 +372,6 @@ paths:
               type: "array"
               items:
                 type: "string"
-      - name: app
-        in: path
-        type: string
-        required: true
-        description: App of Data Stack
       - name: id
         in: path
         type: string
@@ -411,11 +406,6 @@ paths:
               type: "array"
               items: 
                 type: "string"
-      - name: app
-        in: path
-        type: string
-        required: true
-        description: App of Data Stack
       - name: id
         in: path
         type: string
@@ -450,11 +440,6 @@ paths:
               type: "array"
               items:
                 type: "string"
-      - name: app
-        in: path
-        type: string
-        required: true
-        description: App of Data Stack
       - name: id
         in: path
         type: string
@@ -489,11 +474,6 @@ paths:
         type: string
         required: true
         description: action grant or revoke
-      - name: app
-        in: path
-        type: string
-        required: true
-        description: App of Data Stack
       - name: data
         in: body
         description: Payload to update a User

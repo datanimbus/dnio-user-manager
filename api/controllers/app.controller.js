@@ -18,7 +18,7 @@ const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
-let appHook = require('../helpers/util/appHooks');
+// let appHook = require('../helpers/util/appHooks');
 var options = {
 	logger: logger,
 	collectionName: 'userMgmt.apps'
@@ -189,9 +189,9 @@ schema.pre('remove', function (next, req) {
 });
 
 //check FLows exist
-schema.pre('remove', appHook.preRemovePMFlows());
+// schema.pre('remove', appHook.preRemovePMFlows());
 
-schema.post('remove', appHook.getPostRemoveHook());
+// schema.post('remove', appHook.getPostRemoveHook());
 
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {

@@ -352,6 +352,162 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error                
+  /admin/user/utils/addToGroups/{id}:
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to group list
+      operationId: UserAddToGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            groups:
+              type: "array"
+              items:
+                type: "string"
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error 
+  /admin/user/utils/removeFromGroups/{id}:
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to group list
+      operationId: UserRemoveFromGroup
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            groups:
+              type: "array"
+              items: 
+                type: "string"
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                            
+  /admin/user/utils/addToApps/{id}:
+    x-swagger-router-controller: controller
+    put:
+      description: Add a user to App
+      operationId: UserAddToApps
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to reset a User
+        schema: 
+          type: "object"
+          properties:
+            apps:
+              type: "array"
+              items:
+                type: "string"
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error                 
+  /admin/user/utils/appAdmin/{id}/{action}:
+    x-swagger-router-controller: controller
+    put:
+      description: Update user's appAdmin access
+      operationId: UserEditAppAdmin
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      - name: action
+        in: path
+        type: string
+        required: true
+        description: action grant or revoke
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          type: 'object'  
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error        
   /admin/group/count:
     x-swagger-router-controller: controller
     get:

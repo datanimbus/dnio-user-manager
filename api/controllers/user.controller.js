@@ -2647,6 +2647,7 @@ function addUserToApps(req, res) {
 			}
 		})
 		.catch(err => {
+			logger.error(err);
 			res.status(500).json({
 				message: err.message
 			});

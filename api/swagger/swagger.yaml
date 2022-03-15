@@ -590,7 +590,7 @@ paths:
     x-swagger-router-controller: controller
     get:
       description: Retrieve a list of User
-      operationId: UserCount
+      operationId: UserInAppCount
       parameters:
       - name: authorization
         in: header
@@ -885,7 +885,7 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error          
-  /{app}/user/utils/distinctAttributes/{id}:
+  /{app}/user/utils/distinctAttributes:
     x-swagger-router-controller: controller
     get:
       description: Retrieve the distinct attributes of the users in the app
@@ -895,11 +895,6 @@ paths:
         in: header
         type: string
         description: The JWT token for req. validation
-      - name: id
-        in: path
-        type: string
-        required: true
-        description: id of user
       - name: app
         in: path
         required: true
@@ -1242,6 +1237,128 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error        
+  /{app}/bot/utils/count:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: BotInAppCount
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: filter
+        in: query
+        type: string
+        description: Filter results based on certain fields
+      - name: apps
+        in: query
+        type: string
+        description: Filter user on the basis of apps
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+  /{app}/bot/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of User
+      operationId: BotInAppShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    put:
+      description: Update User
+      operationId: UserUpdate
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: data
+        in: body
+        description: Payload to update a User
+        schema:
+          $ref: '#/definitions/Userupdate'
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+    delete:
+      description: Delete a new User
+      operationId: UserDestroy
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: App of Data Stack
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the User to be updated
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
   /{app}/bot/utils/botKey/{id}:
     x-swagger-router-controller: controller
     post:
@@ -2073,6 +2190,61 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
+  /data/app/{id}:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of App
+      operationId: AppShow
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
+  /data/app:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve a list of App
+      operationId: AppList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: select
+        in: query
+        type: string
+        description: Comma seperated fields to be displayed
+      - name: filter
+        in: query
+        type: string
+        description: Id of the object to be fetched
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error
   /auth/authType/{id}:
     x-swagger-router-controller: controller
     get:
@@ -2315,7 +2487,7 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error 
-  /{app}/bookmark/count:
+  /{app}/bookmark/utils/count:
     x-swagger-router-controller: controller
     get:
       description: Retrieve the count of bookmarks

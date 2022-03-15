@@ -73,6 +73,9 @@ exports.disableUser = UserController.disableUser;
 //Bots Manage
 exports.BotInApp = UserController.botInApp;
 exports.BotInAppCount = UserController.botInAppCount;
+exports.BotInAppShow = UserController.userInAppShow;
+
+
 exports.createBotKey = UserController.createBotKey;
 exports.updateBotKey = UserController.updateBotKey;
 exports.deleteBotKey = UserController.deleteBotKey;
@@ -80,9 +83,9 @@ exports.endBotKeySession = UserController.endBotKeySession;
 
 
 //Groups Manage in an App
-exports.GroupInApp = GroupController.groupInApp;
-exports.GroupInAppShow = GroupController.groupInAppShow;
-exports.GroupInAppCount = GroupController.groupInAppCount;
+exports.groupInApp = GroupController.groupInApp;
+exports.groupInAppShow = GroupController.groupInAppShow;
+exports.groupInAppCount = GroupController.groupInAppCount;
 exports.GroupCreate = GroupController.groupInAppCreate;
 exports.GroupUpdate = GroupController.groupInAppUpdate;
 exports.GroupDestroy = GroupController.groupInAppDestroy;

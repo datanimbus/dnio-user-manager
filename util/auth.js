@@ -19,6 +19,8 @@ const permittedUrls = [
 ];
 
 const onlyAuthUrls = [
+	'/rbac/data/app',
+	'/rbac/data/app/{id}',
 	'/rbac/data/{id}/allRoles',
 	'/rbac/data/{id}/appList',
 	'/rbac/data/preferences',
@@ -85,7 +87,7 @@ const commonUrls = [
 	'/rbac/{app}/group/{id}',
 	'/rbac/{app}/group/{id}/{usrType}/count',
 	'/rbac/{app}/group/{id}/{usrType}',
-	'/rbac/{app}/bookmark/count',
+	'/rbac/{app}/bookmark/utils/count',
 	'/rbac/{app}/bookmark',
 	'/rbac/{app}/bookmark/bulkDelete',
 	'/rbac/{app}/bookmark/{id}',

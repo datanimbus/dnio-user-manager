@@ -52,26 +52,26 @@ var crudder = new SMCrud(schema, 'preference', options);
 
 function modifyFilterForApp(req) {
 	let filter = req.swagger.params.filter.value;
-	let app = req.swagger.params.app.value;
+	let userId = req.user._id;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
 	if (filter && typeof filter === 'object') {
-		filter.app = app;
+		filter.userId = userId;
 	} else {
-		filter = { app };
+		filter = { userId };
 	}
 	req.swagger.params.filter.value = JSON.stringify(filter);
 }
 
-function modifyBodyForApp(req) {
-	let app = req.swagger.params.app.value;
-	req.body.app = app;
-}
+// function modifyBodyForApp(req) {
+// 	let app = req.swagger.params.app.value;
+// 	req.body.app = app;
+// }
 
 
 function customCreate(req, res) {
-	modifyBodyForApp(req);
+	// modifyBodyForApp(req);
 	crudder.create(req, res);
 }
 function customIndex(req, res) {
@@ -83,11 +83,11 @@ function customShow(req, res) {
 	crudder.show(req, res);
 }
 function customDestroy(req, res) {
-	modifyBodyForApp(req);
+	// modifyBodyForApp(req);
 	crudder.destroy(req, res);
 }
 function customUpdate(req, res) {
-	modifyBodyForApp(req);
+	// modifyBodyForApp(req);
 	crudder.update(req, res);
 }
 

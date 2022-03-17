@@ -711,8 +711,15 @@ paths:
       - name: data
         in: body
         description: Payload to create a User
-        schema:
-          $ref: '#/definitions/Usercreate'
+        schema: 
+          type: "object"
+          properties:
+            user:
+              type: "object"
+            groups:
+              type: "array"
+              items:
+                type: "string"
       responses:
         '200':
           description: List of the entites

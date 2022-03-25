@@ -49,7 +49,7 @@ exports.GroupDestroy = GroupController.destroy;
 exports.GroupCount = GroupController.count;
 
 
-// exports.AppRemoveUsers = AppController.removeUserFromApp;
+exports.AppRemoveUsers = AppController.removeUserFromApp;
 // exports.AppRemoveBots = AppController.removeBotFromApp;
 // exports.AppAddUsers = AppController.addUsersToApp;
 

@@ -547,7 +547,7 @@ e.validateUser = (req, usrIds, app, flag) => {
 			if (!flag) newUsrId = usrs.filter(usr => !usr.isSuperAdmin);
 			else newUsrId = usrs;
 			pr = newUsrId.map(usrId => {
-				let url = config.baseUrlSM + `/validateUserDeletion/${app}/${usrId._id}`;
+				let url = config.baseUrlSM + `/${app}/internal/validateUserDeletion/${usrId._id}`;
 				return e.sendRequest(url)
 					.then(res => {
 						if (res.status != 200) {

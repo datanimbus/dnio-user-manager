@@ -1229,45 +1229,45 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error                            
-  /{app}/user/utils/addToApps/{id}:
-    x-swagger-router-controller: controller
-    put:
-      description: Add a user to App
-      operationId: UserAddToApps
-      parameters:
-      - name: authorization
-        in: header
-        type: string
-        description: The JWT token for req. validation
-      - name: data
-        in: body
-        description: Payload to reset a User
-        schema: 
-          type: "object"
-          properties:
-            apps:
-              type: "array"
-              items:
-                type: "string"
-      - name: app
-        in: path
-        type: string
-        required: true
-        description: App of Data Stack
-      - name: id
-        in: path
-        type: string
-        required: true
-        description: Id of the User to be updated
-      responses:
-        '200':
-          description: List of the entites
-        '400':
-          description: Bad parameters
-        '404':
-          description: No results to list with the given parameter set.
-        '500':
-          description: Internal server error                 
+  # /{app}/user/utils/addToApps/{id}:
+  #   x-swagger-router-controller: controller
+  #   put:
+  #     description: Add a user to App
+  #     operationId: UserAddToApps
+  #     parameters:
+  #     - name: authorization
+  #       in: header
+  #       type: string
+  #       description: The JWT token for req. validation
+  #     - name: data
+  #       in: body
+  #       description: Payload to reset a User
+  #       schema: 
+  #         type: "object"
+  #         properties:
+  #           apps:
+  #             type: "array"
+  #             items:
+  #               type: "string"
+  #     - name: app
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: App of Data Stack
+  #     - name: id
+  #       in: path
+  #       type: string
+  #       required: true
+  #       description: Id of the User to be updated
+  #     responses:
+        # '200':
+        #   description: List of the entites
+        # '400':
+        #   description: Bad parameters
+        # '404':
+        #   description: No results to list with the given parameter set.
+        # '500':
+          # description: Internal server error                 
   /{app}/user/utils/import/{id}:
     x-swagger-router-controller: controller
     put:
@@ -1288,6 +1288,40 @@ paths:
         type: string
         required: true
         description: app name
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error  
+  /{app}/user/utils/removeUsers:
+    x-swagger-router-controller: controller
+    put:
+      description: Removes user from an app
+      operationId: AppRemoveUsers
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name  
+      - name: data
+        in: body
+        description: Id of the users to be removed
+        schema: 
+          type: "object"
+          properties:
+            userIds:
+              type: "array"
+              items:
+                type: "string"          
       responses:
         '200':
           description: List of the entites

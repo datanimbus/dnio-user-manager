@@ -3003,8 +3003,8 @@ function bulkAddUserDownload(_req, _res) {
 }
 
 function importUserToApp(req, res) {
-	let username = req.swagger.params.username.value;
-	let app = req.swagger.params.app.value;
+	let username = req.swagger.params.id.value;
+	let apps = req.body.apps || [req.swagger.params.app.value];
 	let groups = req.body.groups;
 	let usrdoc = null;
 	let usernameRegex = new RegExp('^' + username + '$', 'i');
@@ -3026,17 +3026,19 @@ function importUserToApp(req, res) {
 					}
 				}, {
 					name: '#',
-					app: app
+					app: {
+						'$in': apps
+					}
 				}]
 			});
 		})
 		.then(_grps => {
-			if (_grps.some(_g => _g.app != app)) {
-				res.status(400).json({
-					message: 'Groups are not present in app ' + app
-				});
-				return;
-			}
+			// if (_grps.some(_g => _g.app != app)) {
+			// 	res.status(400).json({
+			// 		message: 'Groups are not present in app ' + app
+			// 	});
+			// 	return;
+			// }
 			let promises = _grps.map(_grp => {
 				_grp.users.push(usrdoc._id);
 				return _grp.save(req);
@@ -3048,9 +3050,11 @@ function importUserToApp(req, res) {
 				delete usrdoc.salt;
 				delete usrdoc.password;
 				userLog.addUserToApp(req, res, usrdoc);
-				dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
-					app: app
-				}));
+				apps.forEach(app => {
+					dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
+						app: app
+					}));
+				});
 				res.json({
 					user: usrdoc,
 					groups: _d.map(_o => _o._id)

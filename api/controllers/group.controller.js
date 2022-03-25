@@ -239,7 +239,7 @@ function groupInApp(req, res) {
 }
 
 function groupInAppShow(req, res) {
-	modifyFilterForApp(req);
+	//modifyFilterForApp(req);
 	crudder.show(req, res);
 }
 function groupInAppCount(req, res) {

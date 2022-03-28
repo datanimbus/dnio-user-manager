@@ -19,11 +19,11 @@ function create() {
 					txnid: mainData.txnId,
 					_metadata: { 'deleted': false, 'createdAt': new Date(), 'lastUpdated': new Date() },
 					resStatusCode: 200,
-					userId: req ? req.user._id : mainData.user,
+					userId: req && req.user ? req.user._id : mainData.user,
 					apps: app
 				}
 			};
-			return getUserDetails(req ? req.user._id : mainData.user)
+			return getUserDetails(req && req.user ? req.user._id : mainData.user)
 				.then(data => {
 					if (newData.name != '#' && data) {
 						logger.info('pushing in queue');

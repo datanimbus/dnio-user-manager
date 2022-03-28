@@ -111,9 +111,11 @@ schema.pre('save', function (next, req) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
 	const headers = {};
-	const headersLen = req.rawHeaders.length;
-	for (let index = 0; index < headersLen; index += 2) {
-		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+	if (req && req.rawHeaders) {
+		const headersLen = req.rawHeaders.length;
+		for (let index = 0; index < headersLen; index += 2) {
+			headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+		}
 	}
 	this._req.headers = headers;
 	next();

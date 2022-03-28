@@ -355,13 +355,11 @@ e.init = () => {
 								const keyDoc = new keysModel(body);
 								return keyDoc.save();
 							})
-							.then(
-								() => {
-									logger.info('Security key created');
-								}, () => {
-									logger.error('Security key creation failed');
-								}
-							);
+							.then(() => {
+								logger.info('Security key created');
+							}).catch(err => {
+								logger.error('Security key creation failed', err);
+							});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());
 				} else _resolve();

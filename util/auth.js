@@ -77,7 +77,8 @@ const commonUrls = [
 	// '/rbac/{app}/user/utils/addToApps/{id}',
 	'/rbac/{app}/user/utils/import/{id}',
 	'/rbac/{app}/user/utils/removeUsers',
-	'/rbac/{app}/{userType}/{id}/status/{userState}',
+	'/rbac/{app}/user/utils/removeBots',
+	'/rbac/{app}/{userType}/utils/status/{id}/{userState}',
 	'/rbac/{app}/bot',
 	'/rbac/{app}/bot/utils/count',
 	'/rbac/{app}/bot/{id}',
@@ -225,7 +226,10 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/user/utils/import/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/user/utils/removeUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/removeUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/removeBots', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
@@ -267,7 +271,7 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/bot/utils/botKey/session/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMBA']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/{userType}/{id}/status/{userState}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
+	if (compareURL('/rbac/{app}/{userType}/utils/status/{id}/{userState}', req.path) && _.intersection(req.user.appPermissions, ['PMUBU', 'PMBBU']).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/group/{usrType}/{groupId}/count', req.path) && _.intersection(req.user.appPermissions, ['PMUG']).length > 0) {

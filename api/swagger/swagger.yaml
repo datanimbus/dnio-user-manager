@@ -1331,7 +1331,41 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error  
-  /{app}/{userType}/{id}/status/{userState}:
+  /{app}/user/utils/removeBots:
+    x-swagger-router-controller: controller
+    put:
+      description: Removes bots from an app
+      operationId: AppRemoveBots
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for req. validation
+      - name: app
+        in: path
+        type: string
+        required: true
+        description: app name  
+      - name: data
+        in: body
+        description: Id of the Bots to be removed
+        schema: 
+          type: "object"
+          properties:
+            userIds:
+              type: "array"
+              items:
+                type: "string"          
+      responses:
+        '200':
+          description: List of the entites
+        '400':
+          description: Bad parameters
+        '404':
+          description: No results to list with the given parameter set.
+        '500':
+          description: Internal server error   
+  /{app}/{userType}/utils/status/{id}/{userState}:
     x-swagger-router-controller: controller
     put:
       description: End a new bot key

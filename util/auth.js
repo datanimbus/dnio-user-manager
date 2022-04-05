@@ -37,11 +37,10 @@ const onlyAuthUrls = [
 ];
 
 const internalUrls = [
-
+	'/rbac/{app}/keys',
 ];
 
 const adminOnlyUrls = [
-	'/rbac/{app}/keys',
 	'/rbac/{app}/app/{id}',
 	'/rbac/{app}/app',
 	'/rbac/{app}/app/ipwhitelisting',

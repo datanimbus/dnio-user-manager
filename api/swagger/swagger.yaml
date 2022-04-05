@@ -2829,7 +2829,7 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
-  /{app}/bookmark/bulkDelete:
+  /{app}/bookmark/utils/bulkDelete:
     x-swagger-router-controller: controller
     delete:
       description: Delete many bookmark

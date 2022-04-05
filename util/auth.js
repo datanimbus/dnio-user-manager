@@ -91,7 +91,7 @@ const commonUrls = [
 	'/rbac/{app}/group/{id}/{usrType}',
 	'/rbac/{app}/bookmark/utils/count',
 	'/rbac/{app}/bookmark',
-	'/rbac/{app}/bookmark/bulkDelete',
+	'/rbac/{app}/bookmark/utils/bulkDelete',
 	'/rbac/{app}/bookmark/{id}',
 ];
 

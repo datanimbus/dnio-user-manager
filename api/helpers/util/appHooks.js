@@ -107,4 +107,23 @@ e.preRemovePMFlows = function () {
 
 };
 
+e.preRemovePMFaas = function () {
+	return function (next, req) {
+		let self = this;
+		let url = config.baseUrlPM + '/' + self._id + '/faas';
+		let qs = { filter: { status: { $eq: 'Active' }, 'app': self._id }, select: 'name' };
+		
+		return e.sendRequest(url, 'GET', qs, null, req)
+			.then(_body => {
+				if (_body.length === 0) next();
+				else {
+					logger.debug(JSON.stringify(_body));
+					next(new Error( _body.map(_b => _b.name) + ' functions are running. Please stop them before deleting app.' ));
+				}
+			})
+			.catch(err => next(err));
+	};
+
+};
+
 module.exports = e;

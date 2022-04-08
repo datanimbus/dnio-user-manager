@@ -18,7 +18,7 @@ const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
-// let appHook = require('../helpers/util/appHooks');
+let appHook = require('../helpers/util/appHooks');
 var options = {
 	logger: logger,
 	collectionName: 'userMgmt.apps'
@@ -190,6 +190,7 @@ schema.pre('remove', function (next, req) {
 
 //check FLows exist
 // schema.pre('remove', appHook.preRemovePMFlows());
+schema.pre('remove', appHook.preRemovePMFaas());
 
 // schema.post('remove', appHook.getPostRemoveHook());
 
@@ -205,6 +206,20 @@ schema.post('remove', (_doc) => {
 				logger.info('Unable to delete kubernetes namespace :: ' + ns);
 			});
 	}
+	mongoose.model('services').remove({ app: _doc._id }).then(_d => {
+		logger.info('App deleted removing related services');
+		logger.debug(_d);
+	})
+		.catch(err => {
+			logger.error(err.message);
+		});
+	mongoose.model('faas').remove({ app: _doc._id }).then(_d => {
+		logger.info('App deleted removing related functions');
+		logger.debug(_d);
+	})
+		.catch(err => {
+			logger.error(err.message);
+		});
 	mongoose.model('group').remove({ app: _doc._id }).then(_d => {
 		logger.info('App deleted removing related Groups');
 		logger.debug(_d);
@@ -445,7 +460,7 @@ e.customDestroy = (req, res) => {
 
 	if (!req.user.isSuperAdmin) return res.status(403).json({ message: 'Current user does not have permission to delete app' });
 	var options = {
-		url: config.baseUrlSM + '/service',
+		url: config.baseUrlSM + `/${appName}/service`,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -457,6 +472,7 @@ e.customDestroy = (req, res) => {
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
+
 	request(options, function (err, newres, body) {
 		if (err) {
 			logger.error(err.message);

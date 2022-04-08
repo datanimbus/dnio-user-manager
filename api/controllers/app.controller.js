@@ -206,20 +206,6 @@ schema.post('remove', (_doc) => {
 				logger.info('Unable to delete kubernetes namespace :: ' + ns);
 			});
 	}
-	mongoose.model('services').remove({ app: _doc._id }).then(_d => {
-		logger.info('App deleted removing related services');
-		logger.debug(_d);
-	})
-		.catch(err => {
-			logger.error(err.message);
-		});
-	mongoose.model('faas').remove({ app: _doc._id }).then(_d => {
-		logger.info('App deleted removing related functions');
-		logger.debug(_d);
-	})
-		.catch(err => {
-			logger.error(err.message);
-		});
 	mongoose.model('group').remove({ app: _doc._id }).then(_d => {
 		logger.info('App deleted removing related Groups');
 		logger.debug(_d);
@@ -252,14 +238,23 @@ schema.post('remove', (_doc) => {
 		});
 });
 
-// schema.post('remove', (doc) => {
-// 	let appName = doc._id;
-// 	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-// 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-// 	}).catch(err => {
-// 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-// 	});
-// });
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlSM + `/${appName}/internal/services`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App Services are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing Services of App ' + doc._id, err);
+	});
+});
+
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlPM + `/app/internal/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App B2B Objects are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing B2b Objects of App ' + doc._id, err);
+	});
+});
 
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);

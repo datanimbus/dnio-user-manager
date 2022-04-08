@@ -18,7 +18,7 @@ const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
 let release = process.env.RELEASE;
 const request = require('request');
-// let appHook = require('../helpers/util/appHooks');
+let appHook = require('../helpers/util/appHooks');
 var options = {
 	logger: logger,
 	collectionName: 'userMgmt.apps'
@@ -190,6 +190,7 @@ schema.pre('remove', function (next, req) {
 
 //check FLows exist
 // schema.pre('remove', appHook.preRemovePMFlows());
+schema.pre('remove', appHook.preRemovePMFaas());
 
 // schema.post('remove', appHook.getPostRemoveHook());
 
@@ -237,14 +238,23 @@ schema.post('remove', (_doc) => {
 		});
 });
 
-// schema.post('remove', (doc) => {
-// 	let appName = doc._id;
-// 	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-// 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-// 	}).catch(err => {
-// 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-// 	});
-// });
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlSM + `/${appName}/internal/services`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App Services are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing Services of App ' + doc._id, err);
+	});
+});
+
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlPM + `/app/internal/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App B2B Objects are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing B2b Objects of App ' + doc._id, err);
+	});
+});
 
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
@@ -445,7 +455,7 @@ e.customDestroy = (req, res) => {
 
 	if (!req.user.isSuperAdmin) return res.status(403).json({ message: 'Current user does not have permission to delete app' });
 	var options = {
-		url: config.baseUrlSM + '/service',
+		url: config.baseUrlSM + `/${appName}/service`,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -457,6 +467,7 @@ e.customDestroy = (req, res) => {
 		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
+
 	request(options, function (err, newres, body) {
 		if (err) {
 			logger.error(err.message);

@@ -240,7 +240,7 @@ schema.post('remove', (_doc) => {
 
 schema.post('remove', (doc) => {
 	let appName = doc._id;
-	appHook.sendRequest(config.baseUrlSM + `/${appName}/internal/services`, 'DELETE', null, null, doc._req).then(() => {
+	appHook.sendRequest(config.baseUrlSM + `/${appName}/internal/app`, 'DELETE', null, null, doc._req).then(() => {
 		logger.debug(doc._id + 'App Services are deleted.');
 	}).catch(err => {
 		logger.error('Error in removing Services of App ' + doc._id, err);
@@ -249,7 +249,7 @@ schema.post('remove', (doc) => {
 
 schema.post('remove', (doc) => {
 	let appName = doc._id;
-	appHook.sendRequest(config.baseUrlPM + `/app/internal/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+	appHook.sendRequest(config.baseUrlPM + `/internal/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
 		logger.debug(doc._id + 'App B2B Objects are deleted.');
 	}).catch(err => {
 		logger.error('Error in removing B2b Objects of App ' + doc._id, err);

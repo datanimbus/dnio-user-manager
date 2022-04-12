@@ -225,10 +225,10 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/user/utils/import/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUBC']).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/user/utils/removeUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/removeUsers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/user/utils/removeBots', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/removeBots', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {

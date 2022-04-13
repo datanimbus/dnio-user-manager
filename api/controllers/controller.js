@@ -298,10 +298,10 @@ function mapSwaggerParams(req, res, next) {
 	const temp = _.merge(req.params, req.query);
 	const params = {};
 	// Object.assign(params, req.params, req.query);
-	logger.info(req.params, req.query, params);
 	Object.keys(temp).keys(key => {
 		params[key] = { value: temp[key] };
 	});
+	logger.info(req.params, req.query, params);
 	req.swagger = {
 		params
 	};

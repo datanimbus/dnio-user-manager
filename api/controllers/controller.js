@@ -295,7 +295,8 @@ module.exports = router;
 
 
 function mapSwaggerParams(req, res, next) {
-	const temp = _.merge(req.params, req.query);
+	const temp = {};
+	_.merge(temp, req.params, req.query);
 	const params = {};
 	// Object.assign(params, req.params, req.query);
 	Object.keys(temp).keys(key => {

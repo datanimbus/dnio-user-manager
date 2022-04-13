@@ -1,6 +1,6 @@
 const _ = require('lodash');
 
-const logger = global.logger;
+// const logger = global.logger;
 
 'use strict';
 //controllers
@@ -302,7 +302,7 @@ function mapSwaggerParams(req, res, next) {
 	Object.keys(temp).forEach(key => {
 		params[key] = { value: temp[key] };
 	});
-	logger.info(req.params, req.query, params);
+	// logger.debug(req.params, req.query, params);
 	req.swagger = {
 		params
 	};

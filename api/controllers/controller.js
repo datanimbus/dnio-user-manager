@@ -1,5 +1,7 @@
 const _ = require('lodash');
 
+const logger = global.logger;
+
 'use strict';
 //controllers
 const KeyController = require('./keys.controller');
@@ -295,6 +297,7 @@ module.exports = router;
 function mapSwaggerParams(req, res, next) {
 	const params = _.merge(req.params, req.query);
 	// Object.assign(params, req.params, req.query);
+	logger.info(req.params, req.query, params);
 	req.swagger = {
 		params
 	};

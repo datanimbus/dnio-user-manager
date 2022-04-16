@@ -19,7 +19,7 @@
   "dependencies": {
     "@appveen/data.stack-utils": "^1.0.19",
     "@appveen/ds-auth-cache": "^1.0.2",
-    "@appveen/swagger-mongoose-crud": "1.2.7",
+    "@appveen/swagger-mongoose-crud": "1.2.8",
     "@appveen/utils": "^2.1.6",
     "@fidm/x509": "^1.2.1",
     "@microsoft/microsoft-graph-client": "^3.0.2",

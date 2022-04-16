@@ -5,7 +5,7 @@ let gsRole = require('../../config/roles').find(_r => _r.entity === 'GS');
 let e = {};
 
 e.destroy = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	res.json({ message: 'delete process queued' });
 	mongoose.model('roles').findOne({ '_id': id })
 		.then(doc => {
@@ -69,7 +69,7 @@ e.destroy = function (req, res) {
 
 
 e.create = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let newsmRole = JSON.parse(JSON.stringify(smRole));
 	newsmRole.entity = 'SM_' + id;
 	newsmRole.entityName = 'SM_' + req.body.name;
@@ -90,7 +90,7 @@ e.create = function (req, res) {
 };
 
 e.createLibrary = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let newgsRole = JSON.parse(JSON.stringify(gsRole));
 	newgsRole.entity = 'GS_' + id;
 	newgsRole.entityName = 'GS_' + id;
@@ -111,7 +111,7 @@ e.createLibrary = function (req, res) {
 };
 
 e.deleteLibrary = function(req, res){
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	return mongoose.model('roles').findOne({ 'entity': 'GS_' + id })
 		.then(_d => {
 			if (_d) return _d.remove(req);

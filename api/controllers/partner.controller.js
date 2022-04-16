@@ -5,7 +5,7 @@ let nsRole = require('../../config/roles').find(_r => _r.entity === 'NS');
 let e = {};
 
 e.destroy = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	res.json({ message: 'delete process queued' });
 	return mongoose.model('roles').findOne({ 'entity': 'PM_' + id })
 		.then(doc => {
@@ -39,7 +39,7 @@ e.destroy = function (req, res) {
 };
 
 e.create = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let newpmRole = JSON.parse(JSON.stringify(pmRole));
 	newpmRole.entity = 'PM_' + id;
 	newpmRole.entityName = 'PM_' + req.body.name;
@@ -63,7 +63,7 @@ e.create = function (req, res) {
 };
 
 e.destroyFlow = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	res.json({ message: 'delete process queued' });
 	return mongoose.model('group').find({ '$or': [{ 'roles.entity': id }, { 'roles.entity': 'FLOW_' + id }, { 'roles.entity': 'INTR_' + id }] })
 		.then(docs => {
@@ -87,7 +87,7 @@ e.destroyFlow = function (req, res) {
 };
 
 e.destroyDF = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	res.json({ message: 'delete process queued' });
 	return mongoose.model('group').find({ '$or': [{ 'roles.entity': id }, { 'roles.entity': 'DF_' + id }] })
 		.then(docs => {
@@ -111,7 +111,7 @@ e.destroyDF = function (req, res) {
 };
 
 e.destroyNS = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	res.json({ message: 'delete process queued' });
 	return mongoose.model('group').find({ '$or': [{ 'roles.entity': id }, { 'roles.entity': 'NS_' + id }] })
 		.then(docs => {
@@ -143,7 +143,7 @@ e.destroyNS = function (req, res) {
 };
 
 e.CreateNs = function (req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let newnsRole = JSON.parse(JSON.stringify(nsRole));
 	newnsRole.entity = 'NS_' + id;
 	newnsRole.entityName = 'NS_' + req.body.name;

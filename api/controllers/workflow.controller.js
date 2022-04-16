@@ -33,8 +33,8 @@ function getUsersList(roles) {
 }
 
 e.getApproversList = function (req, res) {
-	let entity = req.swagger.params.entity.value;
-	let app = req.swagger.params.app.value;
+	let entity = req.params.entity;
+	let app = req.params.app;
 	return getApproverRolesList(entity, app)
 		.then(_rList => {
 			if (_rList) {

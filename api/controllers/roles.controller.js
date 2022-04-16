@@ -411,9 +411,9 @@ function changeRolesDefinition(_req, _res) {
 }
 
 function getRoleName(req, res) {
-	let app = req.swagger.params.app ? req.swagger.params.app.value : null;
-	let id = req.swagger.params.id ? req.swagger.params.id.value : null;
-	let entity = req.swagger.params.entity ? req.swagger.params.entity.value : null;
+	let app = req.params.app ? req.params.app : null;
+	let id = req.params.id ? req.params.id : null;
+	let entity = req.params.entity ? req.params.entity : null;
 	crudder.model.findOne({ 'app': app, 'entity': entity, 'roles.id': id }, 'roles')
 		.then(_rs => {
 			if (_rs) {
@@ -428,15 +428,15 @@ function getRoleName(req, res) {
 }
 
 function reviewPermission(req, res) {
-	let appName = req.swagger.params.app.value;
+	let appName = req.params.app;
 	crudder.model.find({ app: { $eq: appName }, 'roles.operations.method': 'REVIEW' })
 		.then(services => { res.status(200).json(services); })
 		.catch(err => { res.status(500).json({ 'message': err.message }); });
 }
 
 function reviewPermissionService(req, res) {
-	let entity = req.swagger.params.entity.value;
-	let user = req.swagger.params.user.value;
+	let entity = req.params.entity;
+	let user = req.params.user;
 	let filter = { entity: { $eq: entity }, 'roles.operations.method': 'REVIEW' };
 	crudder.model.find(filter)
 		.then((services) => {
@@ -517,7 +517,7 @@ function customUpdate(req, res) {
 }
 
 function show(req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let roles = require('../../config/roles');
 	let role = roles.filter(role => role.entity === id);
 

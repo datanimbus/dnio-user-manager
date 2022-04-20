@@ -61,6 +61,9 @@ if (conf.debugDB) Logger.setLevel('debug');
 
 let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 
+logger.debug('Mongo Author URL', mongoUrl);
+logger.debug('Mongo Author Options', conf.mongoOptions);
+
 mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
 	if (err) {
 		logger.error(err);
@@ -71,6 +74,9 @@ mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 	}
 });
+
+logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
+logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
 
 MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
 	if (error) logger.error(error.message);

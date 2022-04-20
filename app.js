@@ -14,7 +14,7 @@ const loggerName = (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETE
 
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
-const mongo = require('mongodb').MongoClient;
+const { MongoClient, Logger } = require('mongodb');
 const mongoose = require('mongoose');
 const passport = require('passport');
 var cookieParser = require('cookie-parser');
@@ -57,13 +57,13 @@ app.use(express.json({
 app.use(cookieParser());
 
 if (conf.debugDB) mongoose.set('debug', conf.mongooseCustomLogger);
+if (conf.debugDB) Logger.setLevel('debug');
 
 let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 
 mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
 	if (err) {
 		logger.error(err);
-		process.exit(0);
 	} else {
 		logger.info('Connected to Author DB');
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
@@ -72,7 +72,7 @@ mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
 	}
 });
 
-mongo.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
+MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
 	if (error) logger.error(error.message);
 	if (db) {
 		global.mongoConnection = db;

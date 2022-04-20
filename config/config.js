@@ -1,6 +1,6 @@
 const dataStackUtils = require('@appveen/data.stack-utils');
 let debugDB = false;
-if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
+if (process.env.LOG_LEVEL == 'trace') { debugDB = true; }
 
 let logger = global.logger;
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
@@ -136,8 +136,8 @@ module.exports = {
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
 		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig'
 	},
 	mongoAppcenterOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,

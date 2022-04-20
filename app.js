@@ -56,8 +56,8 @@ app.use(express.json({
 }));
 app.use(cookieParser());
 
-if (conf.debugDB) mongoose.set('info', conf.mongooseCustomLogger);
-if (conf.debugDB) Logger.setLevel('info');
+if (conf.debugDB) mongoose.set('debug', conf.mongooseCustomLogger);
+if (conf.debugDB) Logger.setLevel('debug');
 
 let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 

@@ -206,7 +206,7 @@ schema.post('remove', (_doc) => {
 						logger.trace("Namespace data ", nsData);
                         nsData.body.spec.finalizers = [];
 
-						namespace.updateNamespace(ns, nsData.body)
+						kubeutil.namespace.updateNamespace(ns, nsData.body)
 							.then(_ => {
 								logger.trace("Updated NS :: ", JSON.stringify(_));
 								logger.info('Updated kubernetes namespace :: ' + ns);

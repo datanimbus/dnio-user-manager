@@ -18,7 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "@appveen/data.stack-utils": "github:appveen/data.stack-utils",
-    "@appveen/ds-auth-cache": "^1.0.2",
+    "@appveen/ds-auth-cache": "github:appveen/ds-auth-cache",
     "@appveen/swagger-mongoose-crud": "1.2.9",
     "@appveen/utils": "^2.1.6",
     "@fidm/x509": "^1.2.1",

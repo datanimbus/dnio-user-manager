@@ -243,6 +243,7 @@ router.delete('/data/filter/:id', FilterController.destroy);
 router.get('/data/config', ConfigController.index);
 router.get('/data/config/:id', ConfigController.show);
 router.get('/data/app/:id', AppController.show);
+router.put('/data/app/:id', AppController.update);
 router.get('/data/app', AppController.index);
 router.get('/auth/authType/:id', UserController.authType);
 router.post('/auth/login', UserController.localLogin);

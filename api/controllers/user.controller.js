@@ -9,7 +9,6 @@ const _ = require('lodash');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
-// let globalCache = require('../../util/cache');
 const cache = require('../../util/cache.utils').cache;
 var client = queueMgmt.client;
 const logger = global.logger;
@@ -19,14 +18,12 @@ const jwtKey = envConfig.secret;
 const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
 const azureAdUtil = require('../helpers/util/azureAd.util');
-// const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
 const cacheUtil = utils.cache;
 const XLSX = require('xlsx');
 const fs = require('fs');
 const getSheetDataFromGridFS = require('../helpers/util/bulkAddUser').getSheetDataFromGridFS;
 const getSheetData = require('../helpers/util/bulkAddUser').getSheetData;
 const substituteMappingSheetToSchema = require('../helpers/util/bulkAddUser').substituteMappingSheetToSchema;
-// const algorithm = 'aes256';
 const appController = require('./app.controller');
 const passport = require('passport');
 
@@ -38,15 +35,6 @@ var options = {
 function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
-
-// function getApps(_superAdmin, _id, _tokenHash) {
-// 	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
-// 	if (!_superAdmin) {
-// 		return mongoose.model('group').aggregate([{ '$match': { 'users': _id } }, { $group: { _id: '$app' } }])
-// 		// .then(_apps => globalCache.setApp(`${_tokenHash}`, _apps));
-// 	}
-// 	return Promise.resolve();
-// }
 
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
 	logger.debug(`Generate token called for ${document._id}`);
@@ -1658,7 +1646,7 @@ function customCreate(req, res) {
 function createBotKey(req, res) {
 	let data = req.body;
 	let uuid = cacheUtil.uuid();
-	let botId = req.params._id;
+	let botId = req.params.id;
 	let resKeyValue = '';
 	let botData;
 	//condition based -
@@ -1715,7 +1703,7 @@ function endSessionForBotKey(botId, keyId) {
 }
 
 function endBotKeySession(req, res) {
-	let botId = req.params._id;
+	let botId = req.params.id;
 	let data = req.body;
 	if (!data || !data.keyId) return res.status(500).json({
 		message: 'Please provide the Bot\'s keyId'
@@ -1750,7 +1738,7 @@ function endSessionForUser(userObject) {
 
 function updateBotKey(req, res) {
 	let data = req.body;
-	let botId = req.params._id;
+	let botId = req.params.id;
 	let responseObj = null;
 	let endSessionFlag = false;
 	if (data.keyValue) {
@@ -1800,7 +1788,7 @@ function updateBotKey(req, res) {
 }
 
 function disableUser(req, res) {
-	let botId = req.params._id;
+	let botId = req.params.id;
 	let status = (req.params.userState === 'enable') ? true : false;
 	let isBot = (req.params.userType === 'bot') ? true : false;
 	let responseObj = null;
@@ -1847,7 +1835,7 @@ botId - path
 }
 */
 function deleteBotKey(req, res) {
-	let botId = req.params._id;
+	let botId = req.params.id;
 	return crudder.model.findOne({
 		'_id': botId,
 		'bot': true,
@@ -1970,7 +1958,7 @@ function getRolesList(req, res) {
 }
 
 function getRolesType(req, res) {
-	let usrId = req.params.userId;
+	let usrId = req.params.id;
 	let oprtns;
 	let CUD = 0,
 		view = 0;
@@ -2180,7 +2168,7 @@ function getAppList(usrId) {
 }
 
 function getUserAppList(req, res) {
-	let usrId = req.params.usrId;
+	let usrId = req.params.id;
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
 	if (req.user.isSuperAdmin) {
@@ -2300,7 +2288,7 @@ function createUserinGroups(req, res) {
 }
 
 function addUserToGroups(req, res) {
-	let usrId = req.params.usrId;
+	let usrId = req.params.id;
 	let groups = req.body.groups;
 	let groupDocs = null;
 	let data = null;
@@ -2347,7 +2335,7 @@ function addUserToGroups(req, res) {
 }
 
 function removeUserFromGroups(req, res) {
-	let usrId = req.params.usrId;
+	let usrId = req.params.id;
 	let groups = req.body.groups;
 	return mongoose.model('group').find({
 		_id: {
@@ -2380,7 +2368,7 @@ function removeUserFromGroups(req, res) {
 }
 
 function editAppAdmin(req, res) {
-	let userId = req.params.userId;
+	let userId = req.params.id;
 	logger.debug(`Requested userID : ${userId}`);
 	if (req.user._id === userId) {
 		return res.status(400).json({
@@ -2443,7 +2431,7 @@ function editAppAdmin(req, res) {
 		.then(_d => {
 			docs = _d;
 			return crudder.model.findOne({
-				_id: req.params.userId
+				_id: req.params.id
 			});
 		})
 		.then(data => {
@@ -2468,7 +2456,7 @@ function editAppAdmin(req, res) {
 }
 
 function editSuperAdmin(req, res) {
-	let userId = req.params.userId;
+	let userId = req.params.id;
 	let action = req.params.action;
 	let allApps = [];
 	let diff = [];
@@ -2687,8 +2675,10 @@ async function closeAllSessionForUser(req, res) {
 }
 
 function addUserToApps(req, res) {
-	let usrId = req.params.usrId;
+
+	let usrId = req.params.id;
 	let apps = req.body.apps;
+	logger.info("Add to Apps ==== ", usrId, apps)
 	crudder.model.findOne({
 		_id: usrId
 	}).lean(true)

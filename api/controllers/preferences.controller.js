@@ -51,7 +51,7 @@ var crudder = new SMCrud(schema, 'preference', options);
 
 
 function modifyFilterForApp(req) {
-	let filter = req.params.filter;
+	let filter = req.query.filter;
 	let userId = req.user._id;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
@@ -61,7 +61,7 @@ function modifyFilterForApp(req) {
 	} else {
 		filter = { userId };
 	}
-	req.params.filter = JSON.stringify(filter);
+	req.query.filter = JSON.stringify(filter);
 }
 
 // function modifyBodyForApp(req) {

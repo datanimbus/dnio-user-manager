@@ -73,7 +73,7 @@ const commonUrls = [
 	'/rbac/{app}/user/utils/reset/{id}',
 	'/rbac/{app}/user/utils/addToGroups/{id}',
 	'/rbac/{app}/user/utils/removeFromGroups/{id}',
-	// '/rbac/{app}/user/utils/addToApps/{id}',
+	'/rbac/{app}/user/utils/addToApps/{id}',
 	'/rbac/{app}/user/utils/import/{id}',
 	'/rbac/{app}/user/utils/removeUsers',
 	'/rbac/{app}/user/utils/removeBots',

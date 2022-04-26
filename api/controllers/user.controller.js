@@ -2532,7 +2532,7 @@ function editSuperAdmin(req, res) {
 		})
 		.then(() => {
 			return crudder.model.findOne({
-				_id: req.params.userId
+				_id: req.params.id
 			});
 		})
 		.then(data => {

@@ -3071,8 +3071,8 @@ function bulkAddUserDownload(_req, _res) {
 }
 
 function importUserToApp(req, res) {
-	let username = req.params.username;
-	let apps = req.params.apps;
+	let username = req.params.id;
+	let apps = [req.params.app];
 	let groups = req.body.groups;
 	let usrdoc = null;
 	let usernameRegex = new RegExp('^' + username + '$', 'i');

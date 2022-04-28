@@ -3230,7 +3230,7 @@ function userInAppShow(req, res) {
 
 function modifyFilterForGroup(req) {
 	let filter = req.query.filter;
-	let group = req.params.groupId;
+	let group = req.params.id;
 	let app = req.params.app;
 	let botFlag = req.params.usrType == 'bot' ? true : false;
 	if (filter && typeof filter === 'string') {

@@ -9,7 +9,7 @@ const _ = require('lodash');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const schema = new mongoose.Schema(definition);
 let queueMgmt = require('../../util/queueMgmt');
-let globalCache = require('../../util/cache');
+const cache = require('../../util/cache.utils').cache;
 var client = queueMgmt.client;
 const logger = global.logger;
 const utils = require('@appveen/utils');
@@ -18,14 +18,12 @@ const jwtKey = envConfig.secret;
 const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
 const azureAdUtil = require('../helpers/util/azureAd.util');
-// const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
 const cacheUtil = utils.cache;
 const XLSX = require('xlsx');
 const fs = require('fs');
 const getSheetDataFromGridFS = require('../helpers/util/bulkAddUser').getSheetDataFromGridFS;
 const getSheetData = require('../helpers/util/bulkAddUser').getSheetData;
 const substituteMappingSheetToSchema = require('../helpers/util/bulkAddUser').substituteMappingSheetToSchema;
-// const algorithm = 'aes256';
 const appController = require('./app.controller');
 const passport = require('passport');
 
@@ -36,15 +34,6 @@ var options = {
 
 function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
-}
-
-function getApps(_superAdmin, _id, _tokenHash) {
-	logger.debug(`getApps(_superAdmin, _id) :: ${_superAdmin}, ${_id}`);
-	if (!_superAdmin) {
-		return mongoose.model('group').aggregate([{ '$match': { 'users': _id } }, { $group: { _id: '$app' } }])
-			.then(_apps => globalCache.setApp(`${_tokenHash}`, _apps));
-	}
-	return Promise.resolve();
 }
 
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
@@ -125,18 +114,22 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj['uuid'] = uuid;
 			if (resObj.auth && resObj.auth.authType == 'ldap') delete resObj.auth.dn;
 			let id = resObj._id;
+			cache.whitelistToken(id, md5(token));
 			if (isExtend === true) {
-				return cacheUtil.refreshToken(_botKey ? `B:${id}` : `U:${id}`, md5(oldJwt), md5(token), uuid, resObj.expiresIn, rbacUserToSingleSession, envConfig.RBAC_HB_INTERVAL + 5, isExtend);
+				cache.whitelistToken(id, md5(rToken));
 			}
-			return cacheUtil.addUser(_botKey ? `B:${id}` : `U:${id}`, md5(token), rbacUserToSingleSession)
-				.then(() => {
-					return cacheUtil.addToken(md5(token), resObj.bot ? true : !envConfig.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT, uuid, resObj.expiresIn, envConfig.RBAC_HB_INTERVAL + 5);
-				})
-				.then(() => {
-					if (_botKey) {
-						return cacheUtil.addUser(`B:${id}:${_botKey}`, md5(token), rbacUserToSingleSession);
-					}
-				});
+			// if (isExtend === true) {
+			// 	return cacheUtil.refreshToken(_botKey ? `B:${id}` : `U:${id}`, md5(oldJwt), md5(token), uuid, resObj.expiresIn, rbacUserToSingleSession, envConfig.RBAC_HB_INTERVAL + 5, isExtend);
+			// }
+			// return cacheUtil.addUser(_botKey ? `B:${id}` : `U:${id}`, md5(token), rbacUserToSingleSession)
+			// 	.then(() => {
+			// 		return cacheUtil.addToken(md5(token), resObj.bot ? true : !envConfig.RBAC_USER_CLOSE_WINDOW_TO_LOGOUT, uuid, resObj.expiresIn, envConfig.RBAC_HB_INTERVAL + 5);
+			// 	})
+			// 	.then(() => {
+			// 		if (_botKey) {
+			// 			return cacheUtil.addUser(`B:${id}:${_botKey}`, md5(token), rbacUserToSingleSession);
+			// 		}
+			// 	});
 		})
 		.then(() => {
 			if (isHtml) {
@@ -159,7 +152,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			return response.json(resObj);
 		})
 		// .then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token), md5(oldJwt), resObj.expiresIn, isExtend))
-		.then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token)))
+		// .then(() => getApps(resObj.isSuperAdmin, resObj._id, md5(resObj.token)))
 		.catch(err => {
 			logger.error('Error in generateToken :: ', err);
 			if (isHtml) {
@@ -838,56 +831,6 @@ function azureLoginCallback(req, res) {
 	}
 }
 
-// Azure user fetch api
-// function validateAzureUserFetch(iss, sub, profile, accessToken, refreshToken, done) {
-// 	logger.info('validating user fetch!');
-// 	if (!profile.oid) {
-// 		logger.debug('profile:::: ', profile);
-// 		return done(new Error('No oid found'), null);
-// 	}
-// 	azureAdUtil.searchUser(accessToken)
-// 		.then(() => done(null, accessToken))
-// 		.catch(err => {
-// 			logger.error('error in validate azure user fetch:: ', err);
-// 			done(err, false);
-// 		});
-// }
-//
-// function azureUserFetch(req, res) {
-// 	logger.debug('userFetch called : ', req.path);
-// 	if (checkAuthMode(res, 'azure')) {
-// 		passport.authenticate('AzureUserFetch', {
-// 			session: false
-// 		})(req, res);
-// 	}
-// }
-
-// function azureUserFetchCallback(req, res) {
-// 	logger.debug('userFetch callback called : ', req.path);
-// 	if (checkAuthMode(res, 'azure')) {
-// 		passport.authenticate('AzureUserFetch', {
-// 			response: res,
-// 			failureRedirect: '/',
-// 		},
-// 		function (err, accessToken, info) {
-// 			if (err) {
-// 				logger.error('error in azureUserFetchCallback ::: ', err);
-// 				if (info) userLog.loginFailed(info, req, res);
-// 				return sendAzureCallbackResponse(res, 500, { message: err.message });
-// 			} else if (!accessToken) {
-// 				logger.error('Something went wrong in azureUserFetchCallback:: ', info);
-// 				return sendAzureCallbackResponse(res, 401, { message: info });
-// 			} else {
-// 				let encryptedToken = azureAdUtil.encrypt(accessToken);
-// 				return sendAzureCallbackResponse(res, 200, {
-// 					message: 'Success',
-// 					adToken: encryptedToken
-// 				});
-// 			}
-// 		})(req, res);
-// 	}
-// }
-
 function sendAzureCallbackResponse(res, statusCode, body) {
 	return res.end(`
 		<script>
@@ -928,7 +871,7 @@ function handleSessionAndGenerateToken(_req, _res, user, botKey, isHtml) {
 
 //to be deleted
 // function loginCallbackAzure(req, res) {
-// 	let code = req.swagger.params.code.value;
+// 	let code = req.params.code;
 // 	let usr = null;
 // 	let configADAttr = null;
 // 	return mongoose.model('config').findOne({
@@ -1012,8 +955,9 @@ function handleSessionAndGenerateToken(_req, _res, user, botKey, isHtml) {
 // }
 
 function updatePassword(request, response) {
-	var credentials = crudder.swagMapper(request)['data'];
-	let id = request.swagger.params.id.value;
+	// var credentials = crudder.swagMapper(request)['data'];
+	var credentials = request.body;
+	let id = request.params.id;
 	let usrDoc = null;
 	crudder.model.findOne({
 		'_id': id
@@ -1074,7 +1018,7 @@ function updatePassword(request, response) {
 function resetPassword(req, res) {
 	var credentials = req.body;
 	let userDoc = null;
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	if (credentials.password == credentials.cpassword) {
 		let result = checkPassword(credentials.password);
 		if (result.success) {
@@ -1128,241 +1072,378 @@ function resetPassword(req, res) {
 	}
 }
 
-// function getRoles(_id) {
-// 	logger.debug(`getRoles(_id) :: ${_id}`);
-// 	return mongoose.model('group').aggregate([{
-// 		'$match': {
-// 			'users': _id
-// 		}
-// 	},
-// 	{
-// 		'$project': {
-// 			'roles': 1
-// 		}
-// 	}, {
-// 		'$unwind': {
-// 			'path': '$roles',
-// 			'preserveNullAndEmptyArrays': false
-// 		}
-// 	}, {
-// 		'$group': {
-// 			'_id': null,
-// 			'roles': {
-// 				'$addToSet': '$roles'
+// function validateUserSession(req, res) {
+// 	logger.debug('Validate user session called!');
+// 	let token = req.get('authorization');
+// 	if (!token) return res.status(400).json({
+// 		message: 'Invalid session'
+// 	});
+
+// 	token = token.split('JWT ')[1];
+// 	if (!token) return res.status(400).json({
+// 		'message': 'Unauthorized'
+// 	});
+
+// 	let tokenHash = md5(token);
+// 	logger.debug(`Token hash :: ${tokenHash}`);
+
+// 	return cacheUtil.isBlacklistedToken(tokenHash)
+// 		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
+// 		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
+// 		.then(() => {
+// 			try {
+// 				let d = jwt.verify(token, jwtKey);
+// 				if (d) {
+// 					let doc = {};
+// 					logger.debug(`Finding user with username :: ${d._id}`);
+// 					return crudder.model.findOne({
+// 						'_id': d._id,
+// 						'isActive': true
+// 					})
+// 						.then(_doc => doc = _doc)
+// 						// .then(() => getRoles(doc._id))
+// 						// .then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
+// 						// .then(() => getApps(doc.isSuperAdmin, doc._id))
+// 						// .then(_apps => {
+// 						// 	if (doc) {
+// 						// 		doc = JSON.parse(JSON.stringify(doc));
+// 						// 		doc['apps'] = _apps;
+// 						// 		doc['roles'] = roles;
+// 						// 		logger.debug(`Found user with username :: ${doc._id}`);
+// 						// 		return res.json(doc);
+// 						// 	} else throw 'invalid';
+// 						// });
+// 						.then(() => res.json(doc))
+// 					// .then(() => getApps(doc.isSuperAdmin, doc._id, tokenHash));
+// 				} else throw 'invalid';
+// 			} catch (err) {
+// 				logger.error(err);
+// 				logger.error('Validate user session : JWT verification failed');
+// 				throw 'invalid';
 // 			}
-// 		}
-// 	}
-// 	]);
+// 		})
+// 		.catch(_err => {
+// 			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
+// 			let message;
+// 			if (_err == 'invalid')
+// 				message = 'Invalid session';
+// 			else
+// 				message = _err && _err.message ? _err.message : _err;
+// 			return res.status(400).json({ message });
+// 		});
 // }
 
-function validateUserSession(req, res) {
-	logger.debug('Validate user session called!');
-	let token = req.get('authorization');
-	if (!token) return res.status(400).json({
-		message: 'Invalid session'
-	});
+async function validateUserSession(req, res) {
+	try {
+		logger.debug('Validate user session called!');
+		let token = req.get('authorization');
+		if (!token) throw 'invalid';
 
-	token = token.split('JWT ')[1];
-	if (!token) return res.status(400).json({
-		'message': 'Unauthorized'
-	});
+		token = token.split('JWT ')[1];
+		if (!token) throw 'invalid';
 
-	let tokenHash = md5(token);
-	logger.debug(`Token hash :: ${tokenHash}`);
+		let tokenHash = md5(token);
+		logger.debug(`Token hash :: ${tokenHash}`);
+		const flag = cache.isTokenBlacklisted(tokenHash);
 
-	return cacheUtil.isBlacklistedToken(tokenHash)
-		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
-		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
-		.then(() => {
-			try {
-				let d = jwt.verify(token, jwtKey);
-				if (d) {
-					let doc = {};
-					logger.debug(`Finding user with username :: ${d._id}`);
-					return crudder.model.findOne({
-						'_id': d._id,
-						'isActive': true
-					})
-						.then(_doc => doc = _doc)
-						// .then(() => getRoles(doc._id))
-						// .then(_roles => roles = _roles.length > 0 ? _roles[0].roles : [])
-						// .then(() => getApps(doc.isSuperAdmin, doc._id))
-						// .then(_apps => {
-						// 	if (doc) {
-						// 		doc = JSON.parse(JSON.stringify(doc));
-						// 		doc['apps'] = _apps;
-						// 		doc['roles'] = roles;
-						// 		logger.debug(`Found user with username :: ${doc._id}`);
-						// 		return res.json(doc);
-						// 	} else throw 'invalid';
-						// });
-						.then(() => res.json(doc))
-						.then(() => getApps(doc.isSuperAdmin, doc._id, tokenHash));
-				} else throw 'invalid';
-			} catch (err) {
-				logger.error(err);
-				logger.error('Validate user session : JWT verification failed');
-				throw 'invalid';
-			}
-		})
-		.catch(_err => {
-			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
-			let message;
-			if (_err == 'invalid')
-				message = 'Invalid session';
-			else
-				message = _err && _err.message ? _err.message : _err;
-			return res.status(400).json({ message });
+		if (flag) throw 'invalid';
+
+		const user = jwt.verify(token, jwtKey);
+		if (!user) {
+			throw 'invalid';
+		}
+		logger.debug(`Finding user with username :: ${user._id}`);
+		const doc = await crudder.model.findOne({
+			'_id': user._id,
+			'isActive': true
 		});
+		res.json(doc);
+	} catch (err) {
+		logger.error(`Error :: ${err.message ? err.message : err}`);
+		let message;
+		if (err == 'invalid')
+			message = 'Invalid session';
+		else
+			message = err && err.message ? err.message : err;
+		return res.status(400).json({ message });
+	}
 }
 
-function refreshToken(req, res) {
+// function refreshToken(req, res) {
+// 	logger.debug('Refesh token called!');
+
+// 	let token = req.get('authorization');
+// 	let refreshToken = req.get('rToken');
+
+// 	logger.trace(token);
+// 	logger.trace(refreshToken);
+
+// 	if (!token) return res.status(400).json({
+// 		'message': 'Invalid session'
+// 	});
+// 	if (!refreshToken) return res.status(400).json({
+// 		'message': 'Invalid request. Missing refresh token header rToken.'
+// 	});
+
+// 	token = token.split(' ')[1];
+// 	if (!token) return res.status(400).json({
+// 		'message': 'Invalid session'
+// 	});
+
+// 	refreshToken = refreshToken.split(' ')[1];
+// 	if (!refreshToken) return res.status(400).json({
+// 		'message': 'Invalid session'
+// 	});
+
+// 	let tokenHash = md5(token);
+// 	logger.debug(`Token hash :: ${tokenHash}`);
+
+// 	return cacheUtil.isBlacklistedToken(tokenHash)
+// 		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
+// 		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
+// 		.then(() => {
+// 			try {
+// 				let d = jwt.verify(token, jwtKey);
+// 				let rd = jwt.verify(refreshToken, refreshSecret);
+// 				if (d && rd) {
+// 					let newToken = null;
+// 					let newRToken = null;
+// 					let expiresIn = d.exp;
+// 					let uuid = cacheUtil.uuid();
+
+// 					if (!envConfig.RBAC_USER_TOKEN_REFRESH) {
+// 						newToken = token;
+// 						newRToken = refreshToken;
+// 					} else {
+// 						let newClaim = JSON.parse(JSON.stringify(d));
+// 						let newRClaim = JSON.parse(JSON.stringify(rd));
+// 						delete newClaim.iat;
+// 						delete newClaim.exp;
+// 						delete newRClaim.iat;
+// 						delete newRClaim.exp;
+// 						let expireIn = d.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
+// 						// expireIn = expireIn * 60;
+
+// 						newToken = jwt.sign(newClaim, jwtKey, {
+// 							expiresIn: expireIn
+// 						});
+// 						newRToken = jwt.sign(newRClaim, refreshSecret, {
+// 							expiresIn: expireIn
+// 						});
+
+// 						expiresIn = Date.now() + (expireIn * 1000);
+// 						var userId = d.bot ? `B:${d._id}` : `U:${d._id}`;
+// 						cacheUtil.refreshToken(userId, tokenHash, md5(newToken), uuid, expiresIn, envConfig.RBAC_USER_TO_SINGLE_SESSION, envConfig.RBAC_HB_INTERVAL + 5);
+// 						if (envConfig.RBAC_USER_TO_SINGLE_SESSION)
+// 							cacheUtil.blacklist(tokenHash);
+// 						// Letting token expire itself when single session is disabled.
+// 					}
+// 					userLog.refreshToken(req.user, req, res);
+// 					let userData = req.user;
+// 					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() => res.json({
+// 						token: newToken,
+// 						rToken: newRToken,
+// 						expiresIn: expiresIn,
+// 						serverTime: Date.now(),
+// 						uuid: uuid
+// 					}));
+// 				} else throw 'invalid';
+// 			} catch (err) {
+// 				logger.error(err);
+// 				logger.error('Validate user session : JWT verification failed');
+// 				throw 'invalid';
+// 			}
+// 		})
+// 		.catch(_err => {
+// 			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
+// 			let message;
+// 			if (_err == 'invalid')
+// 				message = 'Invalid session';
+// 			else
+// 				message = _err && _err.message ? _err.message : _err;
+// 			return res.status(400).json({ message });
+// 		});
+// }
+
+async function refreshToken(req, res) {
 	logger.debug('Refesh token called!');
+	try {
+		let token = req.get('authorization');
+		let refreshToken = req.get('rToken');
 
-	let token = req.get('authorization');
-	let refreshToken = req.get('rToken');
+		logger.trace(token);
+		logger.trace(refreshToken);
 
-	logger.trace(token);
-	logger.trace(refreshToken);
+		if (!token) throw 'invalid';
+		if (!refreshToken) throw 'invalid_refresh';
 
-	if (!token) return res.status(400).json({
-		'message': 'Invalid session'
-	});
-	if (!refreshToken) return res.status(400).json({
-		'message': 'Invalid request. Missing refresh token header rToken.'
-	});
+		token = token.split(' ')[1];
+		if (!token) throw 'invalid';
 
-	token = token.split(' ')[1];
-	if (!token) return res.status(400).json({
-		'message': 'Invalid session'
-	});
+		refreshToken = refreshToken.split(' ')[1];
+		if (!refreshToken) throw 'invalid_refresh';
 
-	refreshToken = refreshToken.split(' ')[1];
-	if (!refreshToken) return res.status(400).json({
-		'message': 'Invalid session'
-	});
+		let tokenHash = md5(token);
+		logger.debug(`Token hash :: ${tokenHash}`);
 
-	let tokenHash = md5(token);
-	logger.debug(`Token hash :: ${tokenHash}`);
+		const flag = await cache.isTokenBlacklisted(tokenHash);
 
-	return cacheUtil.isBlacklistedToken(tokenHash)
-		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
-		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
-		.then(() => {
-			try {
-				let d = jwt.verify(token, jwtKey);
-				let rd = jwt.verify(refreshToken, refreshSecret);
-				if (d && rd) {
-					let newToken = null;
-					let newRToken = null;
-					let expiresIn = d.exp;
-					let uuid = cacheUtil.uuid();
+		if (flag) throw 'invalid';
 
-					if (!envConfig.RBAC_USER_TOKEN_REFRESH) {
-						newToken = token;
-						newRToken = refreshToken;
-					} else {
-						let newClaim = JSON.parse(JSON.stringify(d));
-						let newRClaim = JSON.parse(JSON.stringify(rd));
-						delete newClaim.iat;
-						delete newClaim.exp;
-						delete newRClaim.iat;
-						delete newRClaim.exp;
-						let expireIn = d.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
-						// expireIn = expireIn * 60;
+		let d = jwt.verify(token, jwtKey);
+		let rd = jwt.verify(refreshToken, refreshSecret);
+		if (d && rd) {
+			let newToken = null;
+			let newRToken = null;
+			let expiresIn = d.exp;
+			let uuid = cacheUtil.uuid();
 
-						newToken = jwt.sign(newClaim, jwtKey, {
-							expiresIn: expireIn
-						});
-						newRToken = jwt.sign(newRClaim, refreshSecret, {
-							expiresIn: expireIn
-						});
+			if (!envConfig.RBAC_USER_TOKEN_REFRESH) {
+				newToken = token;
+				newRToken = refreshToken;
+			} else {
+				let newClaim = JSON.parse(JSON.stringify(d));
+				let newRClaim = JSON.parse(JSON.stringify(rd));
+				delete newClaim.iat;
+				delete newClaim.exp;
+				delete newRClaim.iat;
+				delete newRClaim.exp;
+				let expireIn = d.bot ? envConfig.RBAC_BOT_TOKEN_DURATION : envConfig.RBAC_USER_TOKEN_DURATION;
+				// expireIn = expireIn * 60;
 
-						expiresIn = Date.now() + (expireIn * 1000);
-						var userId = d.bot ? `B:${d._id}` : `U:${d._id}`;
-						cacheUtil.refreshToken(userId, tokenHash, md5(newToken), uuid, expiresIn, envConfig.RBAC_USER_TO_SINGLE_SESSION, envConfig.RBAC_HB_INTERVAL + 5);
-						if (envConfig.RBAC_USER_TO_SINGLE_SESSION)
-							cacheUtil.blacklist(tokenHash);
-						// Letting token expire itself when single session is disabled.
-					}
-					userLog.refreshToken(req.user, req, res);
-					let userData = req.user;
-					return getApps(userData.isSuperAdmin, userData._id, md5(newToken)).then(() => res.json({
-						token: newToken,
-						rToken: newRToken,
-						expiresIn: expiresIn,
-						serverTime: Date.now(),
-						uuid: uuid
-					}));
-				} else throw 'invalid';
-			} catch (err) {
-				logger.error(err);
-				logger.error('Validate user session : JWT verification failed');
-				throw 'invalid';
+				newToken = jwt.sign(newClaim, jwtKey, {
+					expiresIn: expireIn
+				});
+				newRToken = jwt.sign(newRClaim, refreshSecret, {
+					expiresIn: expireIn
+				});
+
+				expiresIn = Date.now() + (expireIn * 1000);
+				await cache.whitelistToken(d._id, md5(newToken));
+				await cache.whitelistToken(d._id, md5(newRToken));
+				if (envConfig.RBAC_USER_TO_SINGLE_SESSION) {
+					cache.blacklistToken(tokenHash);
+				}
 			}
-		})
-		.catch(_err => {
-			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
-			let message;
-			if (_err == 'invalid')
-				message = 'Invalid session';
-			else
-				message = _err && _err.message ? _err.message : _err;
-			return res.status(400).json({ message });
-		});
+			userLog.refreshToken(req.user, req, res);
+			res.json({
+				token: newToken,
+				rToken: newRToken,
+				expiresIn: expiresIn,
+				serverTime: Date.now(),
+				uuid: uuid
+			});
+		} else {
+			throw 'invalid';
+		}
+	} catch (err) {
+		logger.error('Validate user session : JWT verification failed');
+		logger.error(err);
+		let message;
+		if (err == 'invalid') {
+			message = 'Invalid Session';
+		} else if (err == 'invalid_refresh') {
+			message = 'Invalid Refresh Token';
+		} else {
+			message = err && err.message ? err.message : err;
+		}
+
+		res.status(400).json({ message });
+	}
 }
 
-function checkAndExtendUserSession(_req, _res, _isExtend) {
+async function checkAndExtendUserSession(_req, _res, _isExtend) {
 	logger.debug('Check user session called!');
-	let token = _req.get('authorization');
-	if (!token) return _res.status(400).json({
-		message: 'Invalid session'
-	});
+	try {
+		let token = _req.get('authorization');
+		if (!token) throw 'invalid';
 
-	token = token.split('JWT ')[1];
-	if (!token) return _res.status(400).json({
-		'message': 'Unauthorized'
-	});
+		token = token.split('JWT ')[1];
+		if (!token) throw 'invalid';
 
-	let tokenHash = md5(token);
-	logger.debug(`Token hash :: ${tokenHash}`);
+		let tokenHash = md5(token);
+		logger.debug(`Token hash :: ${tokenHash}`);
 
-	return cacheUtil.isBlacklistedToken(tokenHash)
-		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
-		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
-		.then(() => {
-			try {
-				let d = jwt.verify(token, jwtKey);
-				if (d) {
-					logger.debug(`Finding user with username :: ${d._id}`);
-					return crudder.model.findOne({
-						'_id': d._id,
-						'isActive': true
-					})
-						.then(_doc => {
-							if (_doc) {
-								logger.debug(`Found user with username :: ${_doc._id}`);
-								let botKey = d.bot && d.keyId ? d.keyId : null;
-								return generateToken(_doc, _res, d.exp, false, token, _isExtend, botKey);
-							} else throw 'invalid';
-						});
-				} else throw 'invalid';
-			} catch (err) {
-				logger.error(err);
-				logger.error('Validate user session : JWT verification failed');
-				throw 'invalid';
-			}
-		})
-		.catch(_err => {
-			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
-			let message;
-			if (_err == 'invalid')
-				message = 'Invalid session';
-			else
-				message = _err && _err.message ? _err.message : _err;
-			return _res.status(400).json({ message });
+		let flag = await cache.isTokenBlacklisted(tokenHash);
+		if (flag) throw 'invalid';
+
+		const data = jwt.verify(token, jwtKey);
+		if (!data) throw 'invalid';
+
+		flag = await cache.isValidToken(data._id, tokenHash);
+		if (!flag) throw 'invalid';
+
+		logger.debug(`Finding user with username :: ${data._id}`);
+		const user = await crudder.model.findOne({
+			'_id': data._id,
+			'isActive': true
 		});
+		if (!user) throw 'invalid';
+		logger.debug(`Found user with username :: ${user._id}`);
+		const botKey = data.bot && data.keyId ? data.keyId : null;
+		return generateToken(user, _res, data.exp, false, token, _isExtend, botKey);
+	} catch (err) {
+		logger.error(`Error :: ${err.message ? err.message : err}`);
+		let message;
+		if (err == 'invalid')
+			message = 'Invalid session';
+		else
+			message = err && err.message ? err.message : err;
+		return _res.status(400).json({ message });
+	}
 }
+
+// function checkAndExtendUserSession(_req, _res, _isExtend) {
+// 	logger.debug('Check user session called!');
+// 	let token = _req.get('authorization');
+// 	if (!token) return _res.status(400).json({
+// 		message: 'Invalid session'
+// 	});
+
+// 	token = token.split('JWT ')[1];
+// 	if (!token) return _res.status(400).json({
+// 		'message': 'Unauthorized'
+// 	});
+
+// 	let tokenHash = md5(token);
+// 	logger.debug(`Token hash :: ${tokenHash}`);
+
+// 	return cacheUtil.isBlacklistedToken(tokenHash)
+// 		.then(_flag => _flag ? Promise.reject('invalid') : cacheUtil.isValidToken(tokenHash))
+// 		.then(_flag => _flag ? _flag : Promise.reject('invalid'))
+// 		.then(() => {
+// 			try {
+// 				let d = jwt.verify(token, jwtKey);
+// 				if (d) {
+// 					logger.debug(`Finding user with username :: ${d._id}`);
+// 					return crudder.model.findOne({
+// 						'_id': d._id,
+// 						'isActive': true
+// 					})
+// 						.then(_doc => {
+// 							if (_doc) {
+// 								logger.debug(`Found user with username :: ${_doc._id}`);
+// 								let botKey = d.bot && d.keyId ? d.keyId : null;
+// 								return generateToken(_doc, _res, d.exp, false, token, _isExtend, botKey);
+// 							} else throw 'invalid';
+// 						});
+// 				} else throw 'invalid';
+// 			} catch (err) {
+// 				logger.error(err);
+// 				logger.error('Validate user session : JWT verification failed');
+// 				throw 'invalid';
+// 			}
+// 		})
+// 		.catch(_err => {
+// 			logger.error(`Error :: ${_err.message ? _err.message : _err}`);
+// 			let message;
+// 			if (_err == 'invalid')
+// 				message = 'Invalid session';
+// 			else
+// 				message = _err && _err.message ? _err.message : _err;
+// 			return _res.status(400).json({ message });
+// 		});
+// }
 
 function checkUserSession(req, res) {
 	return checkAndExtendUserSession(req, res, false);
@@ -1399,9 +1480,9 @@ function init() {
 var crudder = new SMCrud(schema, 'user', options);
 
 function modifyFilter(req) {
-	let apps = req.swagger.params.apps.value ? req.swagger.params.apps.value.split(',') : [];
+	let apps = req.params.apps ? req.params.apps.split(',') : [];
 	if (!apps.length) return Promise.resolve();
-	let filter = req.swagger.params.filter.value;
+	let filter = req.query.filter;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
@@ -1433,12 +1514,12 @@ function modifyFilter(req) {
 					}]
 				};
 			}
-			req.swagger.params.filter.value = JSON.stringify(filter);
+			req.query.filter = JSON.stringify(filter);
 		});
 }
 function customIndex(_req, _res) {
 	let omitKeys = ['-salt', '-password'];
-	let select = _req.swagger.params.select.value ? _req.swagger.params.select.value.split(',') : [];
+	let select = _req.query.select ? _req.query.select.split(',') : [];
 	let _idIndex = select.indexOf('-_id');
 	if (_idIndex > -1) select.splice(_idIndex, 1);
 	if (select.indexOf('password') > -1) select.splice(select.indexOf('password'), 1);
@@ -1446,8 +1527,8 @@ function customIndex(_req, _res) {
 	if (select.length == 0) select = select.concat(omitKeys);
 	_idIndex > -1 ? select.push('-_id') : null;
 	select = select.join(',');
-	_req.swagger.params.select.value = select;
-	let apps = _req.swagger.params.apps.value;
+	_req.query.select = select;
+	let apps = _req.params.apps;
 	if (apps) {
 		return modifyFilter(_req).then(() => crudder.index(_req, _res));
 	}
@@ -1455,7 +1536,7 @@ function customIndex(_req, _res) {
 }
 
 function customCount(_req, _res) {
-	let apps = _req.swagger.params.apps.value;
+	let apps = _req.params.apps;
 	if (apps) {
 		return modifyFilter(_req).then(() => crudder.count(_req, _res));
 	}
@@ -1474,7 +1555,7 @@ function customUpdate(req, res) {
 	}
 	let oldValues = null;
 	let updated = null;
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	if (req.body.username && req.body.username != id) {
 		return res.status(400).json({
 			message: 'Username cannot be changed.'
@@ -1565,7 +1646,7 @@ function customCreate(req, res) {
 function createBotKey(req, res) {
 	let data = req.body;
 	let uuid = cacheUtil.uuid();
-	let botId = req.swagger.params._id.value;
+	let botId = req.params.id;
 	let resKeyValue = '';
 	let botData;
 	//condition based -
@@ -1622,7 +1703,7 @@ function endSessionForBotKey(botId, keyId) {
 }
 
 function endBotKeySession(req, res) {
-	let botId = req.swagger.params._id.value;
+	let botId = req.params.id;
 	let data = req.body;
 	if (!data || !data.keyId) return res.status(500).json({
 		message: 'Please provide the Bot\'s keyId'
@@ -1643,9 +1724,10 @@ function endBotKeySession(req, res) {
 
 function endSessionForUser(userObject) {
 	let idToEndSession = null;
-	if (!userObject.bot)
+	if (!userObject.bot) {
+		cache.endSession(userObject._id);
 		return cacheUtil.removeUser(`U:${userObject._id}`);
-	else {
+	} else {
 		let promises = userObject.botKeys.map(obj => {
 			idToEndSession = 'B:' + userObject._id + ':' + obj._id;
 			return cacheUtil.removeUser(idToEndSession);
@@ -1656,7 +1738,7 @@ function endSessionForUser(userObject) {
 
 function updateBotKey(req, res) {
 	let data = req.body;
-	let botId = req.swagger.params._id.value;
+	let botId = req.params.id;
 	let responseObj = null;
 	let endSessionFlag = false;
 	if (data.keyValue) {
@@ -1706,9 +1788,9 @@ function updateBotKey(req, res) {
 }
 
 function disableUser(req, res) {
-	let botId = req.swagger.params._id.value;
-	let status = (req.swagger.params.userState.value === 'enable') ? true : false;
-	let isBot = (req.swagger.params.userType.value === 'bot') ? true : false;
+	let botId = req.params.id;
+	let status = (req.params.userState === 'enable') ? true : false;
+	let isBot = (req.params.userType === 'bot') ? true : false;
 	let responseObj = null;
 	return crudder.model.findOne({
 		'_id': botId,
@@ -1753,7 +1835,7 @@ botId - path
 }
 */
 function deleteBotKey(req, res) {
-	let botId = req.swagger.params._id.value;
+	let botId = req.params.id;
 	return crudder.model.findOne({
 		'_id': botId,
 		'bot': true,
@@ -1784,10 +1866,10 @@ function deleteBotKey(req, res) {
 }
 
 function getRolesList(req, res) {
-	let searchText = req.swagger.params.text.value;
-	let id = req.swagger.params.id.value;
-	let idType = req.swagger.params.idType.value;
-	let entity = req.swagger.params.entity.value;
+	let searchText = req.params.text;
+	let id = req.params.id;
+	let idType = req.params.idType;
+	let entity = req.params.entity;
 	let regex = new RegExp(searchText, 'i');
 	let promise = null;
 	if (id && idType === 'user') promise = crudder.model.findOne({
@@ -1876,7 +1958,7 @@ function getRolesList(req, res) {
 }
 
 function getRolesType(req, res) {
-	let usrId = req.swagger.params.userId.value;
+	let usrId = req.params.id;
 	let oprtns;
 	let CUD = 0,
 		view = 0;
@@ -1940,39 +2022,39 @@ function getRolesType(req, res) {
 	}
 }
 
-function logout(req, res) {
-	let token = req.get('Authorization') ? req.get('Authorization').split('JWT ')[1] : null;
-	let tokenHash = md5(token);
-	userLog.logout(req, res)
-		.then(() => {
-			if (!token) return res.status(400).json({
-				message: 'Authorization token not found'
-			});
-			res.status(200).json({
-				message: 'logged out successfully'
-			});
-			globalCache.unsetApp(tokenHash);
-			try {
-				jwt.verify(token, jwtKey);
-				return cacheUtil.blacklist(md5(token))
-					.then(() => {
-						if (envConfig.RBAC_USER_TO_SINGLE_SESSION) return cacheUtil.removeUser(`U:${req.user._id}`);
-					});
-			} catch (err) {
-				logger.error(err.message);
-				if (!req.headersSent) {
-					res.status(500).json({
-						message: err.message
-					});
-				}
-			}
+async function logout(req, res) {
+	try {
+		let token = req.get('Authorization') ? req.get('Authorization').split('JWT ')[1] : null;
+		await userLog.logout(req, res);
+		if (!token) return res.status(400).json({
+			message: 'Authorization token not found'
 		});
+		// let tokenHash = md5(token);
+		// globalCache.unsetApp(tokenHash);
+		const user = jwt.verify(token, jwtKey);
+		await cache.endSession(user._id);
+		await cache.unsetUserPermissions(user._id);
+		res.status(200).json({
+			message: 'logged out successfully'
+		});
+		// return cacheUtil.blacklist(md5(token))
+		// 	.then(() => {
+		// 		if (envConfig.RBAC_USER_TO_SINGLE_SESSION) return cacheUtil.removeUser(`U:${req.user._id}`);
+		// 	});
+	} catch (err) {
+		logger.error(err.message);
+		if (!req.headersSent) {
+			res.status(500).json({
+				message: err.message
+			});
+		}
+	}
 }
 
 function getAllRolesofUser(req, res) {
-	let id = req.swagger.params.id.value;
+	let id = req.params.id;
 	let user = null;
-	let filter = req.swagger.params.filter.value;
+	let filter = req.query.filter;
 	try {
 		if (filter && typeof filter == 'string') filter = JSON.parse(filter);
 	} catch (err) {
@@ -2045,51 +2127,35 @@ function getAllRolesofUser(req, res) {
 		});
 }
 
-function authType(req, res) {
-	let name = req.swagger.params.userName.value;
-	let authType = null;
-	let resObj = {};
-	let usrObj = null;
-	let usernameRegex = new RegExp('^' + name + '$', 'i');
-	crudder.model.findOne({
-		_id: usernameRegex
-	})
-		.then(usr => {
-			if (usr) {
-				usrObj = JSON.parse(JSON.stringify(usr));
-				authType = usr.auth && usr.auth.authType ? usr.auth.authType : 'local';
-				// if (usr.auth && usr.auth.isLdap) authType = 'ldap';
-				resObj.authType = authType;
-				if (usrObj && !usrObj.bot) {
-					return cacheUtil.checkUser(`U:${usrObj._id}`);
-				}
-			} else {
-				res.status(404).json({
-					message: 'Couldn\'t find your account'
-				});
-			}
-		}).then(_d => {
-			if (usrObj) {
-				resObj.bot = usrObj.bot;
-				resObj.sessionActive = _d;
-				resObj.name = usrObj.basicDetails ? usrObj.basicDetails.name : usrObj._id;
-				resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = envConfig.RBAC_USER_TO_SINGLE_SESSION;
-				resObj[_.camelCase('RBAC_USER_RELOGIN_ACTION')] = envConfig.RBAC_USER_RELOGIN_ACTION;
-				resObj['fqdn'] = process.env.FQDN;
-				resObj['validAuthTypes'] = envConfig['RBAC_USER_AUTH_MODES'];
-			}
-			if (!res.headersSent) {
-				res.json(resObj);
-			}
-		})
-		.catch(err => {
-			logger.error(err);
-			if (!res.headersSent) {
-				res.status(500).json({
-					message: err.message
-				});
-			}
-		});
+async function authType(req, res) {
+	try {
+		let username = req.params.id;
+		let resObj = {};
+		const user = await crudder.model.findOne({ _id: username }).lean();
+		if (!user) {
+			return res.status(404).json({
+				message: 'Couldn\'t find your account'
+			});
+		}
+		resObj.authType = user.auth && user.auth.authType ? user.auth.authType : 'local';
+		if (user && !user.bot) {
+			resObj.sessionActive = await cache.isSessionActive(user._id);
+		}
+		resObj.bot = user.bot;
+		resObj.name = user.basicDetails ? user.basicDetails.name : user._id;
+		resObj[_.camelCase('RBAC_USER_TO_SINGLE_SESSION')] = envConfig.RBAC_USER_TO_SINGLE_SESSION;
+		resObj[_.camelCase('RBAC_USER_RELOGIN_ACTION')] = envConfig.RBAC_USER_RELOGIN_ACTION;
+		resObj['fqdn'] = process.env.FQDN;
+		resObj['validAuthTypes'] = envConfig['RBAC_USER_AUTH_MODES'];
+		res.json(resObj);
+	} catch (err) {
+		logger.error(err);
+		if (!res.headersSent) {
+			res.status(500).json({
+				message: err.message
+			});
+		}
+	}
 }
 
 function getAppList(usrId) {
@@ -2102,7 +2168,7 @@ function getAppList(usrId) {
 }
 
 function getUserAppList(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.params.id;
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
 	if (req.user.isSuperAdmin) {
@@ -2139,7 +2205,7 @@ function getUserAppList(req, res) {
 
 function createUserinGroups(req, res) {
 	let groups = req.body.groups;
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	let createdUser = null;
 	let UserModel = crudder.model;
 	// console.log(JSON.stringify(req.body));
@@ -2222,7 +2288,7 @@ function createUserinGroups(req, res) {
 }
 
 function addUserToGroups(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.params.id;
 	let groups = req.body.groups;
 	let groupDocs = null;
 	let data = null;
@@ -2269,7 +2335,7 @@ function addUserToGroups(req, res) {
 }
 
 function removeUserFromGroups(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+	let usrId = req.params.id;
 	let groups = req.body.groups;
 	return mongoose.model('group').find({
 		_id: {
@@ -2302,7 +2368,7 @@ function removeUserFromGroups(req, res) {
 }
 
 function editAppAdmin(req, res) {
-	let userId = req.swagger.params.userId.value;
+	let userId = req.params.id;
 	logger.debug(`Requested userID : ${userId}`);
 	if (req.user._id === userId) {
 		return res.status(400).json({
@@ -2312,7 +2378,7 @@ function editAppAdmin(req, res) {
 	logger.debug(`Requested apps : ${JSON.stringify(req.body.apps)}`);
 	let apps = req.body.apps;
 	let docs = null;
-	let action = req.swagger.params.action.value;
+	let action = req.params.action;
 	let userData;
 	logger.debug(`Requested action : ${action}`);
 	return crudder.model.findOne({
@@ -2365,7 +2431,7 @@ function editAppAdmin(req, res) {
 		.then(_d => {
 			docs = _d;
 			return crudder.model.findOne({
-				_id: req.swagger.params.userId.value
+				_id: req.params.id
 			});
 		})
 		.then(data => {
@@ -2390,8 +2456,8 @@ function editAppAdmin(req, res) {
 }
 
 function editSuperAdmin(req, res) {
-	let userId = req.swagger.params.userId.value;
-	let action = req.swagger.params.action.value;
+	let userId = req.params.id;
+	let action = req.params.action;
 	let allApps = [];
 	let diff = [];
 	let promise = null;
@@ -2466,7 +2532,7 @@ function editSuperAdmin(req, res) {
 		})
 		.then(() => {
 			return crudder.model.findOne({
-				_id: req.swagger.params.userId.value
+				_id: req.params.id
 			});
 		})
 		.then(data => {
@@ -2517,14 +2583,14 @@ function customDestroy(req, res) {
 	if (!req.user.isSuperAdmin) return res.status(403).json({
 		message: 'Current user does not have permission to delete user'
 	});
-	if (req.swagger.params.id.value === req.user._id) return res.status(403).json({
+	if (req.params.id === req.user._id) return res.status(403).json({
 		message: 'User cannot delete itself'
 	});
-	return getAppList(req.swagger.params.id.value)
+	return getAppList(req.params.id)
 		.then(apps => {
 			apps = _.uniq(apps);
 			let usrIds = [];
-			usrIds.push(req.swagger.params.id.value);
+			usrIds.push(req.params.id);
 			let pr = [];
 			pr = apps.map(app => {
 				return appController.validateUser(req, usrIds, app);
@@ -2544,13 +2610,13 @@ function customDestroy(req, res) {
 		})
 		.then(() => {
 			return crudder.model.findOne({
-				_id: req.swagger.params.id.value
+				_id: req.params.id
 			});
 		})
 		.then(data => {
 			userDoc = data;
 			return mongoose.model('group').find({
-				'users': req.swagger.params.id.value
+				'users': req.params.id
 			}, 'app');
 		})
 		.then(_grps => {
@@ -2561,7 +2627,7 @@ function customDestroy(req, res) {
 				$and: [{
 					'private': true
 				}, {
-					'createdBy': req.swagger.params.id.value
+					'createdBy': req.params.id
 				}]
 			});
 		})
@@ -2571,7 +2637,7 @@ function customDestroy(req, res) {
 		.then(() => {
 			let pr = [];
 			let usrIds = [];
-			usrIds.push(req.swagger.params.id.value);
+			usrIds.push(req.params.id);
 			pr = apps.map(app => {
 				return appController.deleteUserDoc(req, usrIds, app);
 			});
@@ -2588,29 +2654,31 @@ function customDestroy(req, res) {
 
 }
 
-function closeAllSessionForUser(req, res) {
-	let usrId = req.swagger.params.id.value;
-	return cacheUtil.removeUser(`U:${usrId}`)
-		.then((_d) => {
-			logger.debug('Cache remove user');
-			logger.trace(JSON.stringify(_d));
-			if (!res.headersSent) {
-				res.json({
-					message: 'All user session closed.'
-				});
-			}
-		})
-		.catch(err => {
-			logger.error(err.message);
-			res.status(500).json({
-				message: err.message
+async function closeAllSessionForUser(req, res) {
+	try {
+		let userId = req.params.id;
+		const status = await cache.endSession(userId);
+		await cacheUtil.removeUser(`U:${userId}`);
+		logger.debug('Cache remove user');
+		logger.trace(JSON.stringify(status));
+		if (!res.headersSent) {
+			res.json({
+				message: 'All user session closed.'
 			});
+		}
+	} catch (err) {
+		logger.error(err.message);
+		res.status(500).json({
+			message: err.message
 		});
+	}
 }
 
 function addUserToApps(req, res) {
-	let usrId = req.swagger.params.usrId.value;
+
+	let usrId = req.params.id;
 	let apps = req.body.apps;
+	logger.info("Add to Apps ==== ", usrId, apps)
 	crudder.model.findOne({
 		_id: usrId
 	}).lean(true)
@@ -2647,6 +2715,7 @@ function addUserToApps(req, res) {
 			}
 		})
 		.catch(err => {
+			logger.error(err);
 			res.status(500).json({
 				message: err.message
 			});
@@ -2658,7 +2727,7 @@ function bulkAddUserValidate(_req, _res) {
 	let isHeaderProvided = data.fileHeaders;
 	let headerMapping = data.headerMapping;
 	let fileName = data.fileName;
-	let fileId = _req.swagger.params.fileId.value;
+	let fileId = _req.params.fileId;
 	let collectionName = 'userMgmt.users';
 	getSheetDataFromGridFS(fileId, mongoose.connection.db, collectionName)
 		.then((bufferData) => {
@@ -2974,7 +3043,7 @@ function bulkAddUserCreate(_req, _res) {
 }
 
 function bulkAddUserDownload(_req, _res) {
-	let fileId = _req.swagger.params.fileId.value;
+	let fileId = _req.params.fileId;
 	let newDir = './downloads/' + fileId + '.csv';
 	let header = 'Sno, Username, Name, Phone, Status, Conflict, Error message\n';
 	fs.writeFileSync(newDir, header, function (err) {
@@ -3002,8 +3071,8 @@ function bulkAddUserDownload(_req, _res) {
 }
 
 function importUserToApp(req, res) {
-	let username = req.swagger.params.username.value;
-	let app = req.swagger.params.app.value;
+	let username = req.params.id;
+	let apps = [req.params.app];
 	let groups = req.body.groups;
 	let usrdoc = null;
 	let usernameRegex = new RegExp('^' + username + '$', 'i');
@@ -3025,17 +3094,19 @@ function importUserToApp(req, res) {
 					}
 				}, {
 					name: '#',
-					app: app
+					app: {
+						'$in': apps
+					}
 				}]
 			});
 		})
 		.then(_grps => {
-			if (_grps.some(_g => _g.app != app)) {
-				res.status(400).json({
-					message: 'Groups are not present in app ' + app
-				});
-				return;
-			}
+			// if (_grps.some(_g => _g.app != app)) {
+			// 	res.status(400).json({
+			// 		message: 'Groups are not present in app ' + app
+			// 	});
+			// 	return;
+			// }
 			let promises = _grps.map(_grp => {
 				_grp.users.push(usrdoc._id);
 				return _grp.save(req);
@@ -3047,9 +3118,11 @@ function importUserToApp(req, res) {
 				delete usrdoc.salt;
 				delete usrdoc.password;
 				userLog.addUserToApp(req, res, usrdoc);
-				dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
-					app: app
-				}));
+				apps.forEach(app => {
+					dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(usrdoc, {
+						app: app
+					}));
+				});
 				res.json({
 					user: usrdoc,
 					groups: _d.map(_o => _o._id)
@@ -3087,8 +3160,8 @@ function importUserToApp(req, res) {
 
 
 function modifyFilterForApp(req, isBot) {
-	let filter = req.swagger.params.filter.value;
-	let app = req.swagger.params.app.value;
+	let filter = req.query.filter;
+	let app = req.params.app;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
@@ -3122,7 +3195,7 @@ function modifyFilterForApp(req, isBot) {
 					}]
 				};
 			}
-			req.swagger.params.filter.value = JSON.stringify(filter);
+			req.query.filter = JSON.stringify(filter);
 		});
 }
 
@@ -3140,8 +3213,8 @@ function userInApp(req, res) {
 }
 
 function userInAppShow(req, res) {
-	const app = req.swagger.params.app.value.trim();
-	const userId = req.swagger.params.id.value.trim();
+	const app = req.params.app.trim();
+	const userId = req.params.id.trim();
 	mongoose.model('group').find({ app: app, users: userId }).lean().then(groups => {
 		if (groups && groups.length > 0) {
 			return crudder.show(req, res);
@@ -3156,10 +3229,10 @@ function userInAppShow(req, res) {
 }
 
 function modifyFilterForGroup(req) {
-	let filter = req.swagger.params.filter.value;
-	let group = req.swagger.params.groupId.value;
-	let app = req.swagger.params.app.value;
-	let botFlag = req.swagger.params.usrType.value == 'bot' ? true : false;
+	let filter = req.query.filter;
+	let group = req.params.id;
+	let app = req.params.app;
+	let botFlag = req.params.usrType == 'bot' ? true : false;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
@@ -3185,7 +3258,7 @@ function modifyFilterForGroup(req) {
 					}
 				};
 			}
-			req.swagger.params.filter.value = JSON.stringify(filter);
+			req.query.filter = JSON.stringify(filter);
 		});
 }
 
@@ -3295,7 +3368,7 @@ function health(req, res) {
 }
 
 function distinctUserAttribute(req, res) {
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	return mongoose.model('group').find({
 		app: app
 	}, {

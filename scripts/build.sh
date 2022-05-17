@@ -9,7 +9,11 @@ echo "data.stack:user :: Building USER using TAG :: $TAG"
 echo "****************************************************"
 
 
-docker build -t data.stack.user:$TAG .
+if [ $cleanBuild ]; then
+    docker build --no-cache -t data.stack.user:$TAG .
+else 
+    docker build -t data.stack.user:$TAG .
+fi
 
 
 echo "****************************************************"

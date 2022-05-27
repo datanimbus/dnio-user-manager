@@ -182,6 +182,7 @@ router.put('/admin/user/utils/addToGroups/:id', UserController.addUserToGroups);
 router.put('/admin/user/utils/removeFromGroups/:id', UserController.removeUserFromGroups);
 router.put('/admin/user/utils/addToApps/:id', UserController.addUserToApps);
 router.put('/admin/user/utils/appAdmin/:id/:action', UserController.editAppAdmin);
+router.put('/admin/user/utils/hasAzureToken', UserController.hasAzureToken);
 router.get('/admin/group/count', GroupController.count);
 router.get('/admin/group', GroupController.index);
 router.post('/admin/group', GroupController.create);

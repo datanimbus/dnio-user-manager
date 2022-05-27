@@ -818,7 +818,8 @@ async function azureLoginCallback(req, res) {
 		if (checkAuthMode(res, 'azure')) {
 			if (req.query.state == 'import-users') {
 				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
-				const azureToken = jwt.sign({ azureToken: response.accessToken, userId: req.user._id }, jwtKey);
+				const azureToken = azureAdUtil.storeInJWT(req, response.accessToken);
+				// const azureToken = jwt.sign({ azureToken: response.accessToken, userId: req.user._id }, jwtKey);
 				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
 				res.cookie('azure-token', azureToken, {
 					expires: new Date(response.expiresIn),
@@ -3442,6 +3443,19 @@ function distinctUserAttribute(req, res) {
 		});
 }
 
+async function hasAzureToken(req, res) {
+	try {
+		const token = azureAdUtil.fetchFromJWT(req);
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		res.status(200).json({ message: 'Token is Valid' });
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 module.exports = {
 	init: init,
 	create: customCreate,
@@ -3504,5 +3518,6 @@ module.exports = {
 	azureLogin: azureLogin,
 	// azureUserFetch: azureUserFetch,
 	// azureUserFetchCallback: azureUserFetchCallback,
-	// validateAzureUserFetch: validateAzureUserFetch
+	// validateAzureUserFetch: validateAzureUserFetch,
+	hasAzureToken
 };

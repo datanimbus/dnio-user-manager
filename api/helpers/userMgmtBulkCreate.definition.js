@@ -44,7 +44,7 @@ var definition = {
 	},
 	'status': {
 		'type': 'String',
-		'enum': ['Pending', 'Validated', 'Created', 'Error', 'Ignored']
+		'enum': ['Pending', 'Validated', 'Created', 'Error', 'Ignored', 'Success']
 	}
 };
 module.exports.definition = definition;

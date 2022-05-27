@@ -1,9 +1,12 @@
 const msal = require('@azure/msal-node');
 const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
+const JWT = require('jsonwebtoken');
+
 
 const logger = global.logger;
 const config = require('../../config/config');
 const azureConfig = config.azureConfig;
+const SECRET = config.secret;
 
 let authorityHostUrl = 'https://login.microsoftonline.com';
 let tenant = azureConfig.b2cTenant;
@@ -111,7 +114,26 @@ async function getUserInfo(searchText, accessToken) {
 	}
 }
 
+function storeInJWT(req, azureToken) {
+	return JWT.sign({ azureToken: azureToken, userId: req.user._id }, SECRET);
+}
+
+function fetchFromJWT(req) {
+	try {
+		const data = JWT.verify(req.cookie['azure-token'], SECRET);
+		if (data.userId != req.user._id) {
+			throw new Error('Invalid Azure Token');
+		}
+		return data.azureToken;
+	} catch (err) {
+		logger.error(err);
+		throw new Error('Invalid Azure Token');
+	}
+}
+
 module.exports.getAuthUrl = getAuthUrl;
 module.exports.getUserInfo = getUserInfo;
 module.exports.getCurrentUserInfo = getCurrentUserInfo;
 module.exports.getAccessTokenByCode = getAccessTokenByCode;
+module.exports.storeInJWT = storeInJWT;
+module.exports.fetchFromJWT = fetchFromJWT;

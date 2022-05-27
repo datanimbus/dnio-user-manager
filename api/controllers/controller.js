@@ -11,7 +11,7 @@ const GroupController = require('./group.controller.js');
 const ConfigController = require('./config.controller');
 const FilterController = require('./filter.controller');
 const BulkCreateController = require('./bulkCreate.controller.js');
-const BookmarkController=require('./bookmark.controller.js');
+const BookmarkController = require('./bookmark.controller.js');
 
 
 AppController.init()
@@ -194,11 +194,12 @@ router.get('/:app/user/utils/count', UserController.userInAppCount);
 router.get('/:app/user/:id', UserController.userInAppShow);
 router.put('/:app/user/:id', UserController.update);
 router.delete('/:app/user/:id', UserController.destroy);
-router.put('/:app/user/utils/bulkCreate/:fileId/validate', UserController.bulkAddUserValidate);
-router.post('/:app/user/utils/bulkCreate/:fileId', UserController.bulkAddUserCreate);
-router.get('/:app/user/utils/bulkCreate/:fileId/download', UserController.bulkAddUserDownload);
-router.get('/:app/user/utils/bulkCreate/:fileId/count', BulkCreateController.bulkUserCount);
-router.get('/:app/user/utils/bulkCreate/:fileId/userList', BulkCreateController.bulkUserIndex);
+// router.put('/:app/user/utils/bulkCreate/:fileId/validate', UserController.bulkAddUserValidate);
+// router.post('/:app/user/utils/bulkCreate/:fileId', UserController.bulkAddUserCreate);
+// router.get('/:app/user/utils/bulkCreate/:fileId/download', UserController.bulkAddUserDownload);
+// router.get('/:app/user/utils/bulkCreate/:fileId/count', BulkCreateController.bulkUserCount);
+// router.get('/:app/user/utils/bulkCreate/:fileId/userList', BulkCreateController.bulkUserIndex);
+router.use('/:app/user/utils/bulkCreate', BulkCreateController);
 router.get('/:app/user/utils/distinctAttributes', UserController.distinctUserAttribute);
 router.delete('/:app/user/utils/closeAllSessions/:id', UserController.closeAllSessionForUser);
 router.put('/:app/user/utils/appAdmin/:id/:action', UserController.editAppAdmin);

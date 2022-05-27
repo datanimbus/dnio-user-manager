@@ -1,5 +1,13 @@
 var definition = {
-	'fileId': {
+	'_id': {
+		'type': 'String',
+		'required': true,
+	},
+	'app': {
+		'type': 'String',
+		'required': true,
+	},
+	'user': {
 		'type': 'String',
 		'required': true,
 	},
@@ -24,27 +32,12 @@ var definition = {
 	'fileName': {
 		'type': 'String'
 	},
-	'sNo': {
-		'type': 'Number'
-	},
-	'data': {
-		'type': 'Object'
-	},
-	'duplicate': {
-		'type': 'Boolean'
-	},
-	'existsInApp': {
-		'type': 'Boolean'
-	},
-	'existsInPlatform': {
-		'type': 'Boolean'
-	},
-	'message': {
+	'errorMessage': {
 		'type': 'String'
 	},
 	'status': {
 		'type': 'String',
-		'enum': ['Pending', 'Validated', 'Created', 'Error', 'Ignored']
+		'enum': ['Pending', 'Uploaded', 'Validated', 'Created', 'Error', 'Ignored']
 	}
 };
 module.exports.definition = definition;

@@ -14,7 +14,7 @@ const { MongoClient } = require('mongodb');
 const mongoose = require('mongoose');
 const passport = require('passport');
 var cookieParser = require('cookie-parser');
-// const fileUpload = require('express-fileupload');
+const fileUpload = require('express-fileupload');
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
 
@@ -96,15 +96,13 @@ app.use(logMiddleware);
 
 require('./config/passport')(passport);
 app.use(passport.initialize());
-
 app.use(require('./util/auth'));
-
-// app.use(fileUpload());
+app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));
 
 let dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('./util/queueMgmt');
 dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
-app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName,'user.logs'));
+app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, 'user.logs'));
 
 app.use('/rbac', require('./api/controllers/controller'));
 

@@ -17,7 +17,7 @@ const envConfig = require('../../config/config');
 const jwtKey = envConfig.secret;
 const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
-const azureAdUtil = require('../helpers/util/azureAd.util');
+const azureAdUtil = require('../utils/azure.ad.utils');
 const cacheUtil = utils.cache;
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -133,21 +133,21 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		})
 		.then(() => {
 			if (isHtml) {
-				// const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
-				// const expires = new Date(resObj.expiresIn).toISOString();
-				// let cookieJson = {};
-				// if (domain != 'localhost') {
-				// 	cookieJson = {
-				// 		expires: new Date(resObj.expiresIn),
-				// 		httpOnly: domain == 'localhost' ? false : true,
-				// 		sameSite: true,
-				// 		secure: true,
-				// 		domain: domain,
-				// 		path: '/api/'
-				// 	};
-				// }
-				// response.cookie('Authorization', 'JWT ' + resObj.token, cookieJson);
-				return sendAzureCallbackResponse(response, 200, resObj);
+				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
+				let cookieJson = {};
+				if (domain != 'localhost') {
+					cookieJson = {
+						expires: new Date(resObj.expiresIn),
+						httpOnly: domain == 'localhost' ? false : true,
+						sameSite: true,
+						secure: true,
+						domain: domain,
+						path: '/api'
+					};
+				}
+				response.cookie('Authorization', 'JWT ' + resObj.token, cookieJson);
+				// return sendAzureCallbackResponse(response, 200, resObj);
+				return response.redirect('/author');
 			}
 			return response.json(resObj);
 		})
@@ -716,7 +716,8 @@ async function validateLocalLogin(username, password, done) {
 }
 
 function localLogin(req, res) {
-	if (checkAuthMode(res, 'local')) {
+	//Allow Admin User to login and import AD/LDAP Users
+	if (checkAuthMode(res, 'local') || req.body.username == 'admin') {
 		passport.authenticate('local', function (err, user, info) {
 			if (err) {
 				logger.error('error in local login ::: ', err);
@@ -730,6 +731,8 @@ function localLogin(req, res) {
 				return handleSessionAndGenerateToken(req, res, user, botKey, false);
 			}
 		})(req, res);
+	} else {
+		res.status(400).json({ message: 'Local Login Mode is Disabled' });
 	}
 }
 
@@ -781,7 +784,7 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 	try {
 		logger.trace('azure acces token ::', accessToken);
 		// get user info from azure to get odp username
-		let userInfo = await azureAdUtil.getADUserInfo(accessToken);
+		let userInfo = await azureAdUtil.getCurrentUserInfo(accessToken);
 		logger.debug('search User :: ', userInfo);
 		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
 		logger.trace('dbUser :: ', dbUser.basicDetails);
@@ -809,25 +812,44 @@ function azureLogin(req, res) {
 	}
 }
 
-function azureLoginCallback(req, res) {
-	logger.debug('login callback called : ', req.path);
-	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureLogIn', {
-			response: res,
-			failureRedirect: '/'
-		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage: info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
+async function azureLoginCallback(req, res) {
+	try {
+		logger.debug('login callback called : ', req.path);
+		if (checkAuthMode(res, 'azure')) {
+			if (req.query.state == 'import-users') {
+				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
+				const azureToken = jwt.sign({ azureToken: response.accessToken, userId: req.user._id }, jwtKey);
+				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
+				res.cookie('azure-token', azureToken, {
+					expires: new Date(response.expiresIn),
+					httpOnly: domain == 'localhost' ? false : true,
+					sameSite: true,
+					secure: true,
+					domain: domain,
+					path: '/api'
+				});
+				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated', azureToken: azureToken });
+			} else if (req.query.state == 'login' || req.query.state == 'author' || req.query.state == 'appcenter') {
+				passport.authenticate('AzureLogIn', {
+					response: res,
+					failureRedirect: '/'
+				}, function (err, user, info) {
+					if (err) {
+						logger.error('error in azureLoginCallback ::: ', err);
+						if (info) userLog.loginFailed(info, req, res);
+						return sendAzureCallbackResponse(res, 500, { message: err.message });
+					} else if (!user) {
+						logger.error('Something went wrong in azureLoginCallback:: ', info);
+						return sendAzureCallbackResponse(res, 400, { meessage: info });
+					} else {
+						return handleSessionAndGenerateToken(req, res, user, null, true);
+					}
+				})(req, res);
 			}
-		})(req, res);
+		}
+	} catch (err) {
+		logger.error(err);
+		sendAzureCallbackResponse(res, 500, { message: err.message });
 	}
 }
 
@@ -1453,28 +1475,27 @@ function extendSession(req, res) {
 	return checkAndExtendUserSession(req, res, true);
 }
 
-function init() {
-	let users = require('../../config/users.js');
-	return new Promise((_resolve, _reject) => {
-		crudder.model.find({}).count()
-			.then(_d => {
-				if (_d == 0) {
-					return users.reduce((_p, _c) => {
-						return _p.then(() => {
-							return crudder.model.create(_c)
-								.then(_d => {
-									logger.info('Added user :: ' + _d._id);
-								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
-						});
-					}, new Promise(_resolve2 => _resolve2()))
-						.then(() => _resolve());
-				} else _resolve();
-			}, () => _reject());
-	});
+async function init() {
+	try {
+		let users = require('../../config/users.js');
+		await users.reduce(async (prev, curr) => {
+			try {
+				const count = await crudder.model.find({ _id: curr.username }).count();
+				if (count === 0) {
+					await crudder.model.create(curr);
+					logger.info('Added User :: ' + curr._id);
+				} else {
+					logger.info('User Exists:: ' + curr._id);
+				}
+			} catch (err) {
+				logger.error('Error adding user :: ' + curr._id);
+				logger.error(err);
+			}
+		});
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
 }
 
 var crudder = new SMCrud(schema, 'user', options);
@@ -2678,7 +2699,7 @@ function addUserToApps(req, res) {
 
 	let usrId = req.params.id;
 	let apps = req.body.apps;
-	logger.info("Add to Apps ==== ", usrId, apps)
+	logger.info('Add to Apps ==== ', usrId, apps);
 	crudder.model.findOne({
 		_id: usrId
 	}).lean(true)

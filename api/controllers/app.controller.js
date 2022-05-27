@@ -203,21 +203,21 @@ schema.post('remove', (_doc) => {
 				logger.info('Deleted kubernetes namespace :: ' + ns);
 				kubeutil.namespace.getNamespace(ns)
 					.then(nsData => {
-						logger.trace("Namespace data ", nsData);
-                        nsData.body.spec.finalizers = [];
+						logger.trace('Namespace data ', nsData);
+						nsData.body.spec.finalizers = [];
 
 						kubeutil.namespace.updateNamespace(ns, nsData.body)
 							.then(_ => {
-								logger.trace("Updated NS :: ", JSON.stringify(_));
+								logger.trace('Updated NS :: ', JSON.stringify(_));
 								logger.info('Updated kubernetes namespace :: ' + ns);
-								}, _ => {
-									logger.trace(_);
-									logger.info('Unable to update kubernetes namespace :: ' + ns);
-								});
+							}, _ => {
+								logger.trace(_);
+								logger.info('Unable to update kubernetes namespace :: ' + ns);
+							});
 					}, _ => {
 						logger.trace(_);
 						logger.info('Unable to get kubernetes namespace :: ' + ns);		
-					})
+					});
 			}, _ => {
 				logger.debug(_);
 				logger.info('Unable to delete kubernetes namespace :: ' + ns);

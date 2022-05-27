@@ -63,7 +63,7 @@ let allowedFileExt = process.env.DATA_STACK_ALLOWED_FILE_TYPE ? process.env.DATA
 
 function azurePassportConfig(type) {
 	return {
-		identityMetadata: 'https://login.microsoftonline.com/' + azureConfig['B2C_TENANT'] + '/v2.0/.well-known/openid-configuration',
+		identityMetadata: 'https://login.microsoftonline.com/' + azureConfig['TENANT'] + '/v2.0/.well-known/openid-configuration',
 		clientID: azureConfig['CLIENT_ID'],
 		responseType: 'code',
 		responseMode: 'query',
@@ -74,7 +74,7 @@ function azurePassportConfig(type) {
 		validateIssuer: true,
 		issuer: null,
 		passReqToCallback: false,
-		scope: ['profile', 'email', 'user.read'],
+		scope: ['profile', 'email', 'user.read', 'user.read.all'],
 		useCookieInsteadOfSession: true,
 		cookieEncryptionKeys: [
 			{ 'key': '12345678901234567890123456789012', 'iv': '123456789012' },
@@ -166,8 +166,8 @@ module.exports = {
 	azureConfig: {
 		clientId: azureConfig['CLIENT_ID'],
 		clientSecret: azureConfig['CLIENT_SECRET'],
-		b2cTenant: azureConfig['B2C_TENANT'],
-		adUserAttribute: azureConfig['AD_USER_ATTRIBUTE'] ? azureConfig['AD_USER_ATTRIBUTE'] : 'mail'
+		b2cTenant: azureConfig['TENANT'],
+		adUserAttribute: azureConfig['AD_USER_ATTRIBUTE'] ? azureConfig['AD_USER_ATTRIBUTE'] : 'userPrincipalName'
 	},
 	dataStackDefaultTimezone: process.env.TZ_DEFAULT || 'Zulu',
 	disableInsightsApp: process.env.DISABLE_INSIGHTS ? parseBoolean(process.env.DISABLE_INSIGHTS) : false,

@@ -826,10 +826,10 @@ async function azureLoginCallback(req, res) {
 				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
 				const azureToken = azureAdUtil.storeInJWT(req, response.accessToken);
 				// const azureToken = jwt.sign({ azureToken: response.accessToken, userId: req.user._id }, jwtKey);
-				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
+				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost:9080';
 				res.cookie('azure-token', azureToken, {
-					expires: new Date(response.expiresIn),
-					httpOnly: domain == 'localhost' ? false : true,
+					expires: response.expiresOn,
+					httpOnly: domain == 'localhost:9080' ? false : true,
 					sameSite: true,
 					secure: true,
 					domain: domain,
@@ -3463,6 +3463,158 @@ async function hasAzureToken(req, res) {
 	}
 }
 
+async function generateNewAzureToken(req, res) {
+	const url = await azureAdUtil.getAuthUrl('import-users');
+	res.redirect(url);
+}
+
+async function searchUsersInAzure(req, res) {
+	try {
+		const users = req.body.users;
+		if (!users || users.length == 0) {
+			return res.status(400).json({ message: 'Users are Required in Body' });
+		}
+		const token = azureAdUtil.fetchFromJWT(req);
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		let promises = users.map(async (username) => {
+			try {
+				const adUser = await azureAdUtil.getUserInfo(username, token);
+				return {
+					username,
+					statusCode: 200,
+					body: adUser
+				};
+			} catch (err) {
+				logger.error(err);
+				return {
+					username,
+					statusCode: 400,
+					body: err
+				};
+			}
+		});
+		let result = await Promise.all(promises);
+		res.status(200).json(result);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+async function importUsersFromAzure(req, res) {
+	try {
+		const groups = req.body.groups;
+		const users = req.body.users;
+		if (!users || users.length == 0) {
+			return res.status(400).json({ message: 'Users are Required in Body' });
+		}
+		const token = azureAdUtil.fetchFromJWT(req);
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const result = [];
+		await users.reduce(async (prev, username) => {
+			try {
+				await prev;
+				const adUser = await azureAdUtil.getUserInfo(username, token);
+				const newUser = await createUserForAzure(req, adUser);
+				await importUserToAppSimple(req, newUser, req.params.app);
+				if (groups && groups.length > 0) {
+					importUserToGroups(req, newUser, groups);
+				}
+				result.push({
+					username,
+					statusCode: 200,
+					body: adUser
+				});
+			} catch (err) {
+				logger.error(err);
+				result.push({
+					username,
+					statusCode: 400,
+					body: err
+				});
+			}
+		}, Promise.resolve());
+		res.status(200).json(result);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+
+async function createUserForAzure(req, adUser) {
+	try {
+		const userModel = mongoose.model('user');
+		const userData = {
+			username: adUser.username,
+			basicDetails: {
+				name: adUser.name,
+				alternateEmail: adUser.email
+			},
+			auth: {
+				authType: 'azure'
+			}
+		};
+		const doc = new userModel(userData);
+		doc._req = req;
+		return await doc.save(req);
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
+async function importUserToAppSimple(req, user, app) {
+	try {
+		const groupModel = mongoose.model('group');
+		const group = await groupModel.findOne({ name: '#', app: app });
+		group.users.push(user.username);
+		group.users = _.uniq(group.users);
+		await group.save(req);
+		delete user.salt;
+		delete user.password;
+		userLog.addUserToApp(req, { statusCode: 200 }, user);
+		dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(user, { app: app }));
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
+async function importUserToGroups(req, user, groups) {
+	try {
+		const result = [];
+		const groupModel = mongoose.model('group');
+		await groups.reduce(async (prev, groupId) => {
+			try {
+				await prev;
+				const group = await groupModel.findOne({ _id: groupId });
+				group.users.push(user.username);
+				group.users = _.uniq(group.users);
+				await group.save(req);
+				result.push({
+					statusCode: 200,
+					data: { message: 'User Added to group' }
+				});
+			} catch (err) {
+				logger.error(err);
+				result.push({
+					statusCode: 400,
+					data: err
+				});
+			}
+		}, Promise.resolve());
+		return result;
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
 module.exports = {
 	init: init,
 	create: customCreate,
@@ -3526,5 +3678,8 @@ module.exports = {
 	// azureUserFetch: azureUserFetch,
 	// azureUserFetchCallback: azureUserFetchCallback,
 	// validateAzureUserFetch: validateAzureUserFetch,
-	hasAzureToken
+	hasAzureToken,
+	searchUsersInAzure,
+	importUsersFromAzure,
+	generateNewAzureToken
 };

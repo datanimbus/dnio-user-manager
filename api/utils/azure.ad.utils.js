@@ -115,15 +115,12 @@ async function getUserInfo(searchText, accessToken) {
 }
 
 function storeInJWT(req, azureToken) {
-	return JWT.sign({ azureToken: azureToken, userId: req.user._id }, SECRET);
+	return JWT.sign({ azureToken: azureToken }, SECRET);
 }
 
 function fetchFromJWT(req) {
 	try {
-		const data = JWT.verify(req.cookie['azure-token'], SECRET);
-		if (data.userId != req.user._id) {
-			throw new Error('Invalid Azure Token');
-		}
+		const data = JWT.verify(req.cookies['azure-token'], SECRET);
 		return data.azureToken;
 	} catch (err) {
 		logger.error(err);

@@ -109,7 +109,7 @@ async function checkAzureDependencies() {
 			return false;
 		}
 		logger.info('Please Ensure the Callback URL configured in Azure AD App is this:-');
-		logger.info(`https://${config.commonName}/api/a/rbac/azure/login/callback`);
+		logger.info(`https://${config.commonName}/api/a/rbac/auth/azure/login/callback`);
 		logger.info('');
 		// const url = await adUtils.getAuthUrl('initial-setup');
 		// logger.info('Please Use the Below URL and Login with the AD User that will be Super Admin of Data Stack.');

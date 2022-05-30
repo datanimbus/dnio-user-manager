@@ -182,7 +182,6 @@ router.put('/admin/user/utils/addToGroups/:id', UserController.addUserToGroups);
 router.put('/admin/user/utils/removeFromGroups/:id', UserController.removeUserFromGroups);
 router.put('/admin/user/utils/addToApps/:id', UserController.addUserToApps);
 router.put('/admin/user/utils/appAdmin/:id/:action', UserController.editAppAdmin);
-router.put('/admin/user/utils/hasAzureToken', UserController.hasAzureToken);
 router.get('/admin/group/count', GroupController.count);
 router.get('/admin/group', GroupController.index);
 router.post('/admin/group', GroupController.create);
@@ -210,6 +209,10 @@ router.put('/:app/user/utils/removeFromGroups/:id', UserController.removeUserFro
 router.put('/:app/user/utils/import/:id', UserController.importUserToApp);
 router.put('/:app/user/utils/removeUsers', AppController.removeUserFromApp);
 router.put('/:app/user/utils/removeBots', AppController.removeBotFromApp);
+router.get('/:app/user/utils/azure/token/new', UserController.generateNewAzureToken);
+router.get('/:app/user/utils/azure/token', UserController.hasAzureToken);
+router.put('/:app/user/utils/azure/search', UserController.searchUsersInAzure);
+router.put('/:app/user/utils/azure/import', UserController.importUsersFromAzure);
 router.put('/:app/:userType/utils/status/:id/:userState', UserController.disableUser);
 router.get('/:app/bot', UserController.botInApp);
 router.post('/:app/bot', UserController.createUserinGroups);

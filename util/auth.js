@@ -15,7 +15,7 @@ const permittedUrls = [
 	'/rbac/auth/ldap/login',
 	'/rbac/auth/authType/{id}',
 	'/rbac/internal/health/live',
-	'/rbac/internal/health/ready',
+	'/rbac/internal/health/ready'
 ];
 
 const onlyAuthUrls = [
@@ -92,6 +92,10 @@ const commonUrls = [
 	'/rbac/{app}/bookmark',
 	'/rbac/{app}/bookmark/utils/bulkDelete',
 	'/rbac/{app}/bookmark/{id}',
+	'/rbac/{app}/user/utils/azure/token/new',
+	'/rbac/{app}/user/utils/azure/token',
+	'/rbac/{app}/user/utils/azure/search',
+	'/rbac/{app}/user/utils/azure/import',
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
@@ -232,6 +236,18 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
+		return true;
+	}
+	if (commonUrls('/rbac/{app}/user/utils/azure/token/new', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+		return true;
+	}
+	if (commonUrls('/rbac/{app}/user/utils/azure/token', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (commonUrls('/rbac/{app}/user/utils/azure/search', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+		return true;
+	}
+	if (commonUrls('/rbac/{app}/user/utils/azure/import', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {

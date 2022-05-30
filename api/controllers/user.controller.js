@@ -3555,6 +3555,10 @@ async function createUserForAzure(req, adUser) {
 				name: adUser.name,
 				alternateEmail: adUser.email
 			},
+			accessControl: {
+				accessLevel: 'Selected',
+				apps: []
+			},
 			auth: {
 				authType: 'azure'
 			}

@@ -35,9 +35,21 @@ var definition = {
 	'errorMessage': {
 		'type': 'String'
 	},
+	'totalCount': {
+		'type': 'Number'
+	},
+	'successCount': {
+		'type': 'Number'
+	},
+	'errorCount': {
+		'type': 'Number'
+	},
+	'ignoredCount': {
+		'type': 'Number'
+	},
 	'status': {
 		'type': 'String',
-		'enum': ['Pending', 'Uploaded', 'Validated', 'Created', 'Error', 'Ignored']
+		'enum': ['Pending', 'Uploaded', 'Validating', 'Completed', 'Error', 'Ignored']
 	}
 };
 module.exports.definition = definition;

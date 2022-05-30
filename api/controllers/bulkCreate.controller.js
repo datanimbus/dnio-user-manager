@@ -172,7 +172,7 @@ router.post('/upload', async function (req, res) {
 				if (data.statusCode === 400) {
 					payload.status = 'Error';
 				} else {
-					payload.status = 'Uploaded';
+					payload.status = 'Validating';
 					data.data.forEach(async (record) => {
 						try {
 							let bulkUserDoc = new crudder.model(record);
@@ -184,7 +184,29 @@ router.post('/upload', async function (req, res) {
 					});
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: payload });
-				startValidation(req, payload, data.data);
+				await startValidation(req, payload, data.data);
+
+				const finalData = await crudder.model.aggregate([
+					{
+						$facet: {
+							totalCount: [{ $match: { fileId: payload._id } }, { $count: 'count' }],
+							successCount: [{ $match: { fileId: payload._id, status: 'Success' } }, { $count: 'count' }],
+							errorCount: [{ $match: { fileId: payload._id, status: 'Error' } }, { $count: 'count' }],
+							ignoredCount: [{ $match: { fileId: payload._id, status: 'Ignored' } }, { $count: 'count' }]
+						}
+					}
+				]);
+				const result = {
+					totalCount: (finalData[0].totalCount).length > 0 ? finalData[0].totalCount[0].count : 0,
+					successCount: (finalData[0].successCount).length > 0 ? finalData[0].successCount[0].count : 0,
+					errorCount: (finalData[0].errorCount).length > 0 ? finalData[0].errorCount[0].count : 0,
+					ignoredCount: (finalData[0].ignoredCount).length > 0 ? finalData[0].ignoredCount[0].count : 0,
+					status: 'Completed',
+					_metadata: {
+						lastUpdated: new Date()
+					}
+				};
+				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: result });
 			} catch (err) {
 				logger.error('Error from Worker Thread');
 				logger.error(err);
@@ -267,6 +289,7 @@ async function startValidation(req, fileData, records) {
 				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: err.message, status: 'Error' } });
 			}
 		}, Promise.resolve());
+		return;
 		// await Promise.all(promises);
 	} catch (err) {
 		logger.error('Error While Validating Bulk User Records for:', fileData._id);

@@ -16,8 +16,8 @@ const fileTransfersDefinition = require('../helpers/file-transfers.definition').
 const schema = new mongoose.Schema(definition, { timestamps: true });
 const fileTransfersSchema = new mongoose.Schema(fileTransfersDefinition, { timestamps: true });
 
-schema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
-fileTransfersSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+schema.index({ createdAt: 1 }, { expireAfterSeconds: 2628000 });
+fileTransfersSchema.index({ createdAt: 1 }, { expireAfterSeconds: 2628000 });
 const logger = global.logger;
 
 const options = {

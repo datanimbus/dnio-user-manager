@@ -8,6 +8,9 @@ const { writeToPath, writeToString } = require('fast-csv');
 const FileType = require('file-type/core');
 const readChunk = require('read-chunk');
 const { Worker } = require('worker_threads');
+const _ = require('lodash');
+
+
 const adUtils = require('../utils/azure.ad.utils');
 const config = require('../../config/config');
 
@@ -70,7 +73,19 @@ function modifyFilterForFileTransfers(req) {
 
 router.get('/:fileId/userList', function (req, res) {
 	modifyFilterForBulkCreate(req);
-	crudder.index(req, res);
+	crudder.index(req, res, {
+		resHandler: function (err, resTemp, body, statusCode) {
+			if (Array.isArray(body)) {
+				return body.map(e => {
+					delete e.data.password;
+					return e;
+				});
+			} else if (body) {
+				delete body.data.password;
+			}
+			return body;
+		}
+	});
 });
 
 router.get('/:fileId/count', function (req, res) {
@@ -226,8 +241,9 @@ async function startValidation(req, fileData, records) {
 		}
 		const userModel = mongoose.model('user');
 		const groupModel = mongoose.model('group');
-		let promises = validRecords.map(async (item) => {
+		await validRecords.reduce(async (prev, item) => {
 			try {
+				await prev;
 				const userExistsInPlatform = await userModel.findOne({ _id: item.data.username }, { _id: 1, 'basicDetails.name': 1 }).lean();
 				const userExistsInApp = await groupModel.findOne({ name: '#', users: item.data.username, app: fileData.app }, { _id: 1, name: 1 }).lean();
 				if (userExistsInApp) {
@@ -242,7 +258,7 @@ async function startValidation(req, fileData, records) {
 					} else {
 						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Importing User from Azure' } });
 					}
-					await createNewUser(req, item);
+					await createNewUser(req, item, fileData);
 					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Created and Imported to App', status: 'Success' } });
 				}
 			} catch (err) {
@@ -250,8 +266,8 @@ async function startValidation(req, fileData, records) {
 				logger.error(err);
 				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: err.message, status: 'Error' } });
 			}
-		});
-		await Promise.all(promises);
+		}, Promise.resolve());
+		// await Promise.all(promises);
 	} catch (err) {
 		logger.error('Error While Validating Bulk User Records for:', fileData._id);
 		logger.error(err);
@@ -259,7 +275,7 @@ async function startValidation(req, fileData, records) {
 	}
 }
 
-async function createNewUser(req, record) {
+async function createNewUser(req, record, fileData) {
 	if (record.data.authType == 'azure') {
 		const token = adUtils.fetchFromJWT(req);
 		const adUser = await adUtils.getUserInfo(record.data.username, token);
@@ -276,6 +292,9 @@ async function createNewUser(req, record) {
 		basicDetails: {
 			name: record.data.name,
 			alternateEmail: record.data.email
+		},
+		auth: {
+			authType: record.data.authType
 		}
 	};
 	if (record.data.authType === 'local') {
@@ -283,14 +302,15 @@ async function createNewUser(req, record) {
 	}
 	const doc = new userModel(userData);
 	doc._req = req;
-	return await doc.save(req);
+	await doc.save(req);
+	await importUserToApp(req, record, fileData);
 }
 
 async function importUserToApp(req, record, fileData) {
 	const groupModel = mongoose.model('group');
 	const group = await groupModel.findOne({ name: '#', app: fileData.app });
 	group.users.push(record.data.username);
-	group._req = req;
+	group.users = _.uniq(group.users);
 	return await group.save(req);
 	// await groupModel.findByIdAndUpdate({ name: '#', app: record.app }, { $push: { users: record.data.username } });
 }

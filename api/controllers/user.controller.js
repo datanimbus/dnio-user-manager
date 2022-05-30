@@ -36,6 +36,12 @@ function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
+if (!envConfig.isK8sEnv()) {
+	require('../init/init')().catch(err => {
+		logger.error(err.message);
+	});
+}
+
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
 	logger.debug(`Generate token called for ${document._id}`);
 	let resObj = JSON.parse(JSON.stringify(document));
@@ -1481,6 +1487,7 @@ async function init() {
 		let users = require('../../config/users.js');
 		await users.reduce(async (prev, curr) => {
 			try {
+				await prev;
 				const count = await crudder.model.find({ _id: curr.username }).count();
 				if (count === 0) {
 					await crudder.model.create(curr);
@@ -1492,7 +1499,7 @@ async function init() {
 				logger.error('Error adding user :: ' + curr._id);
 				logger.error(err);
 			}
-		});
+		}, Promise.resolve());
 	} catch (err) {
 		logger.error(err);
 		throw err;

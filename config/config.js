@@ -1,8 +1,14 @@
+const log4js = require('log4js');
 const dataStackUtils = require('@appveen/data.stack-utils');
+
+
 let debugDB = false;
 if (process.env.LOG_LEVEL == 'trace') { debugDB = true; }
 
 let logger = global.logger;
+if (!logger) {
+	logger = log4js.getLogger(process.env.IMAGE_TAG);
+}
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
 logger.debug(`DATA_STACK_NAMESPACE : ${process.env.DATA_STACK_NAMESPACE}`);
 

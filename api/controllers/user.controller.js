@@ -863,9 +863,10 @@ async function azureLoginCallback(req, res) {
 function sendAzureCallbackResponse(res, statusCode, body) {
 	return res.end(`
 		<script>
+			window.opener.document.getElementById('azure-body').value = '${JSON.stringify(body)}';
     		window.parent.localStorage.setItem('azure-status','${statusCode}');
     		window.parent.localStorage.setItem('azure-body','${JSON.stringify(body)}');
-    		window.close();
+    		// window.close();
 		</script>
 	`);
 }

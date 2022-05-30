@@ -1,7 +1,7 @@
 const msal = require('@azure/msal-node');
 const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
 const JWT = require('jsonwebtoken');
-
+require('isomorphic-fetch');
 
 const logger = global.logger;
 const config = require('../../config/config');

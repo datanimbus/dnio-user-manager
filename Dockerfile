@@ -23,6 +23,7 @@ COPY config /app/config
 COPY util /app/util
 
 ENV IMAGE_TAG=__image_tag__
+ENV NODE_ENV=production
 
 EXPOSE 10004
 

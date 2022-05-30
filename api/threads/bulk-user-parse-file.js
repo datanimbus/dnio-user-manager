@@ -1,5 +1,6 @@
 const { workerData, parentPort } = require('worker_threads');
 const { parseFile } = require('fast-csv');
+const config = require('../../config/config');
 
 
 const filePath = workerData.filePath;
@@ -19,7 +20,7 @@ parseFile(filePath, { headers: false, skipRows: 1 }).on('error', (err) => {
 		name: row[0],
 		username: row[1],
 		password: row[2],
-		authType: row[3]
+		authType: row[3] || config.RBAC_USER_AUTH_MODES[0]
 	};
 	const data = {
 		fileId,

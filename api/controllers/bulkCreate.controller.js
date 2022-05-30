@@ -9,6 +9,7 @@ const FileType = require('file-type/core');
 const readChunk = require('read-chunk');
 const { Worker } = require('worker_threads');
 const adUtils = require('../utils/azure.ad.utils');
+const config = require('../../config/config');
 
 const definition = require('../helpers/userMgmtBulkCreate.definition.js').definition;
 const fileTransfersDefinition = require('../helpers/file-transfers.definition').definition;
@@ -206,45 +207,51 @@ async function startValidation(req, fileData, records) {
 		]);
 		const duplicates = result.filter(item => item.records.length > 1);
 		let validRecords = result.filter(item => item.records.length == 1).map(e => e.records[0]);
-		if (duplicates.length > 0) {
+		if (duplicates && duplicates.length > 0) {
 			logger.debug('Duplicate Records found in the sheet, Skipping those records');
 			duplicates.map(async (item) => {
-				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: true, message: 'Duplicate Record Present in the Sheet', status: 'Ignored' } });
+				await crudder.model.updateMany({ fileId: fileData._id, 'data.username': item._id }, { $set: { duplicate: true, message: 'Duplicate Record Present in the Sheet', status: 'Error' } });
+			});
+		}
+		const invalidAuthModes = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) == -1);
+		validRecords = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) > -1);
+		if (invalidAuthModes && invalidAuthModes.length > 0) {
+			logger.debug('Invalid Auth Modes found in the sheet, Skipping those records');
+			invalidAuthModes.map(async (item) => {
+				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: `${item.data.authType} Auth Mode Not Configured`, status: 'Error' } });
 			});
 		}
 		if (validRecords.length == 0) {
 			return await fileTransfersCrudder.model.findOneAndUpdate({ _id: fileData._id }, { $set: { message: 'No Valid Record Available in File', status: 'Error' } });
 		}
-		if (validRecords.length > 0) {
-			const userModel = mongoose.model('user');
-			const groupModel = mongoose.model('group');
-			let promises = validRecords.map(async (item) => {
-				try {
-					const userExistsInPlatform = await userModel.findOne({ _id: item.data.username }, { _id: 1, 'basicDetails.name': 1 }).lean();
-					const userExistsInApp = await groupModel.findOne({ name: '#', users: item.data.username, app: fileData.app }, { _id: 1, name: 1 }).lean();
-					if (userExistsInApp) {
-						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: true, existsInPlatform: true, message: 'User Exists in App', status: 'Ignored' } });
-					} else if (userExistsInPlatform) {
-						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: true, message: 'User Exists in Platform, Importing User to App' } });
-						await importUserToApp(req, fileData, item);
-						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Imported to App', status: 'Success' } });
+		const userModel = mongoose.model('user');
+		const groupModel = mongoose.model('group');
+		let promises = validRecords.map(async (item) => {
+			try {
+				const userExistsInPlatform = await userModel.findOne({ _id: item.data.username }, { _id: 1, 'basicDetails.name': 1 }).lean();
+				const userExistsInApp = await groupModel.findOne({ name: '#', users: item.data.username, app: fileData.app }, { _id: 1, name: 1 }).lean();
+				if (userExistsInApp) {
+					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: true, existsInPlatform: true, message: 'User Exists in App', status: 'Ignored' } });
+				} else if (userExistsInPlatform) {
+					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: true, message: 'User Exists in Platform, Importing User to App' } });
+					await importUserToApp(req, item, fileData);
+					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Imported to App', status: 'Success' } });
+				} else {
+					if (item.data.type == 'local') {
+						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Creating New User' } });
 					} else {
-						if (item.data.type == 'local') {
-							await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Creating New User' } });
-						} else {
-							await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Importing User from Azure' } });
-						}
-						await createNewUser(req, item);
-						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Created and Imported to App', status: 'Success' } });
+						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Importing User from Azure' } });
 					}
-				} catch (err) {
-					logger.error('Error While Trying to Validating Bulk User Records for:', fileData._id);
-					logger.error(err);
-					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: err.message, status: 'Error' } });
+					await createNewUser(req, item);
+					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Created and Imported to App', status: 'Success' } });
 				}
-			});
-			await Promise.all(promises);
-		}
+			} catch (err) {
+				logger.error('Error While Trying to Validating Bulk User Records for:', fileData._id);
+				logger.error(err);
+				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: err.message, status: 'Error' } });
+			}
+		});
+		await Promise.all(promises);
 	} catch (err) {
 		logger.error('Error While Validating Bulk User Records for:', fileData._id);
 		logger.error(err);
@@ -279,7 +286,7 @@ async function createNewUser(req, record) {
 	return await doc.save(req);
 }
 
-async function importUserToApp(req, fileData, record) {
+async function importUserToApp(req, record, fileData) {
 	const groupModel = mongoose.model('group');
 	const group = await groupModel.findOne({ name: '#', app: fileData.app });
 	group.users.push(record.data.username);

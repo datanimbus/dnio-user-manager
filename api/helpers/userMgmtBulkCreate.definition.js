@@ -31,13 +31,16 @@ var definition = {
 		'type': 'Object'
 	},
 	'duplicate': {
-		'type': 'Boolean'
+		'type': 'Boolean',
+		'default': false
 	},
 	'existsInApp': {
-		'type': 'Boolean'
+		'type': 'Boolean',
+		'default': false
 	},
 	'existsInPlatform': {
-		'type': 'Boolean'
+		'type': 'Boolean',
+		'default': false
 	},
 	'message': {
 		'type': 'String'

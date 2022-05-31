@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const router = require('express').Router({ mergeParams: true });
 const mongoose = require('mongoose');
@@ -184,6 +185,7 @@ router.post('/upload', async function (req, res) {
 					});
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: payload });
+				fs.unlinkSync(file.tempFilePath);
 				await startValidation(req, payload, data.data);
 
 				const finalData = await crudder.model.aggregate([

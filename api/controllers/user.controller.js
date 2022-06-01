@@ -783,7 +783,7 @@ function ldapLogin(req, res) {
 }
 
 async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, done) {
-	if (!profile.oid || !(profile._json && profile._json.email)) {
+	if (!profile.oid || !(profile._json && (profile._json.email || profile._json.preferred_username))) {
 		logger.debug('profile:::: ', profile);
 		return done(new Error('No oid/email found in profile.'), null);
 	}

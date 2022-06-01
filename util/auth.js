@@ -238,16 +238,16 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
 		return true;
 	}
-	if (commonUrls('/rbac/{app}/user/utils/azure/token/new', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/azure/token/new', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
-	if (commonUrls('/rbac/{app}/user/utils/azure/token', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/azure/token', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
-	if (commonUrls('/rbac/{app}/user/utils/azure/search', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/azure/search', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
-	if (commonUrls('/rbac/{app}/user/utils/azure/import', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/user/utils/azure/import', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {

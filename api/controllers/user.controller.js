@@ -152,8 +152,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 					};
 				}
 				response.cookie('Authorization', 'JWT ' + resObj.token, cookieJson);
-				// return sendAzureCallbackResponse(response, 200, resObj);
-				return response.redirect('/author');
+				return sendAzureCallbackResponse(response, 200, resObj);
+				// return response.redirect('/author');
 			}
 			return response.json(resObj);
 		})
@@ -836,7 +836,7 @@ async function azureLoginCallback(req, res) {
 					path: '/api'
 				});
 				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated', azureToken: azureToken });
-			} else if (req.query.state == 'login' || req.query.state == 'author' || req.query.state == 'appcenter') {
+			} else { //if (req.query.state == 'login' || req.query.state == 'author' || req.query.state == 'appcenter')
 				passport.authenticate('AzureLogIn', {
 					response: res,
 					failureRedirect: '/'

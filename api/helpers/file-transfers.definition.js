@@ -32,7 +32,7 @@ var definition = {
 	'fileName': {
 		'type': 'String'
 	},
-	'errorMessage': {
+	'message': {
 		'type': 'String'
 	},
 	'totalCount': {

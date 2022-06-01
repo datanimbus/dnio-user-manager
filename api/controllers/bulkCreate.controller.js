@@ -172,17 +172,24 @@ router.post('/upload', async function (req, res) {
 			try {
 				if (data.statusCode === 400) {
 					payload.status = 'Error';
+					payload.message = data.message;
 				} else {
-					payload.status = 'Validating';
-					data.data.forEach(async (record) => {
-						try {
-							let bulkUserDoc = new crudder.model(record);
-							await bulkUserDoc.save();
-						} catch (err) {
-							logger.error('Error While Uploading Bulk User Record');
-							logger.error(err);
-						}
-					});
+					if (!data.data || data.data.length == 0) {
+						payload.status = 'Error';
+						payload.message = 'Unable to read file, Please upload a valid file.';
+					} else {
+						payload.status = 'Validating';
+						payload.message = 'File was Uploaded to DB, Validation Process has Started';
+						data.data.forEach(async (record) => {
+							try {
+								let bulkUserDoc = new crudder.model(record);
+								await bulkUserDoc.save();
+							} catch (err) {
+								logger.error('Error While Uploading Bulk User Record');
+								logger.error(err);
+							}
+						});
+					}
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: payload });
 				fs.unlinkSync(file.tempFilePath);

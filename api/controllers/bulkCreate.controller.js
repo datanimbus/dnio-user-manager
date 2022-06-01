@@ -210,11 +210,18 @@ router.post('/upload', async function (req, res) {
 					successCount: (finalData[0].successCount).length > 0 ? finalData[0].successCount[0].count : 0,
 					errorCount: (finalData[0].errorCount).length > 0 ? finalData[0].errorCount[0].count : 0,
 					ignoredCount: (finalData[0].ignoredCount).length > 0 ? finalData[0].ignoredCount[0].count : 0,
-					status: 'Completed',
-					_metadata: {
-						lastUpdated: new Date()
-					}
+					'_metadata.lastUpdated': new Date()
 				};
+				if (result.totalCount > 0) {
+					if (result.totalCount == result.errorCount) {
+						result.status = 'Error';
+						result.message = 'File has errors';
+					}
+					if (result.totalCount != result.errorCount && result.errorCount > 0) {
+						result.status = 'Completed';
+						result.message = 'File processed with few errors';
+					}
+				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: result });
 			} catch (err) {
 				logger.error('Error from Worker Thread');

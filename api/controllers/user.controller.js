@@ -3481,6 +3481,9 @@ async function searchUsersInAzure(req, res) {
 		let promises = users.map(async (username) => {
 			try {
 				const adUser = await azureAdUtil.getUserInfo(username, token);
+				if (!adUser) {
+					throw new Error('User Not Found');
+				}
 				return {
 					username,
 					statusCode: 200,
@@ -3491,7 +3494,7 @@ async function searchUsersInAzure(req, res) {
 				return {
 					username,
 					statusCode: 400,
-					body: err
+					body: { message: err.message }
 				};
 			}
 		});
@@ -3519,6 +3522,9 @@ async function importUsersFromAzure(req, res) {
 			try {
 				await prev;
 				const adUser = await azureAdUtil.getUserInfo(username, token);
+				if (!adUser) {
+					throw new Error('User Not Found');
+				}
 				const newUser = await createUserForAzure(req, adUser);
 				await importUserToAppSimple(req, newUser, req.params.app);
 				if (groups && groups.length > 0) {

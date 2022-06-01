@@ -86,7 +86,7 @@ async function getUserInfo(searchText, accessToken) {
 				done(null, accessToken);
 			}
 		});
-		let response = await client.api('/users').filter(`startswith(displayName,'${searchText}') or startswith(userPrincipalName,'${searchText}')`).top(1).get();
+		let response = await client.api('/users').filter(`startswith(mail,'${searchText}') or startswith(displayName,'${searchText}') or startswith(userPrincipalName,'${searchText}')`).top(1).get();
 		let userInfo = response.value;
 		logger.trace('Azure user info result :: ', userInfo);
 		if (Array.isArray(userInfo)) {

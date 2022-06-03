@@ -17,9 +17,9 @@ parseFile(filePath, { headers: false, skipRows: 1 }).on('error', (err) => {
 	parentPort.close();
 }).on('data', async (row) => {
 	const user = {
-		name: row[0],
-		username: row[1],
-		password: row[2],
+		name: row[0] ? row[0].trim() : null,
+		username: row[1] ? row[1].trim() : null,
+		password: row[2] ? row[2].trim() : null,
 		authType: row[3] || config.RBAC_USER_AUTH_MODES[0]
 	};
 	const data = {

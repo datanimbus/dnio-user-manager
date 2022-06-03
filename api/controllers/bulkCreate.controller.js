@@ -38,6 +38,8 @@ const fileTransfersOptions = {
 const crudder = new SMCrud(schema, 'bulkCreate', options);
 const fileTransfersCrudder = new SMCrud(fileTransfersSchema, 'fileTransfers', fileTransfersOptions);
 
+const passwordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*?~]).+$/;
+
 function modifyFilterForBulkCreate(req) {
 	let filter = req.query.filter;
 	let fileId = req.params.fileId;
@@ -242,13 +244,27 @@ router.post('/upload', async function (req, res) {
 
 module.exports = router;
 
+function isPasswordInvalid(row) {
+	if (row.data.authType == 'local') {
+		if (row.data.password.trim().length < config.RBAC_PASSWORD_LENGTH) {
+			return true;
+		}
+		if (config.RBAC_PASSWORD_COMPLEXITY) {
+			return !row.data.password.trim().match(passwordPattern);
+		}
+	}
+	return false;
+}
+
 
 async function startValidation(req, fileData, records) {
 	try {
+		await crudder.model.updateMany({ fileId: fileData._id, 'data.username': { $in: [null, ''] } }, { $set: { duplicate: false, message: 'Username is a required field', status: 'Error' } });
 		const result = await crudder.model.aggregate([
 			{
 				$match: {
-					fileId: fileData._id
+					fileId: fileData._id,
+					status: { $ne: 'Error' }
 				}
 			},
 			{
@@ -274,6 +290,14 @@ async function startValidation(req, fileData, records) {
 				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: `${item.data.authType} Auth Mode Not Configured`, status: 'Error' } });
 			});
 		}
+		const nameNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
+		validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
+		if (nameNotSet && nameNotSet.length > 0) {
+			logger.debug('Name not set for few records, Skipping those records');
+			nameNotSet.map(async (item) => {
+				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Name not set for Local Auth Mode', status: 'Error' } });
+			});
+		}
 		const passwordNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
 		validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
 		if (passwordNotSet && passwordNotSet.length > 0) {
@@ -282,12 +306,12 @@ async function startValidation(req, fileData, records) {
 				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Password not set for Local Auth Mode', status: 'Error' } });
 			});
 		}
-		const nameNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
-		validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
-		if (nameNotSet && nameNotSet.length > 0) {
-			logger.debug('Name not set for few records, Skipping those records');
-			nameNotSet.map(async (item) => {
-				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Name not set for Local Auth Mode', status: 'Error' } });
+		const passwordInvalid = validRecords.filter(e => isPasswordInvalid(e));
+		validRecords = validRecords.filter(e => !isPasswordInvalid(e));
+		if (passwordInvalid && passwordInvalid.length > 0) {
+			logger.debug('Password Invalid, Skipping those records');
+			passwordInvalid.map(async (item) => {
+				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Incorrect Password Format', status: 'Error' } });
 			});
 		}
 		if (validRecords.length == 0) {

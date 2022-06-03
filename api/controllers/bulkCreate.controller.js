@@ -14,6 +14,7 @@ const _ = require('lodash');
 
 const adUtils = require('../utils/azure.ad.utils');
 const config = require('../../config/config');
+const cache = require('../../util/cache.utils').cache;
 
 const definition = require('../helpers/userMgmtBulkCreate.definition.js').definition;
 const fileTransfersDefinition = require('../helpers/file-transfers.definition').definition;
@@ -356,7 +357,14 @@ async function startValidation(req, fileData, records) {
 
 async function createNewUser(req, record, fileData) {
 	if (record.data.authType == 'azure') {
-		const token = adUtils.fetchFromJWT(req);
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			throw new Error('Invalid Azure Token');
+		}
+		const token = data.azureToken;
+		if (!token) {
+			throw new Error('Invalid Azure Token');
+		}
 		const adUser = await adUtils.getUserInfo(record.data.username, token);
 		if (adUser && adUser.username == record.data.username) {
 			record.data.name = adUser.name;

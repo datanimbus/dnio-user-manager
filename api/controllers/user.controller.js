@@ -822,20 +822,17 @@ async function azureLoginCallback(req, res) {
 	try {
 		logger.debug('login callback called : ', req.path);
 		if (checkAuthMode(res, 'azure')) {
-			if (req.query.state == 'import-users') {
+			const state = req.query.state;
+			let data;
+			try {
+				data = azureAdUtil.readStateToken(req, state);
+			} catch (err) {
+				logger.warn('State in Callback is not parseable');
+			}
+			if (state && data) {
 				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
-				const azureToken = azureAdUtil.storeInJWT(req, response.accessToken);
-				// const azureToken = jwt.sign({ azureToken: response.accessToken, userId: req.user._id }, jwtKey);
-				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost:9080';
-				res.cookie('azure-token', azureToken, {
-					expires: response.expiresOn,
-					httpOnly: domain == 'localhost:9080' ? false : true,
-					sameSite: true,
-					secure: true,
-					domain: domain,
-					path: '/api'
-				});
-				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated', azureToken: azureToken });
+				await cache.setData(data.userId, { azureToken: response.accessToken });
+				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated' });
 			} else { //if (req.query.state == 'login' || req.query.state == 'author' || req.query.state == 'appcenter')
 				passport.authenticate('AzureLogIn', {
 					response: res,
@@ -3452,7 +3449,11 @@ function distinctUserAttribute(req, res) {
 
 async function hasAzureToken(req, res) {
 	try {
-		const token = azureAdUtil.fetchFromJWT(req);
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
 		if (!token) {
 			return res.status(400).json({ message: 'Token not Valid' });
 		}
@@ -3464,7 +3465,8 @@ async function hasAzureToken(req, res) {
 }
 
 async function generateNewAzureToken(req, res) {
-	const url = await azureAdUtil.getAuthUrl('import-users');
+	const stateToken = azureAdUtil.createStateToken(req, { userId: req.user._id, action: 'import-users' });
+	const url = await azureAdUtil.getAuthUrl(stateToken);
 	res.redirect(url);
 }
 
@@ -3474,7 +3476,11 @@ async function searchUsersInAzure(req, res) {
 		if (!users || users.length == 0) {
 			return res.status(400).json({ message: 'Users are Required in Body' });
 		}
-		const token = azureAdUtil.fetchFromJWT(req);
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
 		if (!token) {
 			return res.status(400).json({ message: 'Token not Valid' });
 		}
@@ -3513,7 +3519,11 @@ async function importUsersFromAzure(req, res) {
 		if (!users || users.length == 0) {
 			return res.status(400).json({ message: 'Users are Required in Body' });
 		}
-		const token = azureAdUtil.fetchFromJWT(req);
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
 		if (!token) {
 			return res.status(400).json({ message: 'Token not Valid' });
 		}

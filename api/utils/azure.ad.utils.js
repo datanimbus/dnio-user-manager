@@ -1,12 +1,10 @@
 const msal = require('@azure/msal-node');
 const MicrosoftGraph = require('@microsoft/microsoft-graph-client');
-const JWT = require('jsonwebtoken');
 require('isomorphic-fetch');
 
 const logger = global.logger;
 const config = require('../../config/config');
 const azureConfig = config.azureConfig;
-const SECRET = config.secret;
 
 let authorityHostUrl = 'https://login.microsoftonline.com';
 let tenant = azureConfig.b2cTenant;
@@ -115,23 +113,18 @@ async function getUserInfo(searchText, accessToken) {
 	}
 }
 
-function storeInJWT(req, azureToken) {
-	return JWT.sign({ azureToken: azureToken }, SECRET);
+function createStateToken(req, data) {
+	return Buffer.from(JSON.stringify(data), 'utf-8').toString('base64');
 }
 
-function fetchFromJWT(req) {
-	try {
-		const data = JWT.verify(req.cookies['azure-token'], SECRET);
-		return data.azureToken;
-	} catch (err) {
-		logger.error(err);
-		throw new Error('Invalid Azure Token');
-	}
+function readStateToken(req, token) {
+	let data = Buffer.from(token, 'base64').toString('utf-8');
+	return JSON.parse(data);
 }
 
 module.exports.getAuthUrl = getAuthUrl;
 module.exports.getUserInfo = getUserInfo;
 module.exports.getCurrentUserInfo = getCurrentUserInfo;
 module.exports.getAccessTokenByCode = getAccessTokenByCode;
-module.exports.storeInJWT = storeInJWT;
-module.exports.fetchFromJWT = fetchFromJWT;
+module.exports.createStateToken = createStateToken;
+module.exports.readStateToken = readStateToken;

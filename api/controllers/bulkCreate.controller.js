@@ -22,8 +22,8 @@ const fileTransfersDefinition = require('../helpers/file-transfers.definition').
 const schema = new mongoose.Schema(definition, { timestamps: true });
 const fileTransfersSchema = new mongoose.Schema(fileTransfersDefinition, { timestamps: true });
 
-schema.index({ createdAt: 1 }, { expireAfterSeconds: 2628000 });
-fileTransfersSchema.index({ createdAt: 1 }, { expireAfterSeconds: 2628000 });
+schema.index({ '_metadata.createdAt': 1 }, { expireAfterSeconds: 2628000 });
+fileTransfersSchema.index({ '_metadata.createdAt': 1 }, { expireAfterSeconds: 2628000 });
 const logger = global.logger;
 
 const options = {
@@ -260,7 +260,10 @@ function isPasswordInvalid(row) {
 
 async function startValidation(req, fileData, records) {
 	try {
-		await crudder.model.updateMany({ fileId: fileData._id, 'data.username': { $in: [null, ''] } }, { $set: { duplicate: false, message: 'Username is a required field', status: 'Error' } });
+		await crudder.model.updateMany({ fileId: fileData._id, status: { $ne: 'Error' }, 'data.authType': { $nin: config.RBAC_USER_AUTH_MODES } }, { $set: { duplicate: false, message: 'Invalid Auth Type', status: 'Error' } });
+		await crudder.model.updateMany({ fileId: fileData._id, status: { $ne: 'Error' }, 'data.username': { $in: [null, ''] } }, { $set: { duplicate: false, message: 'Username is a required field', status: 'Error' } });
+		await crudder.model.updateMany({ fileId: fileData._id, status: { $ne: 'Error' }, 'data.authType': 'local', 'data.password': { $in: [null, ''] } }, { $set: { duplicate: false, message: 'Password is a required field for Local Auth Type', status: 'Error' } });
+		await crudder.model.updateMany({ fileId: fileData._id, status: { $ne: 'Error' }, 'data.authType': 'local', 'data.name': { $in: [null, ''] } }, { $set: { duplicate: false, message: 'Name is a required field for Local Auth Type', status: 'Error' } });
 		const result = await crudder.model.aggregate([
 			{
 				$match: {
@@ -283,30 +286,30 @@ async function startValidation(req, fileData, records) {
 				await crudder.model.updateMany({ fileId: fileData._id, 'data.username': item._id }, { $set: { duplicate: true, message: 'Duplicate Record Present in the Sheet', status: 'Error' } });
 			});
 		}
-		const invalidAuthModes = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) == -1);
-		validRecords = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) > -1);
-		if (invalidAuthModes && invalidAuthModes.length > 0) {
-			logger.debug('Invalid Auth Modes found in the sheet, Skipping those records');
-			invalidAuthModes.map(async (item) => {
-				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: `${item.data.authType} Auth Mode Not Configured`, status: 'Error' } });
-			});
-		}
-		const nameNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
-		validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
-		if (nameNotSet && nameNotSet.length > 0) {
-			logger.debug('Name not set for few records, Skipping those records');
-			nameNotSet.map(async (item) => {
-				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Name not set for Local Auth Mode', status: 'Error' } });
-			});
-		}
-		const passwordNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
-		validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
-		if (passwordNotSet && passwordNotSet.length > 0) {
-			logger.debug('Password not set for few records, Skipping those records');
-			passwordNotSet.map(async (item) => {
-				await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Password not set for Local Auth Mode', status: 'Error' } });
-			});
-		}
+		// const invalidAuthModes = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) == -1);
+		// validRecords = validRecords.filter(e => config.RBAC_USER_AUTH_MODES.indexOf(e.data.authType) > -1);
+		// if (invalidAuthModes && invalidAuthModes.length > 0) {
+		// 	logger.debug('Invalid Auth Modes found in the sheet, Skipping those records');
+		// 	invalidAuthModes.map(async (item) => {
+		// 		await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: `${item.data.authType} Auth Mode Not Configured`, status: 'Error' } });
+		// 	});
+		// }
+		// const nameNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
+		// validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.name || !e.data.name.trim()));
+		// if (nameNotSet && nameNotSet.length > 0) {
+		// 	logger.debug('Name not set for few records, Skipping those records');
+		// 	nameNotSet.map(async (item) => {
+		// 		await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Name not set for Local Auth Mode', status: 'Error' } });
+		// 	});
+		// }
+		// const passwordNotSet = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
+		// validRecords = validRecords.filter(e => e.data.authType == 'local' && (!e.data.password || !e.data.password.trim()));
+		// if (passwordNotSet && passwordNotSet.length > 0) {
+		// 	logger.debug('Password not set for few records, Skipping those records');
+		// 	passwordNotSet.map(async (item) => {
+		// 		await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, message: 'Password not set for Local Auth Mode', status: 'Error' } });
+		// 	});
+		// }
 		const passwordInvalid = validRecords.filter(e => isPasswordInvalid(e));
 		validRecords = validRecords.filter(e => !isPasswordInvalid(e));
 		if (passwordInvalid && passwordInvalid.length > 0) {

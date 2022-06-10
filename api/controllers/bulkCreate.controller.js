@@ -373,7 +373,8 @@ async function createNewUser(req, record, fileData) {
 		const adUser = await adUtils.getUserInfo(record.data.username, token);
 		if (adUser && adUser.username == record.data.username) {
 			record.data.name = adUser.name;
-			record.data.email = adUser.email;
+			record.data.email = adUser.email || record.data.email;
+			record.data.phone = adUser.phone || record.data.phone;
 		} else {
 			throw new Error(`User ${record.data.username} not found in Azure AD`);
 		}

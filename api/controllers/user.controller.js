@@ -3528,12 +3528,18 @@ async function importUsersFromAzure(req, res) {
 			return res.status(400).json({ message: 'Token not Valid' });
 		}
 		const result = [];
-		await users.reduce(async (prev, username) => {
+		await users.reduce(async (prev, user) => {
 			try {
 				await prev;
-				const adUser = await azureAdUtil.getUserInfo(username, token);
+				const adUser = await azureAdUtil.getUserInfo(user.username, token);
 				if (!adUser) {
 					throw new Error('User Not Found');
+				}
+				if (!adUser.email) {
+					adUser.email = user.basicDetails.alternateEmail;
+				}
+				if (!adUser.phone) {
+					adUser.phone = user.basicDetails.phone;
 				}
 				const newUser = await createUserForAzure(req, adUser);
 				await importUserToAppSimple(req, newUser, req.params.app);
@@ -3541,14 +3547,14 @@ async function importUsersFromAzure(req, res) {
 					importUserToGroups(req, newUser, groups);
 				}
 				result.push({
-					username,
+					username: user.username,
 					statusCode: 200,
 					body: adUser
 				});
 			} catch (err) {
 				logger.error(err);
 				result.push({
-					username,
+					username: user.username,
 					statusCode: 400,
 					body: err
 				});

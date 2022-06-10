@@ -33,6 +33,7 @@
     "fast-csv": "^4.3.6",
     "fast-levenshtein": "^3.0.0",
     "file-type": "^16.5.3",
+    "got": "^11.8.5",
     "ioredis": "^5.0.4",
     "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^8.5.1",

@@ -219,10 +219,12 @@ router.post('/upload', async function (req, res) {
 					if (result.totalCount == result.errorCount) {
 						result.status = 'Error';
 						result.message = 'File has errors';
-					}
-					if (result.totalCount != result.errorCount && result.errorCount > 0) {
+					} else if (result.totalCount != result.errorCount && result.errorCount > 0) {
 						result.status = 'Completed';
 						result.message = 'File processed with few errors';
+					} else {
+						result.status = 'Completed';
+						result.message = 'File processed';
 					}
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: result });

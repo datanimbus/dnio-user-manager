@@ -78,7 +78,7 @@ function azurePassportConfig(type) {
 		clientID: azureConfig.clientId,
 		responseType: 'code',
 		responseMode: 'query',
-		redirectUrl: (isK8sEnv() ? 'https://' : 'http://') + process.env.FQDN +
+		redirectUrl: (isK8sEnv() ? 'https://' : 'https://') + process.env.FQDN +
 			(type === 'login' ? '/api/a/rbac/auth/azure/login/callback' : '/api/a/rbac/auth/azure/userFetch/callback'),
 		allowHttpForRedirectUrl: process.env.FQDN == 'localhost',
 		clientSecret: azureConfig.clientSecret,

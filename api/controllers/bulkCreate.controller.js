@@ -363,7 +363,8 @@ async function createNewUser(req, record, fileData) {
 		username: record.data.username,
 		basicDetails: {
 			name: record.data.name,
-			alternateEmail: record.data.email
+			alternateEmail: record.data.email,
+			phone: record.data.phone
 		},
 		accessControl: {
 			accessLevel: 'Selected',

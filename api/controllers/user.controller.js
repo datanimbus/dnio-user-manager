@@ -3575,7 +3575,8 @@ async function createUserForAzure(req, adUser) {
 			username: adUser.username,
 			basicDetails: {
 				name: adUser.name,
-				alternateEmail: adUser.email
+				alternateEmail: adUser.email,
+				phone: adUser.phone
 			},
 			accessControl: {
 				accessLevel: 'Selected',

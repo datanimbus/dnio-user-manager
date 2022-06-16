@@ -107,7 +107,7 @@ module.exports = {
 	baseUrlNE: get('ne') + '/ne',
 	baseUrlUSR: get('user') + '/rbac',
 	baseUrlPM: get('bm') + '/bm',
-	baseUrlGW: get('gw') + '/gw',
+	baseUrlGW: get('gw') + '/api/a/gw',
 	debugDB: debugDB,
 	validationApi: get('user') + '/rbac/validate',
 	baseUrlSEC: get('sec') + '/sec',

@@ -4,7 +4,7 @@ const config = require('../../config/config');
 
 async function sendToSocket(event, data) {
 	const resp = await got({
-		url: config.baseUrlGW + '/api/a/gw/socket-emit',
+		url: config.baseUrlGW + '/socket-emit',
 		method: 'post',
 		json: {
 			event,

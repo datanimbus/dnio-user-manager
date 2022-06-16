@@ -196,10 +196,10 @@ router.post('/upload', async function (req, res) {
 					}
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: payload });
-				sendToSocket('bulk-upload', { status: payload.status, message: payload.message });
+				sendToSocket('bulk-upload', { status: payload.status, app, message: payload.message });
 				fs.unlinkSync(file.tempFilePath);
 				await startValidation(req, payload, data.data);
-				sendToSocket('bulk-upload', { status: 'Processed', message: 'Insertion Completed' });
+				sendToSocket('bulk-upload', { status: 'Processed', app, message: 'Insertion Completed' });
 				const finalData = await crudder.model.aggregate([
 					{
 						$facet: {
@@ -230,7 +230,7 @@ router.post('/upload', async function (req, res) {
 					}
 				}
 				await fileTransfersCrudder.model.findOneAndUpdate({ _id: payload._id }, { $set: result });
-				sendToSocket('bulk-upload', { status: result.status, message: result.message });
+				sendToSocket('bulk-upload', { status: result.status, app, message: result.message });
 			} catch (err) {
 				logger.error('Error from Worker Thread');
 				logger.error(err);

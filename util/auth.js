@@ -62,9 +62,9 @@ const commonUrls = [
 	'/rbac/{app}/user',
 	'/rbac/{app}/user/utils/count',
 	'/rbac/{app}/user/{id}',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}/validate',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}/download',
+	'/rbac/{app}/user/utils/bulkCreate/template',
+	'/rbac/{app}/user/utils/bulkCreate/upload',
+	'/rbac/{app}/user/utils/bulkCreate/fileTransfers',
 	'/rbac/{app}/user/utils/bulkCreate/{fileId}/count',
 	'/rbac/{app}/user/utils/bulkCreate/{fileId}/userList',
 	'/rbac/{app}/user/utils/distinctAttributes/{id}',
@@ -215,6 +215,21 @@ function getUrlParams(tempUrl, url) {
 
 function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/user', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/template', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/upload', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/fileTransfers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/{fileId}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/{fileId}/userList', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {

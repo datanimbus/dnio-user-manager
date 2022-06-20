@@ -5,7 +5,7 @@ const _ = require('lodash');
 const config = require('../config/config');
 
 const logger = global.logger;
-global.USER_TOKEN = JWT.sign({ name: 'USER', _id: 'admin', isSuperAdmin: true }, config.TOKEN_SECRET);
+global.USER_TOKEN = JWT.sign({ name: 'USER', _id: 'admin', isSuperAdmin: true }, config.RBAC_JWT_KEY);
 
 const permittedUrls = [
 	'/rbac/auth/authType/{id}',
@@ -98,7 +98,7 @@ const commonUrls = [
 	'/rbac/{app}/user/utils/azure/import',
 ];
 
-router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
+router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
 
 router.use((req, res, next) => {
 	if (!req.locals) {

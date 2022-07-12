@@ -307,7 +307,7 @@ async function startValidation(req, fileData, records) {
 		await validRecords.reduce(async (prev, item) => {
 			try {
 				await prev;
-				const userExistsInPlatform = await userModel.findOne({ _id: item.data.username }, { _id: 1, 'basicDetails.name': 1 }).lean();
+				const userExistsInPlatform = await userModel.findOne({ $or: [{ username: item.data.username }, { _id: item.data.username }] }, { _id: 1, 'basicDetails.name': 1, 'username': 1 }).lean();
 				const userExistsInApp = await groupModel.findOne({ name: '#', users: item.data.username, app: fileData.app }, { _id: 1, name: 1 }).lean();
 				if (userExistsInApp) {
 					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: true, existsInPlatform: true, message: 'User Exists in App', status: 'Ignored' } });

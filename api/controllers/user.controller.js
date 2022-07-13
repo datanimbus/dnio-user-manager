@@ -842,17 +842,22 @@ async function customAzureAuthenticate(data, done) {
 	}
 }
 
-function azureLogin(req, res) {
-	logger.debug('Checking Azure Login.');
-	if (checkAuthMode(res, 'azure')) {
-		// passport.authenticate('AzureLogIn', { session: false })(req, res);
-		const url = azureAdUtil.getAuthUrl();
-		return res.redirect(url);
+async function azureLogin(req, res) {
+	try {
+		logger.debug('Checking Azure Login.');
+		if (checkAuthMode(res, 'azure')) {
+			// passport.authenticate('AzureLogIn', { session: false })(req, res);
+			const url = await azureAdUtil.getAuthUrl();
+			return res.redirect(url);
+		}
+		if (req.header('content-type') == 'application/json') {
+			return res.status(400).json({ message: 'Azure auth mode not configured' });
+		}
+		return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+	} catch (err) {
+		logger.error(err);
+		return sendAzureCallbackResponse(res, 500, { message: Error.message });
 	}
-	if (req.header('content-type') == 'application/json') {
-		return res.status(400).json({ message: 'Azure auth mode not configured' });
-	}
-	return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
 }
 
 async function azureLoginCallback(req, res) {

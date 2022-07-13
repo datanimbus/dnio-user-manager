@@ -812,11 +812,11 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 }
 
 async function customAzureAuthenticate(data, done) {
-	const profile = data.profile;
+	const account = data.account;
 	const accessToken = data.accessToken;
-	if (!profile.oid || !(profile._json && (profile._json.email || profile._json.preferred_username))) {
-		logger.debug('profile:::: ', profile);
-		return done(new Error('No oid/email found in profile.'), null);
+	if (!account.username) {
+		logger.debug('account:::: ', account);
+		return done(new Error('No Username found in account.'), null);
 	}
 	try {
 		logger.trace('azure acces token ::', accessToken);

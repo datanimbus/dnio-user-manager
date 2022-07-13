@@ -811,11 +811,48 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 	}
 }
 
+async function customAzureAuthenticate(data, done) {
+	const profile = data.profile;
+	const accessToken = data.accessToken;
+	if (!profile.oid || !(profile._json && (profile._json.email || profile._json.preferred_username))) {
+		logger.debug('profile:::: ', profile);
+		return done(new Error('No oid/email found in profile.'), null);
+	}
+	try {
+		logger.trace('azure acces token ::', accessToken);
+		// get user info from azure to get odp username
+		let userInfo = await azureAdUtil.getCurrentUserInfo(accessToken);
+		logger.debug('search User :: ', userInfo);
+		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
+		logger.trace('dbUser :: ', dbUser.basicDetails);
+		// For first time logging in user
+		if (dbUser && JSON.stringify(dbUser.basicDetails) === '{}') {
+			dbUser.basicDetails = {
+				name: userInfo.name,
+				alternateEmail: userInfo.email,
+				phone: userInfo.phone
+			};
+			await dbUser.save();
+		}
+		let userDoc = await getLoginUserdoc(dbUser);
+		done(null, userDoc);
+	} catch (err) {
+		logger.info('error in validate azure login:: ', err);
+		done(err, false);
+	}
+}
+
 function azureLogin(req, res) {
 	logger.debug('Checking Azure Login.');
 	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureLogIn', { session: false })(req, res);
+		// passport.authenticate('AzureLogIn', { session: false })(req, res);
+		const url = azureAdUtil.getAuthUrl();
+		return res.redirect(url);
 	}
+	if (req.header('content-type') == 'application/json') {
+		return res.status(400).json({ message: 'Azure auth mode not configured' });
+	}
+	return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
 }
 
 async function azureLoginCallback(req, res) {
@@ -833,11 +870,24 @@ async function azureLoginCallback(req, res) {
 				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
 				await cache.setData(data.userId, { azureToken: response.accessToken });
 				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated' });
-			} else { //if (req.query.state == 'login' || req.query.state == 'author' || req.query.state == 'appcenter')
-				passport.authenticate('AzureLogIn', {
-					response: res,
-					failureRedirect: '/'
-				}, function (err, user, info) {
+			} else {
+				// passport.authenticate('AzureLogIn', {
+				// 	response: res,
+				// 	failureRedirect: '/'
+				// }, function (err, user, info) {
+				// 	if (err) {
+				// 		logger.error('error in azureLoginCallback ::: ', err);
+				// 		if (info) userLog.loginFailed(info, req, res);
+				// 		return sendAzureCallbackResponse(res, 500, { message: err.message });
+				// 	} else if (!user) {
+				// 		logger.error('Something went wrong in azureLoginCallback:: ', info);
+				// 		return sendAzureCallbackResponse(res, 400, { meessage: info });
+				// 	} else {
+				// 		return handleSessionAndGenerateToken(req, res, user, null, true);
+				// 	}
+				// })(req, res);
+				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
+				customAzureAuthenticate(response, function (err, user, info) {
 					if (err) {
 						logger.error('error in azureLoginCallback ::: ', err);
 						if (info) userLog.loginFailed(info, req, res);
@@ -848,8 +898,10 @@ async function azureLoginCallback(req, res) {
 					} else {
 						return handleSessionAndGenerateToken(req, res, user, null, true);
 					}
-				})(req, res);
+				});
 			}
+		} else {
+			sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
 		}
 	} catch (err) {
 		logger.error(err);

@@ -47,6 +47,8 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 	let resObj = JSON.parse(JSON.stringify(document));
 	let claim = {
 		_id: resObj._id,
+		username: resObj.username,
+		basicDetails: resObj.basicDetails,
 		enableSessionRefresh: resObj.enableSessionRefresh,
 		sessionTime: resObj.sessionTime,
 		bot: resObj.bot,

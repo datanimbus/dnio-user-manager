@@ -47,8 +47,6 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 	let resObj = JSON.parse(JSON.stringify(document));
 	let claim = {
 		_id: resObj._id,
-		username: resObj.username,
-		basicDetails: resObj.basicDetails,
 		enableSessionRefresh: resObj.enableSessionRefresh,
 		sessionTime: resObj.sessionTime,
 		bot: resObj.bot,
@@ -56,6 +54,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		isSuperAdmin: resObj.isSuperAdmin,
 		apps: (resObj.accessControl.apps || []).map(e => e._id)
 	};
+	cache.setData(resObj._id, { userData: resObj });
 	const deleteKeys = ['password', '_metadata', 'salt', '_v', 'roles', 'botKeys'];
 	deleteKeys.forEach(_k => delete resObj[_k]);
 	var token = null;

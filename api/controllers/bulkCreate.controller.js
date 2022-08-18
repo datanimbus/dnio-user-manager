@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const router = require('express').Router({ mergeParams: true });
 const mongoose = require('mongoose');
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const { writeToPath, writeToString } = require('fast-csv');
 const FileType = require('file-type/core');
 const readChunk = require('read-chunk');
@@ -20,8 +20,8 @@ const { sendToSocket } = require('../utils/socket.utils');
 const definition = require('../helpers/userMgmtBulkCreate.definition.js').definition;
 const fileTransfersDefinition = require('../helpers/file-transfers.definition').definition;
 
-const schema = new mongoose.Schema(definition, { timestamps: true });
-const fileTransfersSchema = new mongoose.Schema(fileTransfersDefinition, { timestamps: true });
+const schema = MakeSchema(definition, { timestamps: true });
+const fileTransfersSchema = MakeSchema(fileTransfersDefinition, { timestamps: true });
 
 schema.index({ '_metadata.createdAt': 1 }, { expireAfterSeconds: 2628000 });
 fileTransfersSchema.index({ '_metadata.createdAt': 1 }, { expireAfterSeconds: 2628000 });

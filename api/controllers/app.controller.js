@@ -2,8 +2,8 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/app.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
-const schema = new mongoose.Schema(definition);
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const schema = MakeSchema(definition);
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
@@ -216,7 +216,7 @@ schema.post('remove', (_doc) => {
 							});
 					}, _ => {
 						logger.trace(_);
-						logger.info('Unable to get kubernetes namespace :: ' + ns);		
+						logger.info('Unable to get kubernetes namespace :: ' + ns);
 					});
 			}, _ => {
 				logger.debug(_);

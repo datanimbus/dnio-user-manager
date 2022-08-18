@@ -2,8 +2,8 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/group.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
-const schema = new mongoose.Schema(definition);
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const schema = MakeSchema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
 const cacheUtils = require('../../util/cache.utils').cache;

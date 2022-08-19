@@ -145,14 +145,14 @@ module.exports = {
 		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
-		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true,
 	},
 	mongoAppcenterOptions: {
-		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
 	mongooseCustomLogger: (coll, op, doc, proj) => {

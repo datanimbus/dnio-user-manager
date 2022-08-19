@@ -64,16 +64,29 @@ let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 logger.debug('Mongo Author URL', mongoUrl);
 logger.debug('Mongo Author Options', conf.mongoOptions);
 
-mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
-	if (err) {
-		logger.error(err);
-	} else {
-		logger.info('Connected to Author DB');
+// mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
+// 	if (err) {
+// 		logger.error(err);
+// 	} else {
+// 		logger.info('Connected to Author DB');
+// 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
+// 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
+// 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+// 	}
+// });
+(async () => {
+	try {
+		await mongoose.connect(mongoUrl, conf.mongoOptions);
+		logger.info(`Connected to Author DB`);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+		require('./util/init/fixDataService')();
+	} catch (err) {
+		logger.error(err);
 	}
-});
+})();
+
 
 logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
 logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);

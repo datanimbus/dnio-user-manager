@@ -81,7 +81,6 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
-		require('./util/init/fixDataService')();
 	} catch (err) {
 		logger.error(err);
 	}

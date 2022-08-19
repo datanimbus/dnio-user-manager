@@ -40,7 +40,7 @@
     "ldapjs": "^2.3.2",
     "lodash": "^4.17.20",
     "log4js": "^6.5.2",
-    "mongodb": "^3.7.3",
+    "mongodb": "^4.9.0",
     "mongoose": "^6.5.2",
     "nats": "^2.6.1",
     "node-cron": "^3.0.0",

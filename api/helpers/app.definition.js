@@ -17,8 +17,10 @@ var definition = {
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': {
-					'type': 'Number'
+				'type': {
+					'release': {
+						'type': 'Number'
+					}
 				}
 			}
 		}

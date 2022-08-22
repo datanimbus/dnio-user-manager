@@ -19,7 +19,7 @@ var definition = {
 			'version': {
 				'type': {
 					'release': {
-						'type': 'Number'
+						'type': Schema.Types.Mixed
 					}
 				}
 			}

@@ -37,7 +37,7 @@ var definition = {
 		},
 		'primaryColor': {
 			'type': 'String',
-			'default': '#03A9F4'
+			'default': '#0A6CFF'
 		},
 		'textColor': {
 			'type': 'String',

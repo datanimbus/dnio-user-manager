@@ -605,7 +605,7 @@ e.deleteUserDoc = (req, usrIds, app) => {
 		.then(usrs => {
 			newUsrId = usrs.filter(usr => !usr.isSuperAdmin);
 			pr = newUsrId.map(usrId => {
-				let url = config.baseUrlSM + `/userDeletion/${app}/${usrId._id}`;
+				let url = config.baseUrlSM + `/${app}/internal/userDeletion/${usrId._id}`;
 				return e.sendRequest(url);
 			});
 			return Promise.all(pr);

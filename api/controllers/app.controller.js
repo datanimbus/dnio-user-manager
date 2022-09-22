@@ -606,11 +606,13 @@ e.deleteUserDoc = (req, usrIds, app) => {
 			newUsrId = usrs.filter(usr => !usr.isSuperAdmin);
 			pr = newUsrId.map(usrId => {
 				let url = config.baseUrlSM + `/${app}/internal/userDeletion/${usrId._id}`;
+				logger.error('Trying to delete user doc in SM: ', usrId, url);
 				return e.sendRequest(url);
 			});
 			return Promise.all(pr);
 		})
 		.catch(err => {
+			logger.error('Unable to delete user doc in SM');
 			logger.debug(err);
 		});
 };

@@ -164,7 +164,7 @@ AppController.init()
 // module.exports = exports;
 
 
-const router = require('express').Router();
+const router = require('express').Router({ mergeParams: true });
 
 router.get('/admin/app', AppController.index);
 router.post('/admin/app', AppController.create);

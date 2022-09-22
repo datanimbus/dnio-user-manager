@@ -3251,7 +3251,7 @@ function modifyFilterForApp(req, isBot) {
 	}
 	return mongoose.model('group').find({
 		app: app
-	})
+	}).lean()
 		.then(_grps => {
 			let users = [].concat.apply([], _grps.map(_g => _g.users));
 			if (filter && typeof filter === 'object') {
@@ -3280,6 +3280,7 @@ function modifyFilterForApp(req, isBot) {
 				};
 			}
 			req.query.filter = JSON.stringify(filter);
+			logger.debug('User In App Filter:', req.query.filter);
 		});
 }
 

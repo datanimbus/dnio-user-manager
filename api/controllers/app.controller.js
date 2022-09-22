@@ -400,33 +400,38 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 	usrIds = _.difference(usrIds, usrIdArray);
 	let app = req.params.app;
 	usrIds = _.uniq(usrIds);
-	return mongoose.model('user').find({ _id: { $in: usrIds }, bot: isBot })
+	const UserModel = mongoose.model('user');
+	const GroupModel = mongoose.model('group');
+
+	return UserModel.find({ _id: { $in: usrIds }, bot: isBot })
 		.then(_usr => {
 			if (_usr.length != usrIds.length) {
 				let usrNotFound = _.difference(usrIds, _usr.map(_u => _u._id));
 				return res.status(400).json({ message: 'Could not find these ' + isBot ? 'bots ' : 'users ' + usrNotFound });
 			}
-			return mongoose.model('group').find({ users: { '$in': usrIds }, app: app })
+			return GroupModel.find({ users: { '$in': usrIds }, app: app })
 				.then(_grps => {
 					let promises = _grps.map(_grp => {
 						_grp.users = _grp.users.filter(_u => usrIds.indexOf(_u) === -1);
-						let model = mongoose.model('group');
-						let doc = new model(_grp);
-						return doc.save(req);
+						// let model = GroupModel;
+						// let doc = new model(_grp);
+						return _grp.save(req);
 					});
 					return Promise.all(promises);
 				})
 				.then(_rs => {
 					logger.info('Removed user ' + usrIds + ' from ' + _rs.map(_r => _r._id));
-					return mongoose.model('user').find({ _id: { $in: usrIds }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
+					return UserModel.find({ _id: { $in: usrIds }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
 				})
 				.then(_users => {
 					let promises = _users.map(_usr => {
-						if (_usr.accessControl.apps) _usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app);
-						let model = mongoose.model('user');
-						let doc = new model(_usr);
-						doc.markModified('accessControl.apps');
-						return doc.save(req);
+						if (_usr.accessControl.apps && _usr.accessControl.apps.length > 0) {
+							_usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app)
+						};
+						// let model = UserModel;
+						// let doc = new model(_usr);
+						_usr.markModified('accessControl.apps');
+						return _usr.save(req);
 					});
 					return Promise.all(promises);
 				})

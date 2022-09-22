@@ -618,7 +618,7 @@ e.deleteUserDoc = (req, usrIds, app) => {
 e.sendRequest = (url) => {
 	var options = {
 		url: url,
-		method: 'POST',
+		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
 		},

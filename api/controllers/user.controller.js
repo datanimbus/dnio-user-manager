@@ -2730,7 +2730,6 @@ function customDestroy(req, res) {
 		.then(() => dataStackUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
 			logger.error('Error in User customDestroy :: ', err);
-
 			return res.status(400).json({
 				message: err.message
 			});

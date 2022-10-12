@@ -486,7 +486,7 @@ e.customDestroy = (req, res) => {
 			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,
-		qs: { filter: { status: { $eq: 'Active' }, 'app': req.params.id }, select: 'name,status,app' }
+		qs: { filter: JSON.stringify({ 'status': { '$eq': 'Active' }, 'app': req.params.id }), select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 

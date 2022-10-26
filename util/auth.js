@@ -97,6 +97,7 @@ const commonUrls = [
 	'/rbac/{app}/user/utils/azure/search',
 	'/rbac/{app}/user/utils/azure/import',
 	'/rbac/{app}/connector/count',
+	'/rbac/{app}/connector/utils/count',
 	'/rbac/{app}/connector',
 	'/rbac/{app}/connector/{id}'
 ];

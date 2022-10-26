@@ -12,6 +12,7 @@ const ConfigController = require('./config.controller');
 const FilterController = require('./filter.controller');
 const BulkCreateController = require('./bulkCreate.controller.js');
 const BookmarkController = require('./bookmark.controller.js');
+const ConnectorController = require('./connectors.controller');
 
 
 AppController.init()
@@ -233,6 +234,14 @@ router.delete('/:app/group/:id', GroupController.destroy);
 router.get('/:app/group/:id/:usrType/count', UserController.UserInGroupCount);
 router.get('/:app/group/:id/:usrType', UserController.UserInGroup);
 router.get('/:app/keys', KeyController.GetKeysOfApp);
+
+router.get('/:app/connector/utils/count', ConnectorController.count);
+router.get('/:app/connector', ConnectorController.index);
+router.post('/:app/connector', ConnectorController.create);
+router.get('/:app/connector/:id', ConnectorController.show);
+router.put('/:app/connector/:id', ConnectorController.update);
+router.delete('/:app/connector/:id', ConnectorController.destroy);
+
 router.get('/data/:id/allRoles', UserController.getAllRolesofUser);
 router.get('/data/:id/appList', UserController.getUserAppList);
 router.get('/data/preferences', PerferencesController.index);

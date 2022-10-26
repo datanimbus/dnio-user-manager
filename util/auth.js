@@ -96,6 +96,9 @@ const commonUrls = [
 	'/rbac/{app}/user/utils/azure/token',
 	'/rbac/{app}/user/utils/azure/search',
 	'/rbac/{app}/user/utils/azure/import',
+	'/rbac/{app}/connector/count',
+	'/rbac/{app}/connector',
+	'/rbac/{app}/connector/{id}'
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
@@ -339,6 +342,32 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/group/{id}/{usrType}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
+
+
+	if (compareURL('/rbac/{app}/connector/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'PUT' || req.method === 'DELETE')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	return false;
 }
 

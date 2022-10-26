@@ -10,8 +10,6 @@ const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const appInit = require('../../config/apps');
-const appIdMDM = appInit.find(obj => obj.type === 'Management')._id;
-const rolesInit = require('../../config/roles');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
 var userLog = require('./insight.log.controller');
@@ -131,42 +129,25 @@ schema.post('save', function (doc) {
 		const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
 		const appInitList = appInit.map(obj => obj._id);
 		if (appInitList.indexOf(doc._id) == -1) {
-			let rolesList = null;
-			if (doc.type === 'Management') rolesList = rolesInit.filter(ob => ob.app == appIdMDM);
-			rolesList = JSON.parse(JSON.stringify(rolesList));
-			let RolesModel = mongoose.model('roles');
-			//Create roles for APP
-			let promiseArr = rolesList.map(obj => {
-				obj.app = doc._id;
-				obj.fields = JSON.stringify(obj.fields);
-				let roleDoc = new RolesModel(obj);
-				return roleDoc.save(doc._req);
+			let GroupModel = mongoose.model('group');
+			let groupDoc = new GroupModel({
+				name: '#',
+				description: 'Default Group for ' + doc._id,
+				app: doc._id,
+				users: [],
+				roles: []
 			});
-			return Promise.all(promiseArr)
-				.then(roles => {
-					roles.forEach(role => logger.info('Roles ' + role.entityName + ' created' + ' on App ' + doc._id));
-					// Create default Group
-					let GroupModel = mongoose.model('group');
-					let groupDoc = new GroupModel({
-						name: '#',
-						description: 'Default Group for ' + doc._id,
-						app: doc._id,
-						users: [],
-						roles: []
+			return groupDoc.save(doc._req).then(() => {
+				if (isK8sEnv) kubeutil.namespace.createNamespace(ns, release)
+					.then(_ => {
+						if (_.statusCode != 200 || _.statusCode != 202) {
+							logger.error(_.message);
+							logger.debug(JSON.stringify(_));
+							return Error(_.message);
+						}
+						return _;
 					});
-					return groupDoc.save(doc._req);
-				})
-				.then(() => {
-					if (isK8sEnv) kubeutil.namespace.createNamespace(ns, release)
-						.then(_ => {
-							if (_.statusCode != 200 || _.statusCode != 202) {
-								logger.error(_.message);
-								logger.debug(JSON.stringify(_));
-								return Error(_.message);
-							}
-							return _;
-						});
-				})
+			})
 				.then(_ => {
 					if (isK8sEnv) {
 						logger.debug(_);
@@ -208,9 +189,10 @@ schema.pre('remove', function (next, req) {
 });
 
 //check FLows exist
-schema.pre('remove', appHook.preRemovePMFlows());
+// schema.pre('remove', appHook.preRemovePMFlows());
+schema.pre('remove', appHook.preRemovePMFaas());
 
-schema.post('remove', appHook.getPostRemoveHook());
+// schema.post('remove', appHook.getPostRemoveHook());
 
 schema.post('remove', (_doc) => {
 	if (isK8sEnv) {
@@ -219,6 +201,23 @@ schema.post('remove', (_doc) => {
 			.then(_ => {
 				logger.debug(_);
 				logger.info('Deleted kubernetes namespace :: ' + ns);
+				kubeutil.namespace.getNamespace(ns)
+					.then(nsData => {
+						logger.trace("Namespace data ", nsData);
+                        nsData.body.spec.finalizers = [];
+
+						kubeutil.namespace.updateNamespace(ns, nsData.body)
+							.then(_ => {
+								logger.trace("Updated NS :: ", JSON.stringify(_));
+								logger.info('Updated kubernetes namespace :: ' + ns);
+								}, _ => {
+									logger.trace(_);
+									logger.info('Unable to update kubernetes namespace :: ' + ns);
+								});
+					}, _ => {
+						logger.trace(_);
+						logger.info('Unable to get kubernetes namespace :: ' + ns);		
+					})
 			}, _ => {
 				logger.debug(_);
 				logger.info('Unable to delete kubernetes namespace :: ' + ns);
@@ -231,10 +230,6 @@ schema.post('remove', (_doc) => {
 		.catch(err => {
 			logger.error(err.message);
 		});
-	mongoose.model('roles').remove({ app: _doc._id }).then(_d => {
-		logger.info('App deleted removing related roles');
-		logger.debug(_d);
-	});
 	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
 		logger.info('Sec Keys Deleted');
 		logger.debug(_d);
@@ -260,14 +255,23 @@ schema.post('remove', (_doc) => {
 		});
 });
 
-// schema.post('remove', (doc) => {
-// 	let appName = doc._id;
-// 	appHook.sendRequest(config.baseUrlSEC + `/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
-// 		logger.debug(doc._id + 'App Security Credentials Are deleted.');
-// 	}).catch(err => {
-// 		logger.error('Error in removing Security Credentials of App ' + doc._id, err);
-// 	});
-// });
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlSM + `/${appName}/internal/app`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App Services are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing Services of App ' + doc._id, err);
+	});
+});
+
+schema.post('remove', (doc) => {
+	let appName = doc._id;
+	appHook.sendRequest(config.baseUrlPM + `/internal/app/${appName}`, 'DELETE', null, null, doc._req).then(() => {
+		logger.debug(doc._id + 'App B2B Objects are deleted.');
+	}).catch(err => {
+		logger.error('Error in removing B2b Objects of App ' + doc._id, err);
+	});
+});
 
 schema.post('remove', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent('EVENT_APP_DELETE', 'app', doc._req, doc);
@@ -378,13 +382,11 @@ e.init = () => {
 								const keyDoc = new keysModel(body);
 								return keyDoc.save();
 							})
-							.then(
-								() => {
-									logger.info('Security key created');
-								}, () => {
-									logger.error('Security key creation failed');
-								}
-							);
+							.then(() => {
+								logger.info('Security key created');
+							}).catch(err => {
+								logger.error('Security key creation failed', err);
+							});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());
 				} else _resolve();
@@ -396,7 +398,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 	let usrIds = req.body.userIds;
 	usrIds = usrIds ? usrIds : [];
 	usrIds = _.difference(usrIds, usrIdArray);
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	usrIds = _.uniq(usrIds);
 	return mongoose.model('user').find({ _id: { $in: usrIds }, bot: isBot })
 		.then(_usr => {
@@ -451,26 +453,26 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 
 e.removeUserFromApp = (req, res) => {
 	let usrIds = req.body.userIds;
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	return e.validateUser(req, usrIds, app)
 		.then(diff => e.removeUserBotFromApp(req, res, false, diff.diff));
 };
 
 e.removeBotFromApp = (req, res) => {
 	let usrIds = req.body.userIds;
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	return e.validateUser(req, usrIds, app)
 		.then(diff => e.removeUserBotFromApp(req, res, true, diff.diff));
 };
 
 e.customDestroy = (req, res) => {
 	let txnId = req.get('txnId');
-	let appName = req.swagger.params.id.value;
+	let appName = req.params.id;
 	logger.info(`[${txnId}] App delete request received for ${appName}`);
 
 	if (!req.user.isSuperAdmin) return res.status(403).json({ message: 'Current user does not have permission to delete app' });
 	var options = {
-		url: config.baseUrlSM + '/service',
+		url: config.baseUrlSM + `/${appName}/service`,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -479,9 +481,10 @@ e.customDestroy = (req, res) => {
 			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,
-		qs: { filter: { status: { $eq: 'Active' }, 'app': req.swagger.params.id.value }, select: 'name,status,app' }
+		qs: { filter: { status: { $eq: 'Active' }, 'app': req.params.id }, select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
+
 	request(options, function (err, newres, body) {
 		if (err) {
 			logger.error(err.message);
@@ -514,7 +517,7 @@ e.customDestroy = (req, res) => {
 };
 
 e.addUsersToApp = (req, res) => {
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	let users = req.body.users;
 	return mongoose.model('group').findOne({ name: '#', app: app })
 		.then(grp => {
@@ -570,7 +573,7 @@ e.validateUser = (req, usrIds, app, flag) => {
 			if (!flag) newUsrId = usrs.filter(usr => !usr.isSuperAdmin);
 			else newUsrId = usrs;
 			pr = newUsrId.map(usrId => {
-				let url = config.baseUrlSM + `/validateUserDeletion/${app}/${usrId._id}`;
+				let url = config.baseUrlSM + `/${app}/internal/validateUserDeletion/${usrId._id}`;
 				return e.sendRequest(url)
 					.then(res => {
 						if (res.status != 200) {
@@ -661,7 +664,7 @@ e.customAppIndex = (_req, _res) => {
 			}]);
 		})
 		.then(_apps => {
-			let filter = _req.swagger.params.filter.value;
+			let filter = _req.query.filter;
 			logger.debug(`Incoming filter :: ${filter}`);
 
 			if (user.isSuperAdmin) return crudder.index(_req, _res);
@@ -681,7 +684,7 @@ e.customAppIndex = (_req, _res) => {
 			else filter['_id'] = { '$in': apps };
 
 			logger.info(`Updated filter :: ${JSON.stringify(filter)}`);
-			_req.swagger.params.filter.value = JSON.stringify(filter);
+			_req.query.filter = JSON.stringify(filter);
 
 			return crudder.index(_req, _res);
 		}).catch(err => {

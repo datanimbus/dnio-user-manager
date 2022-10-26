@@ -1,6 +1,6 @@
 const dataStackUtils = require('@appveen/data.stack-utils');
 let debugDB = false;
-if (process.env.LOG_LEVEL == 'DB_DEBUG') { process.env.LOG_LEVEL = 'debug'; debugDB = true; }
+if (process.env.LOG_LEVEL == 'trace') { debugDB = true; }
 
 let logger = global.logger;
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
@@ -42,19 +42,17 @@ function get(_service) {
 	if (isK8sEnv()) {
 		if (_service == 'ne') return `http://ne.${dataStackNS}`;
 		if (_service == 'sm') return `http://sm.${dataStackNS}`;
-		if (_service == 'pm') return `http://pm.${dataStackNS}`;
 		if (_service == 'user') return `http://user.${dataStackNS}`;
 		if (_service == 'gw') return `http://gw.${dataStackNS}`;
 		if (_service == 'sec') return `http://sec.${dataStackNS}`;
-		if (_service == 'pm') return `http://pm.${dataStackNS}`;
+		if (_service == 'bm') return `http://bm.${dataStackNS}`;
 	} else {
 		if (_service == 'ne') return 'http://localhost:10010';
 		if (_service == 'sm') return 'http://localhost:10003';
-		if (_service == 'pm') return 'http://localhost:10011';
 		if (_service == 'user') return 'http://localhost:10004';
 		if (_service == 'gw') return 'http://localhost:9080';
 		if (_service == 'sec') return 'http://localhost:10007';
-		if (_service == 'pm') return 'http://localhost:10011';
+		if (_service == 'bm') return 'http://localhost:10011';
 	}
 }
 
@@ -97,7 +95,7 @@ module.exports = {
 	baseUrlSM: get('sm') + '/sm',
 	baseUrlNE: get('ne') + '/ne',
 	baseUrlUSR: get('user') + '/rbac',
-	baseUrlPM: get('pm') + '/pm',
+	baseUrlPM: get('bm') + '/bm',
 	debugDB: debugDB,
 	validationApi: get('user') + '/rbac/validate',
 	baseUrlSEC: get('sec') + '/sec',
@@ -136,8 +134,8 @@ module.exports = {
 	mongoOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,
 		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true,
-		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig'
 	},
 	mongoAppcenterOptions: {
 		reconnectTries: process.env.MONGO_RECONN_TRIES,

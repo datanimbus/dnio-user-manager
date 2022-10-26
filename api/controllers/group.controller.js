@@ -111,9 +111,11 @@ schema.pre('save', function (next, req) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
 	const headers = {};
-	const headersLen = req.rawHeaders.length;
-	for (let index = 0; index < headersLen; index += 2) {
-		headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+	if (req && req.rawHeaders) {
+		const headersLen = req.rawHeaders.length;
+		for (let index = 0; index < headersLen; index += 2) {
+			headers[req.rawHeaders[index]] = req.rawHeaders[index + 1];
+		}
 	}
 	this._req.headers = headers;
 	next();
@@ -215,8 +217,8 @@ function customUpdate(req, res) {
 }
 
 function modifyFilterForApp(req) {
-	let filter = req.swagger.params.filter.value;
-	let app = req.swagger.params.app.value;
+	let filter = req.query.filter;
+	let app = req.params.app;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
@@ -225,7 +227,12 @@ function modifyFilterForApp(req) {
 	} else {
 		filter = { app };
 	}
-	req.swagger.params.filter.value = JSON.stringify(filter);
+	req.query.filter = JSON.stringify(filter);
+}
+
+function modifyBodyForApp(req) {
+	let app = req.swagger.params.app.value;
+	req.body.app = app;
 }
 
 function groupInApp(req, res) {
@@ -234,12 +241,27 @@ function groupInApp(req, res) {
 }
 
 function groupInAppShow(req, res) {
-	modifyFilterForApp(req);
+	//modifyFilterForApp(req);
 	crudder.show(req, res);
 }
 function groupInAppCount(req, res) {
 	modifyFilterForApp(req);
 	crudder.count(req, res);
+}
+
+
+function groupInAppCreate(req, res) {
+	modifyBodyForApp(req);
+	crudder.create(req, res);
+}
+
+function groupInAppUpdate(req, res) {
+	modifyBodyForApp(req);
+	crudder.update(req, res);
+}
+function groupInAppDestroy(req, res) {
+	modifyBodyForApp(req);
+	crudder.destroy(req, res);
 }
 
 module.exports = {
@@ -249,7 +271,10 @@ module.exports = {
 	destroy: crudder.destroy,
 	update: customUpdate,
 	count: crudder.count,
-	groupInApp: groupInApp,
-	groupInAppCount: groupInAppCount,
-	groupInAppShow: groupInAppShow
+	groupInApp,
+	groupInAppCount,
+	groupInAppShow,
+	groupInAppCreate,
+	groupInAppUpdate,
+	groupInAppDestroy
 };

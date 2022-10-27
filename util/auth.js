@@ -99,7 +99,8 @@ const commonUrls = [
 	'/rbac/{app}/connector/count',
 	'/rbac/{app}/connector/utils/count',
 	'/rbac/{app}/connector',
-	'/rbac/{app}/connector/{id}'
+	'/rbac/{app}/connector/{id}',
+	'/rbac/{app}/connector/utils/availableConnectors'
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
@@ -346,6 +347,9 @@ function canAccessPath(req) {
 
 
 	if (compareURL('/rbac/{app}/connector/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/utils/availableConnectors', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/connector', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {

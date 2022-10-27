@@ -4,6 +4,7 @@ const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const utils = require('@appveen/utils');
 
 const definition = require('../helpers/connectors.definition').definition;
+const availableConnectors = require('../helpers/connectors.list').data;
 // const metadataDefinition = require('../helpers/connectors.metadata.definition').definition;
 
 const schema = MakeSchema(definition);
@@ -48,7 +49,13 @@ const crudder = new SMCrud(schema, 'config.connectors', options);
 // const metadataCrudder = new SMCrud(metadataSchema, 'config.connectors.metadata', optionsMetadata);
 
 
+async function listOptions(req, res) {
+	res.json(availableConnectors);
+}
+
+
 module.exports = {
+	listOptions: listOptions,
 	count: crudder.count,
 	create: crudder.create,
 	index: crudder.index,

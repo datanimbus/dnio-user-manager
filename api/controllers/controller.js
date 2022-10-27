@@ -241,6 +241,8 @@ router.post('/:app/connector', ConnectorController.create);
 router.get('/:app/connector/:id', ConnectorController.show);
 router.put('/:app/connector/:id', ConnectorController.update);
 router.delete('/:app/connector/:id', ConnectorController.destroy);
+router.get('/:app/connector/utils/availableConnectors', ConnectorController.listOptions);
+
 
 router.get('/data/:id/allRoles', UserController.getAllRolesofUser);
 router.get('/data/:id/appList', UserController.getUserAppList);

@@ -20,7 +20,7 @@ const options = {
 // 	collectionName: 'config.connectors.metadata'
 // };
 
-schema.index({ name: 1, app: 1, type: 1 });
+schema.index({ name: 1, app: 1, type: 1 }, { unique: 'Connector Exists with same Name and Type', sparse: true, collation: { locale: 'en', strength: 2 } });
 // metadataSchema.index({ type: 1 });
 
 schema.pre('save', utils.counter.getIdGenerator('CON', 'connectors', null, null, 1000));

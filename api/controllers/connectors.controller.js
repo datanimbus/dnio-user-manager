@@ -1,10 +1,13 @@
 'use strict';
 
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const dataStackUtils = require('@appveen/data.stack-utils');
 const utils = require('@appveen/utils');
 
 const definition = require('../helpers/connectors.definition').definition;
 const availableConnectors = require('../helpers/connectors.list').data;
+const queueMgmt = require('../../util/queueMgmt');
+const client = queueMgmt.client;
 // const metadataDefinition = require('../helpers/connectors.metadata.definition').definition;
 
 const schema = MakeSchema(definition);
@@ -44,6 +47,11 @@ schema.pre('save', function (next) {
 	}
 	next();
 });
+
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('config.connectors'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('config.connectors.audit', client, 'auditQueue'));
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('config.connectors.audit', client, 'auditQueue'));
 
 const crudder = new SMCrud(schema, 'config.connectors', options);
 // const metadataCrudder = new SMCrud(metadataSchema, 'config.connectors.metadata', optionsMetadata);

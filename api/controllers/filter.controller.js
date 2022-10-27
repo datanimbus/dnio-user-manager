@@ -58,7 +58,7 @@ schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.fil
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.filter.audit', client, 'auditQueue'));
 
 var crudder = new SMCrud(schema, 'userMgmt.filter', options);
 function customCreate(req, res) {

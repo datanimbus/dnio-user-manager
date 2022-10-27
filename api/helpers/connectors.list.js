@@ -95,7 +95,7 @@ const data = [
 			},
 			{
 				type: 'String',
-				key: 'sftpAuthType',
+				key: 'authType',
 				label: 'SFTP Auth Type',
 				htmlInputType: 'select',
 				options: [

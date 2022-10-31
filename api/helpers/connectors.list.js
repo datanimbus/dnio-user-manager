@@ -201,6 +201,37 @@ const data = [
 				htmlInputType: 'text'
 			}
 		]
+	},
+	{
+		type: 'S3',
+		label: 'S3 Bucket',
+		fields: [
+			{
+				type: 'String',
+				key: 'secretAccessKey',
+				label: 'IAM User Secret Access Key',
+				htmlInputType: 'password'
+			},
+			{
+				type: 'String',
+				key: 'accessKeyId',
+				label: 'IAM User Access Key ID',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'region',
+				label: 'AWS S3 Region',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'bucket',
+				label: 'S3 Bucket Name',
+				htmlInputType: 'text'
+			}
+		]
 	}
 ];
+
 module.exports.data = data;

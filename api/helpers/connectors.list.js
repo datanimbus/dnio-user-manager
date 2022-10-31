@@ -221,7 +221,7 @@ const data = [
 			{
 				type: 'String',
 				key: 'region',
-				label: 'Amazon S3 Region',
+				label: 'AWS S3 Region',
 				htmlInputType: 'text'
 			},
 			{

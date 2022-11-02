@@ -40,10 +40,35 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	const idregex = '^[a-zA-Z0-9 ]*$';
 	if (!this.name.match(idregex)) {
-		next(new Error('Filter name must consist of alphanumeric characters .'));
+		next(new Error('Connector name must consist of alphanumeric characters .'));
 	}
 	else if (this.name.length > 40) {
-		next(new Error('Filter name cannot be greater than 40'));
+		next(new Error('Connector name cannot be greater than 40'));
+	}
+	next();
+});
+
+schema.pre('save', function (next) {
+	let nameRegex = new RegExp('^' + this.name + '$', 'i');
+	let filter = { 'app': this.app, 'name': nameRegex };
+	this.wasNew = this.isNew;
+	if (!this.isNew) {
+		filter['_id'] = { $ne: this._id };
+	}
+	return crudder.model.findOne(filter).lean(true)
+		.then(_d => {
+			if (_d) {
+				return next(new Error('Connector name already in use'));
+			}
+			next();
+		})
+		.catch(next);
+});
+
+schema.pre('remove', function (next) {
+	let self = this;
+	if (self._doc?.options?.default) {
+		return next(new Error('Cannot delete default connector'));
 	}
 	next();
 });

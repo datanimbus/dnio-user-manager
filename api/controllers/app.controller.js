@@ -64,6 +64,30 @@ schema.pre('save', function (next) {
 	next();
 });
 
+
+schema.pre('save', function (next) {
+	logger.info('Creating default connector for MongoDB');
+	let connector = {};
+	connector.category = 'DB';
+	connector.type = 'MongoDB';
+	connector.name = 'MongoDB Appcenter';
+	connector.app = this._doc._id;
+	connector.options = {
+		default: true
+	};
+	connector.values = {
+		connectionString: config.mongoUrlAppcenter
+	};
+
+	appHook.sendRequest(config.baseUrlUSR + `/${this._doc._id}/connector/`, 'POST', null, connector, this._req).then((doc) => {
+		logger.debug(doc._id + 'Connector created.');
+	}).catch(err => {
+		logger.error('Error in creating default connector for App ' + this._doc._id, err);
+	});
+	next();
+});
+
+
 schema.pre('save', function (next, req) {
 	this._req = req;
 	this._wasNew = this.isNew;

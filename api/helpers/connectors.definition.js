@@ -11,6 +11,9 @@ var definition = {
 	'values': {
 		'type': 'Object'
 	},
+	'category': {
+		'type': 'String'
+	},
 	'type': {
 		'type': 'String'
 	},

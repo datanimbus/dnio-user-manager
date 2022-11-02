@@ -1,6 +1,7 @@
 const data = [
 	{
-		type: 'MONGODB',
+		category: 'DB',
+		type: 'MongoDB',
 		label: 'MongoDB',
 		fields: [
 			{
@@ -12,7 +13,8 @@ const data = [
 		]
 	},
 	{
-		type: 'MYSQL',
+		category: 'DB',
+		type: 'MySQL',
 		label: 'MySQL',
 		fields: [
 			{
@@ -42,7 +44,8 @@ const data = [
 		]
 	},
 	{
-		type: 'PG',
+		category: 'DB',
+		type: 'PostgreSQL',
 		label: 'PostgreSQL',
 		fields: [
 			{
@@ -72,6 +75,7 @@ const data = [
 		]
 	},
 	{
+		category: 'SFTP',
 		type: 'SFTP',
 		label: 'SFTP',
 		fields: [
@@ -137,7 +141,8 @@ const data = [
 		]
 	},
 	{
-		type: 'KAFKA',
+		category: 'MESSAGING',
+		type: 'Apache Kafka',
 		label: 'Apache Kafka',
 		fields: [
 			{
@@ -173,25 +178,26 @@ const data = [
 		]
 	},
 	{
-		type: 'AZBLOB',
-		label: 'Azure Blob',
+		category: 'STORAGE',
+		type: 'Azure Blob Storage',
+		label: 'Azure Blob Storage',
 		fields: [
 			{
 				type: 'String',
 				key: 'connectionString',
-				label: 'Azure Connection URL',
+				label: 'Connection URL',
 				htmlInputType: 'text'
 			},
 			{
 				type: 'String',
 				key: 'container',
-				label: 'Azure Container Name',
+				label: 'Container Name',
 				htmlInputType: 'text'
 			},
 			{
 				type: 'String',
 				key: 'sharedKey',
-				label: 'Azure Shared Key',
+				label: 'Shared Key',
 				htmlInputType: 'text'
 			},
 			{
@@ -203,8 +209,9 @@ const data = [
 		]
 	},
 	{
-		type: 'S3',
-		label: 'S3 Bucket',
+		category: 'STORAGE',
+		type: 'Amazon S3',
+		label: 'Amazon S3',
 		fields: [
 			{
 				type: 'String',
@@ -221,13 +228,80 @@ const data = [
 			{
 				type: 'String',
 				key: 'region',
-				label: 'AWS S3 Region',
+				label: 'Amazon S3 Bucket Region',
 				htmlInputType: 'text'
 			},
 			{
 				type: 'String',
 				key: 'bucket',
-				label: 'S3 Bucket Name',
+				label: 'Amazon S3 Bucket Name',
+				htmlInputType: 'text'
+			}
+		]
+	},
+	{
+		category: 'STORAGE',
+		type: 'Google Cloud Storage',
+		label: 'Google Cloud Storage',
+		fields: [
+			{
+				type: 'String',
+				key: 'projectId',
+				label: 'GCS Project ID',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'privateKeyId',
+				label: 'GCS IAM Service Account Private Key ID',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'privateKey',
+				label: 'GCS IAM Service Account Private Key ID',
+				htmlInputType: 'textarea'
+			},
+			{
+				type: 'String',
+				key: 'clientEmail',
+				label: 'GCS Service Account Email',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'clientId',
+				label: 'GCS Service Account Unique Client ID',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'authURI',
+				label: 'GCS Service Account Auth URI',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'tokenURI',
+				label: 'GCS Service Account Token URI',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'authCertURL',
+				label: 'GCS Auth Provider Cert URL',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'clientCertURL',
+				label: 'GCS Client Cert URL',
+				htmlInputType: 'text'
+			},
+			{
+				type: 'String',
+				key: 'bucket',
+				label: 'GCS Bucket Name',
 				htmlInputType: 'text'
 			}
 		]

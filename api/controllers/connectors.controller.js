@@ -65,6 +65,13 @@ schema.pre('save', function (next) {
 		.catch(next);
 });
 
+schema.pre('save', function (next) {
+	if (!this.isNew && this._doc?.options?.default) {
+		return next(new Error('Cannot update default connector'));
+	}
+	next();
+});
+
 schema.pre('remove', function (next) {
 	let self = this;
 	if (self._doc?.options?.default) {

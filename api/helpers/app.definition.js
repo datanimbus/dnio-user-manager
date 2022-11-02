@@ -85,6 +85,12 @@ var definition = {
 	'disableInsights': {
 		'type': 'Boolean',
 		'default': envConfig.disableInsightsApp
+	},
+	'fileStorage': {
+		'type': 'Object'
+	},
+	'dataStorage': {
+		'type': 'Object'
 	}
 };
 module.exports.definition = definition;

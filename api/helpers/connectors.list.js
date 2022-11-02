@@ -179,6 +179,19 @@ const data = [
 	},
 	{
 		category: 'STORAGE',
+		type: 'GridFS',
+		label: 'MongoDB GridFS',
+		fields: [
+			{
+				type: 'String',
+				key: 'connectionString',
+				label: 'Connection String',
+				htmlInputType: 'text'
+			}
+		]
+	},
+	{
+		category: 'STORAGE',
 		type: 'Azure Blob Storage',
 		label: 'Azure Blob Storage',
 		fields: [

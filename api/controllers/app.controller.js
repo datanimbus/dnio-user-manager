@@ -90,6 +90,31 @@ schema.pre('save', function (next) {
 });
 
 
+schema.pre('save', function (next) {
+	if (this.isNew) {
+		logger.info('Creating default connector for MongoDB GridFS');
+		let connector = {};
+		connector.category = 'STORAGE';
+		connector.type = 'GridFS';
+		connector.name = 'MongoDB GridFS Appcenter';
+		connector.app = this._doc._id;
+		connector.options = {
+			default: true
+		};
+		connector.values = {
+			connectionString: config.mongoUrlAppcenter
+		};
+	
+		appHook.sendRequest(config.baseUrlUSR + `/${this._doc._id}/connector/`, 'POST', null, connector, this._req).then((doc) => {
+			logger.debug(doc._id + 'Connector created.');
+		}).catch(err => {
+			logger.error('Error in creating default GridFS connector for App ' + this._doc._id, err);
+		});
+	}
+	next();
+});
+
+
 schema.pre('save', function (next, req) {
 	this._req = req;
 	this._wasNew = this.isNew;

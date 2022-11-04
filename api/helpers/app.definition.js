@@ -86,10 +86,7 @@ var definition = {
 		'type': 'Boolean',
 		'default': envConfig.disableInsightsApp
 	},
-	'fileStorage': {
-		'type': 'Object'
-	},
-	'dataStorage': {
+	'connectors': {
 		'type': 'Object'
 	}
 };

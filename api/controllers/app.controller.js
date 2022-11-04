@@ -67,11 +67,19 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	if (this.isNew) {
+		if (!this._doc.connectors){
+			this._doc.connectors = {
+				data: {},
+				file: {}
+			};
+		}
+		
 		logger.info('Creating default connector for MongoDB');
 		let connector = {};
+		
 		connector.category = 'DB';
-		connector.type = 'MongoDB';
-		connector.name = 'MongoDB Appcenter';
+		connector.type = 'MONGODB';
+		connector.name = 'Default DB Connector';
 		connector.app = this._doc._id;
 		connector.options = {
 			default: true
@@ -79,24 +87,36 @@ schema.pre('save', function (next) {
 		connector.values = {
 			connectionString: config.mongoUrlAppcenter
 		};
-	
-		appHook.sendRequest(config.baseUrlUSR + `/${this._doc._id}/connector/`, 'POST', null, connector, this._req).then((doc) => {
+
+		let connectorDoc = new mongoose.model('config.connectors')(connector);
+		connectorDoc.save().then((doc) => {
 			logger.debug(doc._id + 'Connector created.');
+			this._doc.connectors.data = {
+				_id: doc._id
+			};
+			next();
 		}).catch(err => {
 			logger.error('Error in creating default connector for App ' + this._doc._id, err);
+			next(err);
 		});
 	}
-	next();
 });
 
 
 schema.pre('save', function (next) {
 	if (this.isNew) {
+		if (!this._doc.connectors) {
+			this._doc.connectors = {
+				data: {},
+				file: {}
+			};
+		}
+
 		logger.info('Creating default connector for MongoDB GridFS');
 		let connector = {};
 		connector.category = 'STORAGE';
-		connector.type = 'GridFS';
-		connector.name = 'MongoDB GridFS Appcenter';
+		connector.type = 'GRIDFS';
+		connector.name = 'Default File Connector';
 		connector.app = this._doc._id;
 		connector.options = {
 			default: true
@@ -105,13 +125,18 @@ schema.pre('save', function (next) {
 			connectionString: config.mongoUrlAppcenter
 		};
 	
-		appHook.sendRequest(config.baseUrlUSR + `/${this._doc._id}/connector/`, 'POST', null, connector, this._req).then((doc) => {
+		let connectorDoc = new mongoose.model('config.connectors')(connector);
+		connectorDoc.save().then((doc) => {
 			logger.debug(doc._id + 'Connector created.');
+			this._doc.connectors.file = {
+				_id: doc._id
+			};
+			next();
 		}).catch(err => {
 			logger.error('Error in creating default GridFS connector for App ' + this._doc._id, err);
+			next(err);
 		});
 	}
-	next();
 });
 
 

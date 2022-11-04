@@ -17,6 +17,9 @@ var definition = {
 	'type': {
 		'type': 'String'
 	},
+	'label': {
+		'type': 'String'
+	},
 	'options': {
 		'type': 'Object'
 	},

@@ -1,20 +1,21 @@
 const data = [
 	{
 		category: 'DB',
-		type: 'MongoDB',
+		type: 'MONGODB',
 		label: 'MongoDB',
 		fields: [
 			{
 				type: 'String',
 				key: 'connectionString',
 				label: 'Connection String',
-				htmlInputType: 'text'
+				htmlInputType: 'textarea',
+				encrypted: true
 			}
 		]
 	},
 	{
 		category: 'DB',
-		type: 'MySQL',
+		type: 'MYSQL',
 		label: 'MySQL',
 		fields: [
 			{
@@ -39,13 +40,14 @@ const data = [
 				type: 'String',
 				key: 'password',
 				label: 'MySQL Password',
-				htmlInputType: 'password'
+				htmlInputType: 'password',
+				encrypted: true
 			}
 		]
 	},
 	{
 		category: 'DB',
-		type: 'PostgreSQL',
+		type: 'PGSQL',
 		label: 'PostgreSQL',
 		fields: [
 			{
@@ -70,12 +72,13 @@ const data = [
 				type: 'String',
 				key: 'password',
 				label: 'PostgreSQL Password',
-				htmlInputType: 'password'
+				htmlInputType: 'password',
+				encrypted: true
 			}
 		]
 	},
 	{
-		category: 'SFTP',
+		category: 'FILE',
 		type: 'SFTP',
 		label: 'SFTP',
 		fields: [
@@ -122,27 +125,36 @@ const data = [
 				key: 'password',
 				label: 'SFTP Password',
 				htmlInputType: 'password',
-				authType: 'password'
+				condition: { 
+					authType: 'password'
+				},
+				encrypted: true
 			},
 			{
 				type: 'String',
 				key: 'publicKey',
 				label: 'SFTP Public Key',
 				htmlInputType: 'textarea',
-				authType: 'publickey'
+				condition: { 
+					authType: 'publickey'
+				},
+				encrypted: true
 			},
 			{
 				type: 'String',
 				key: 'password',
 				label: 'SFTP Public Key Passphrase',
 				htmlInputType: 'password',
-				authType: 'publickey'
+				condition: { 
+					authType: 'publickey'
+				},
+				encrypted: true
 			}
 		]
 	},
 	{
 		category: 'MESSAGING',
-		type: 'Apache Kafka',
+		type: 'KAFKA',
 		label: 'Apache Kafka',
 		fields: [
 			{
@@ -161,7 +173,8 @@ const data = [
 				type: 'String',
 				key: 'password',
 				label: 'Password',
-				htmlInputType: 'password'
+				htmlInputType: 'password',
+				encrypted: true
 			},
 			{
 				type: 'String',
@@ -179,20 +192,21 @@ const data = [
 	},
 	{
 		category: 'STORAGE',
-		type: 'GridFS',
+		type: 'GRIDFS',
 		label: 'MongoDB GridFS',
 		fields: [
 			{
 				type: 'String',
 				key: 'connectionString',
 				label: 'Connection String',
-				htmlInputType: 'text'
+				htmlInputType: 'textarea',
+				encrypted: true
 			}
 		]
 	},
 	{
 		category: 'STORAGE',
-		type: 'Azure Blob Storage',
+		type: 'AZBLOB',
 		label: 'Azure Blob Storage',
 		fields: [
 			{
@@ -211,7 +225,8 @@ const data = [
 				type: 'String',
 				key: 'sharedKey',
 				label: 'Shared Key',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				encrypted: true
 			},
 			{
 				type: 'String',
@@ -223,14 +238,15 @@ const data = [
 	},
 	{
 		category: 'STORAGE',
-		type: 'Amazon S3',
+		type: 'S3',
 		label: 'Amazon S3',
 		fields: [
 			{
 				type: 'String',
 				key: 'secretAccessKey',
 				label: 'IAM User Secret Access Key',
-				htmlInputType: 'password'
+				htmlInputType: 'password',
+				encrypted: true
 			},
 			{
 				type: 'String',
@@ -254,7 +270,7 @@ const data = [
 	},
 	{
 		category: 'STORAGE',
-		type: 'Google Cloud Storage',
+		type: 'GCS',
 		label: 'Google Cloud Storage',
 		fields: [
 			{
@@ -273,7 +289,8 @@ const data = [
 				type: 'String',
 				key: 'privateKey',
 				label: 'GCS IAM Service Account Private Key ID',
-				htmlInputType: 'textarea'
+				htmlInputType: 'textarea',
+				encrypted: true
 			},
 			{
 				type: 'String',

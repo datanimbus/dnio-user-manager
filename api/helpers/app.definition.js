@@ -85,6 +85,9 @@ var definition = {
 	'disableInsights': {
 		'type': 'Boolean',
 		'default': envConfig.disableInsightsApp
+	},
+	'connectors': {
+		'type': 'Object'
 	}
 };
 module.exports.definition = definition;

@@ -2,6 +2,7 @@
 
 // const request = require('request');
 const mongoose = require('mongoose');
+const _ = require('lodash');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const config = require('../../config/config');
@@ -14,6 +15,90 @@ const azureConfig = config.azureConfig;
 // let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
 // let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
+
+async function updateExistingAppConnectors() {
+	try {
+		const connectorsModel = mongoose.model('config.connectors');
+		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } });
+		const promises = apps.map(async (doc) => {
+			try {
+				if (!doc.connectors) {
+					doc.connectors = {
+						data: {},
+						file: {}
+					};
+				}
+
+				let connectors = await connectorsModel.find({ app: doc._id, "$or": [{"name": "Default DB Connector"}, {"name": "Default File Connector"}] }).lean();
+				
+				if (connectors.length !== 2) {
+					let dbConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default DB Connector');
+					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
+
+					if (!fileConnector) {
+						let connector = {};
+						connector.category = 'STORAGE';
+						connector.type = 'GRIDFS';
+						connector.name = 'Default File Connector';
+						connector.app = doc._id;
+						connector.options = {
+							default: true
+						};
+						connector.values = {
+							connectionString: config.mongoUrlAppcenter
+						};
+
+						let fileConnDoc = new connectorsModel(connector);
+						let con = fileConnDoc.save();
+						logger.debug(con._id + 'Connector created.');
+						doc.connectors.file = {
+							_id: con._id
+						};
+					}
+
+					if (!dbConnector) {
+						let connector = {};
+						connector.category = 'DB';
+						connector.type = 'MONGODB';
+						connector.name = 'Default DB Connector';
+						connector.app = doc._id;
+						connector.options = {
+							default: true
+						};
+						connector.values = {
+							connectionString: config.mongoUrlAppcenter
+						};
+
+						let dbConnDoc = new connectorsModel(connector);
+						let con = await dbConnDoc.save();
+						logger.debug(con._id + 'Connector created.');
+						doc.connectors.data = {
+							_id: con._id
+						};
+					}
+				} else {
+					let dbConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default DB Connector');
+					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
+					
+					if (!doc.connectors?.data?._id) {
+						doc.connectors.data._id = dbConnector?._id;
+					}
+
+					if (!doc.connectors?.file?._id) {
+						doc.connectors.file._id = fileConnector?._id;
+					}
+				}
+				doc.save();
+			} catch (err) {
+				logger.error(err);
+			}
+		await Promise.all(promises);
+		logger.debug('Created connectors for apps');
+		});
+	} catch (err) {
+		logger.error(err.message);
+	}
+}
 
 async function createNSifNotExist(ns) {
 	try {
@@ -174,7 +259,8 @@ function init() {
 		.then(() => createNS())
 		.then(() => createSecurityKeys())
 		.then(() => validateAuthModes())
-		.then(() => createIndexForSession());
+		.then(() => createIndexForSession())
+		.then(() => updateExistingAppConnectors());
 }
 
 module.exports = init;

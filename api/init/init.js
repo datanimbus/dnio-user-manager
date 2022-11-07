@@ -20,7 +20,7 @@ async function updateExistingAppConnectors() {
 	try {
 		logger.info(`=== Updating existing apps with default connectors ===`);
 		const connectorsModel = mongoose.model('config.connectors');
-		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } });
+		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } }).lean();
 		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
 		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
 		const promises = apps.map(async (doc) => {
@@ -58,7 +58,7 @@ async function updateExistingAppConnectors() {
 						};
 
 						let fileConnDoc = new connectorsModel(connector);
-						let con = fileConnDoc.save();
+						let con = await fileConnDoc.save();
 						logger.info(`File connector created for app :: ${doc._id} :: ${con._id}`);
 						doc.connectors.file = {
 							_id: con._id
@@ -100,7 +100,7 @@ async function updateExistingAppConnectors() {
 						doc.connectors.file._id = fileConnector?._id;
 					}
 				}
-				doc.save();
+				await mongoose.model('app').updateOne({"_id": doc._id}, { "$set": doc });
 				logger.info(`Updated app :: ${doc._id} :: with connectors`);
 			} catch (err) {
 				logger.error(err);

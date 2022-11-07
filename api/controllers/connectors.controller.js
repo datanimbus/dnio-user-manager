@@ -44,7 +44,7 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let self = this;
-	if (self._doc?.options?.default && (self._doc?.name !== 'Default DB Connector' || self._doc?.name !== 'Default File Connector')) {
+	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
 		delete self._doc.options.default;
 	}
 	next();
@@ -88,7 +88,7 @@ schema.pre('save', function (next) {
 schema.pre('remove', function (next) {
 	let self = this;
 	if (self._doc?.options?.default) {
-		
+		return next(new Error('Cannot delete default connector'));
 	}
 	next();
 });

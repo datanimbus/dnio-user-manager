@@ -21,7 +21,7 @@ async function updateExistingAppConnectors() {
 		logger.info(`=== Updating existing apps with default connectors ===`);
 		const connectorsModel = mongoose.model('config.connectors');
 		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } });
-		logger.info(`Total no. of apps without connectors :: ${app.length}`);
+		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
 		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
 		const promises = apps.map(async (doc) => {
 			try {

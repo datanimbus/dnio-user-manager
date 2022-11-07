@@ -18,10 +18,16 @@ let release = process.env.RELEASE;
 
 async function updateExistingAppConnectors() {
 	try {
+		logger.info(`=== Updating existing apps with default connectors ===`);
 		const connectorsModel = mongoose.model('config.connectors');
 		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } });
+		logger.info(`Total no. of apps without connectors :: ${app.length}`);
+		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
 		const promises = apps.map(async (doc) => {
 			try {
+				logger.info(`Processing App :: ${doc._id}`);
+				logger.trace(`Processing App :: ${JSON.stringify(doc)}`);
+
 				if (!doc.connectors) {
 					doc.connectors = {
 						data: {},
@@ -30,12 +36,15 @@ async function updateExistingAppConnectors() {
 				}
 
 				let connectors = await connectorsModel.find({ app: doc._id, "$or": [{"name": "Default DB Connector"}, {"name": "Default File Connector"}] }).lean();
-				
+				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
+				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
+
 				if (connectors.length !== 2) {
 					let dbConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default DB Connector');
 					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
 
 					if (!fileConnector) {
+						logger.info(`File connector not found for app :: ${doc._id}`);
 						let connector = {};
 						connector.category = 'STORAGE';
 						connector.type = 'GRIDFS';
@@ -50,13 +59,14 @@ async function updateExistingAppConnectors() {
 
 						let fileConnDoc = new connectorsModel(connector);
 						let con = fileConnDoc.save();
-						logger.debug(con._id + 'Connector created.');
+						logger.info(`File connector created for app :: ${doc._id} :: ${con._id}`);
 						doc.connectors.file = {
 							_id: con._id
 						};
 					}
 
 					if (!dbConnector) {
+						logger.info(`Data connector not found for app :: ${doc._id}`);
 						let connector = {};
 						connector.category = 'DB';
 						connector.type = 'MONGODB';
@@ -71,7 +81,7 @@ async function updateExistingAppConnectors() {
 
 						let dbConnDoc = new connectorsModel(connector);
 						let con = await dbConnDoc.save();
-						logger.debug(con._id + 'Connector created.');
+						logger.info(`Data connector created for app :: ${doc._id} :: ${con._id}`);
 						doc.connectors.data = {
 							_id: con._id
 						};
@@ -81,20 +91,23 @@ async function updateExistingAppConnectors() {
 					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
 					
 					if (!doc.connectors?.data?._id) {
+						logger.info(`Setting data connector for app :: ${doc._id} :: ${dbConnector?._id}`);
 						doc.connectors.data._id = dbConnector?._id;
 					}
 
 					if (!doc.connectors?.file?._id) {
+						logger.info(`Setting file connector for app :: ${doc._id} :: ${fileConnector?._id}`);
 						doc.connectors.file._id = fileConnector?._id;
 					}
 				}
 				doc.save();
+				logger.info(`Updated app :: ${doc._id} :: with connectors`);
 			} catch (err) {
 				logger.error(err);
 			}
-		await Promise.all(promises);
-		logger.debug('Created connectors for apps');
 		});
+		await Promise.all(promises);
+		logger.info(`Updated all apps with default connectors`);
 	} catch (err) {
 		logger.error(err.message);
 	}

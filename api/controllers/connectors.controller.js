@@ -43,6 +43,14 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	let self = this;
+	if (self._doc?.options?.default && (self._doc?.name !== 'Default DB Connector' || self._doc?.name !== 'Default File Connector')) {
+		delete self._doc.options.default;
+	}
+	next();
+});
+
+schema.pre('save', function (next) {
 	const idregex = '^[a-zA-Z0-9 ]*$';
 	if (!this.name.match(idregex)) {
 		next(new Error('Connector name must consist of alphanumeric characters .'));

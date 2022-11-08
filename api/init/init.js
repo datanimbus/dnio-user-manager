@@ -39,8 +39,8 @@ async function updateExistingAppConnectors() {
 				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
 				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
 
-				let dbConnector = _.find(connectors, conn => conn.options && conn.options.default && conn.name === 'Default DB Connector');
-				let fileConnector = _.find(connectors, conn => conn.options && conn.options.default && conn.name === 'Default File Connector');
+				let dbConnector = _.find(connectors, conn => conn.name === 'Default DB Connector');
+				let fileConnector = _.find(connectors, conn => conn.name === 'Default File Connector');
 
 				if (connectors.length !== 2) {
 					if (!fileConnector) {

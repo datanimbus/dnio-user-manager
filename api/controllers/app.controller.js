@@ -106,7 +106,7 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	if (this.isNew) {
-		if (!this._doc.connectors) {
+		if (!this._doc.connectors || _.isEmpty(this._doc.connectors)) {
 			this._doc.connectors = {
 				data: {},
 				file: {}

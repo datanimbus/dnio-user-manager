@@ -28,21 +28,21 @@ async function updateExistingAppConnectors() {
 				logger.info(`Processing App :: ${doc._id}`);
 				logger.trace(`Processing App :: ${JSON.stringify(doc)}`);
 
-				if (!doc.connectors) {
+				if (!doc.connectors || _.isEmpty(doc.connectors)) {
 					doc.connectors = {
 						data: {},
 						file: {}
 					};
 				}
 
-				let connectors = await connectorsModel.find({ app: doc._id, "$or": [{"name": "Default DB Connector"}, {"name": "Default File Connector"}] }).lean();
+				let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ["Default DB Connector", "Default File Connector"] } }).lean();
 				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
 				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
 
-				if (connectors.length !== 2) {
-					let dbConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default DB Connector');
-					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
+				let dbConnector = _.find(connectors, conn => conn.options && conn.options.default && conn.name === 'Default DB Connector');
+				let fileConnector = _.find(connectors, conn => conn.options && conn.options.default && conn.name === 'Default File Connector');
 
+				if (connectors.length !== 2) {
 					if (!fileConnector) {
 						logger.info(`File connector not found for app :: ${doc._id}`);
 						let connector = {};
@@ -58,10 +58,10 @@ async function updateExistingAppConnectors() {
 						};
 
 						let fileConnDoc = new connectorsModel(connector);
-						let con = await fileConnDoc.save();
-						logger.info(`File connector created for app :: ${doc._id} :: ${con._id}`);
+						let status = await fileConnDoc.save();
+						logger.info(`File connector created for app :: ${doc._id} :: ${status._id}`);
 						doc.connectors.file = {
-							_id: con._id
+							_id: status._id
 						};
 					}
 
@@ -80,16 +80,13 @@ async function updateExistingAppConnectors() {
 						};
 
 						let dbConnDoc = new connectorsModel(connector);
-						let con = await dbConnDoc.save();
-						logger.info(`Data connector created for app :: ${doc._id} :: ${con._id}`);
+						let status = await dbConnDoc.save();
+						logger.info(`Data connector created for app :: ${doc._id} :: ${status._id}`);
 						doc.connectors.data = {
-							_id: con._id
+							_id: status._id
 						};
 					}
 				} else {
-					let dbConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default DB Connector');
-					let fileConnector = _.find(connectors, conn => conn.options?.default && conn.name === 'Default File Connector');
-					
 					if (!doc.connectors?.data?._id) {
 						logger.info(`Setting data connector for app :: ${doc._id} :: ${dbConnector?._id}`);
 						doc.connectors.data._id = dbConnector?._id;
@@ -100,7 +97,7 @@ async function updateExistingAppConnectors() {
 						doc.connectors.file._id = fileConnector?._id;
 					}
 				}
-				await mongoose.model('app').updateOne({"_id": doc._id}, { "$set": doc });
+				await mongoose.model('app').updateOne({ "_id": doc._id }, { "$set": doc });
 				logger.info(`Updated app :: ${doc._id} :: with connectors`);
 			} catch (err) {
 				logger.error(err);
@@ -270,10 +267,10 @@ async function createIndexForSession() {
 function init() {
 	return checkDependency()
 		.then(() => createNS())
+		.then(() => updateExistingAppConnectors())
 		.then(() => createSecurityKeys())
 		.then(() => validateAuthModes())
 		.then(() => createIndexForSession())
-		.then(() => updateExistingAppConnectors());
 }
 
 module.exports = init;

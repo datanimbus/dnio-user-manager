@@ -135,6 +135,15 @@ schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('config.conne
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('config.connectors.audit', client, 'auditQueue'));
 
+
+schema.post('save', function (error, doc, next) {
+	if (error.errors && error.errors._id || error.code == 11000 || error._id === 'ValidationError' && error.message.indexOf('__CUSTOM_ID_DUPLICATE_ERROR__') > -1) {
+		logger.error(error);
+		next(new Error('Connector name is already in use'));
+	} else {
+		next(error);
+	}
+});
 const crudder = new SMCrud(schema, 'config.connectors', options);
 // const metadataCrudder = new SMCrud(metadataSchema, 'config.connectors.metadata', optionsMetadata);
 

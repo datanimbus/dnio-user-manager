@@ -1,36 +1,31 @@
 'use strict';
 
-const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
-const dataStackUtils = require('@appveen/data.stack-utils');
-const utils = require('@appveen/utils');
 const _ = require('lodash');
+const { default: mongoose } = require('mongoose');
+
+const utils = require('@appveen/utils');
+const dataStackUtils = require('@appveen/data.stack-utils');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+
+const config = require('../../config/config');
+let appHook = require('../helpers/util/appHooks');
+const queueMgmt = require('../../util/queueMgmt');
+const client = queueMgmt.client;
 
 const definition = require('../helpers/connectors.definition').definition;
 const availableConnectors = require('../helpers/connectors.list').data;
-const queueMgmt = require('../../util/queueMgmt');
-const client = queueMgmt.client;
-let appHook = require('../helpers/util/appHooks');
-const config = require('../../config/config');
-const { default: mongoose } = require('mongoose');
-// const metadataDefinition = require('../helpers/connectors.metadata.definition').definition;
 
 const schema = MakeSchema(definition);
-// const metadataSchema = MakeSchema(metadataDefinition);
 const logger = global.logger;
-
 const options = {
 	logger: logger,
 	collectionName: 'config.connectors'
 };
 
-// const optionsMetadata = {
-// 	logger: logger,
-// 	collectionName: 'config.connectors.metadata'
-// };
 
 schema.index({ name: 1, app: 1 }, { unique: 'Connector Exists with same Name and Type', collation: { locale: 'en', strength: 2 } });
 schema.index({ category: 1, type: 1 });
-// metadataSchema.index({ type: 1 });
+
 
 schema.pre('save', utils.counter.getIdGenerator('CON', 'connectors', null, null, 1000));
 
@@ -38,14 +33,6 @@ schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
-	}
-	next();
-});
-
-schema.pre('save', function (next) {
-	let self = this;
-	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
-		delete self._doc.options.default;
 	}
 	next();
 });
@@ -61,22 +48,13 @@ schema.pre('save', function (next) {
 	next();
 });
 
-// schema.pre('save', function (next) {
-// 	let nameRegex = new RegExp('^' + this.name + '$', 'i');
-// 	let filter = { 'app': this.app, 'name': nameRegex };
-// 	this.wasNew = this.isNew;
-// 	if (!this.isNew) {
-// 		filter['_id'] = { $ne: this._id };
-// 	}
-// 	return crudder.model.findOne(filter).lean(true)
-// 		.then(_d => {
-// 			if (_d) {
-// 				return next(new Error('Connector name already in use'));
-// 			}
-// 			next();
-// 		})
-// 		.catch(next);
-// });
+schema.pre('save', function (next) {
+	let self = this;
+	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		delete self._doc.options.default;
+	}
+	next();
+});
 
 schema.pre('save', function (next) {
 	if (!this.isNew && this._doc?.options?.default) {
@@ -84,6 +62,21 @@ schema.pre('save', function (next) {
 	}
 	next();
 });
+
+schema.pre('save', function (next) {
+	if (!this.isNew) {
+		let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
+		connectorDefinition.fields.forEach(field => {
+			if (field.required) {
+				if (!this._doc.values[field.key]) {
+					return next(new Error(`${field.label} is required`));
+				}
+			}
+		});
+	}
+	next();
+});
+
 
 schema.pre('remove', function (next) {
 	let self = this;
@@ -114,7 +107,6 @@ schema.pre('remove', function (next) {
 	});	
 });
 
-
 schema.pre('remove', function (next) {
 	mongoose.model('app').find({ _id: this._doc.app }).then((app) => {
 		logger.info('App details :: ', app);
@@ -130,12 +122,6 @@ schema.pre('remove', function (next) {
 });
 
 
-schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('config.connectors'));
-schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('config.connectors.audit', client, 'auditQueue'));
-schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
-schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('config.connectors.audit', client, 'auditQueue'));
-
-
 schema.post('save', function (error, doc, next) {
 	if (error.errors && error.errors._id || error.code == 11000 || error._id === 'ValidationError' && error.message.indexOf('__CUSTOM_ID_DUPLICATE_ERROR__') > -1) {
 		logger.error(error);
@@ -144,8 +130,15 @@ schema.post('save', function (error, doc, next) {
 		next(error);
 	}
 });
+
+
+schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('config.connectors'));
+schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('config.connectors.audit', client, 'auditQueue'));
+schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('config.connectors.audit', client, 'auditQueue'));
+
+
 const crudder = new SMCrud(schema, 'config.connectors', options);
-// const metadataCrudder = new SMCrud(metadataSchema, 'config.connectors.metadata', optionsMetadata);
 
 
 async function listOptions(req, res) {
@@ -160,7 +153,5 @@ module.exports = {
 	index: crudder.index,
 	show: crudder.show,
 	destroy: crudder.destroy,
-	update: crudder.update,
-	// metadataIndex: metadataCrudder.index,
-	// metadataShow: metadataCrudder.show,
+	update: crudder.update
 };

@@ -9,7 +9,8 @@ const data = [
 				key: 'connectionString',
 				label: 'Connection String',
 				htmlInputType: 'textarea',
-				encrypted: true
+				encrypted: true,
+				required: true
 			}
 		]
 	},
@@ -22,7 +23,8 @@ const data = [
 				type: 'String',
 				key: 'host',
 				label: 'MySQL Host',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'Number',
@@ -34,14 +36,16 @@ const data = [
 				type: 'String',
 				key: 'user',
 				label: 'MySQL User',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'password',
 				label: 'MySQL Password',
 				htmlInputType: 'password',
-				encrypted: true
+				encrypted: true,
+				required: true
 			}
 		]
 	},
@@ -54,7 +58,8 @@ const data = [
 				type: 'String',
 				key: 'host',
 				label: 'PostgreSQL Host',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'Number',
@@ -66,14 +71,16 @@ const data = [
 				type: 'String',
 				key: 'user',
 				label: 'PostgreSQL User',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'password',
 				label: 'PostgreSQL Password',
 				htmlInputType: 'password',
-				encrypted: true
+				encrypted: true,
+				required: true
 			}
 		]
 	},
@@ -86,7 +93,8 @@ const data = [
 				type: 'String',
 				key: 'host',
 				label: 'SFTP Host',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'Number',
@@ -98,7 +106,8 @@ const data = [
 				type: 'String',
 				key: 'user',
 				label: 'SFTP User',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
@@ -118,7 +127,8 @@ const data = [
 						label: 'Public Key',
 						value: 'publickey'
 					}
-				]
+				],
+				required: true
 			},
 			{
 				type: 'String',
@@ -161,7 +171,8 @@ const data = [
 				type: 'String',
 				key: 'servers',
 				label: 'Bootstrap Servers',
-				htmlInputType: 'textarea'
+				htmlInputType: 'textarea',
+				required: true
 			},
 			{
 				type: 'String',
@@ -200,7 +211,8 @@ const data = [
 				key: 'connectionString',
 				label: 'Connection String',
 				htmlInputType: 'textarea',
-				encrypted: true
+				encrypted: true,
+				required: true
 			}
 		]
 	},
@@ -213,20 +225,23 @@ const data = [
 				type: 'String',
 				key: 'connectionString',
 				label: 'Connection URL',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'container',
 				label: 'Container Name',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'sharedKey',
 				label: 'Shared Key',
 				htmlInputType: 'text',
-				encrypted: true
+				encrypted: true,
+				required: true
 			},
 			{
 				type: 'String',
@@ -246,25 +261,29 @@ const data = [
 				key: 'secretAccessKey',
 				label: 'IAM User Secret Access Key',
 				htmlInputType: 'password',
-				encrypted: true
+				encrypted: true,
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'accessKeyId',
 				label: 'IAM User Access Key ID',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'region',
 				label: 'Amazon S3 Bucket Region',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'bucket',
 				label: 'Amazon S3 Bucket Name',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			}
 		]
 	},
@@ -277,62 +296,72 @@ const data = [
 				type: 'String',
 				key: 'projectId',
 				label: 'GCS Project ID',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'privateKeyId',
 				label: 'GCS IAM Service Account Private Key ID',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'privateKey',
 				label: 'GCS IAM Service Account Private Key ID',
 				htmlInputType: 'textarea',
-				encrypted: true
+				encrypted: true,
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'clientEmail',
 				label: 'GCS Service Account Email',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'clientId',
 				label: 'GCS Service Account Unique Client ID',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'authURI',
 				label: 'GCS Service Account Auth URI',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'tokenURI',
 				label: 'GCS Service Account Token URI',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'authCertURL',
 				label: 'GCS Auth Provider Cert URL',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'clientCertURL',
 				label: 'GCS Client Cert URL',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			},
 			{
 				type: 'String',
 				key: 'bucket',
 				label: 'GCS Bucket Name',
-				htmlInputType: 'text'
+				htmlInputType: 'text',
+				required: true
 			}
 		]
 	}

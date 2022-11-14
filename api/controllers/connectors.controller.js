@@ -28,7 +28,7 @@ const options = {
 // 	collectionName: 'config.connectors.metadata'
 // };
 
-schema.index({ name: 1, app: 1 }, { unique: 'Connector Exists with same Name and Type', collation: { locale: 'en', strength: 2 } });
+schema.index({ name: 1, app: 1 }, { unique: 'UNIQUE_INDEX', name: '__UNIQUE__', collation: { locale: 'en', strength: 2 } });
 schema.index({ category: 1, type: 1 });
 // metadataSchema.index({ type: 1 });
 
@@ -111,14 +111,14 @@ schema.pre('remove', function (next) {
 	}).catch(err => {
 		logger.error('Error in fetching services for App ' + this._doc.app, err);
 		return next(new Error('Error fetching services list for app'));
-	});	
+	});
 });
 
 
 schema.pre('remove', function (next) {
 	mongoose.model('app').find({ _id: this._doc.app }).then((app) => {
 		logger.info('App details :: ', app);
-		
+
 		if (app.connectors?.data?._id === this._doc._id || app.connectors?.file?._id === this._doc._id) {
 			return next(new Error('Cannot delete connector while it is set as default for app'));
 		}
@@ -126,7 +126,7 @@ schema.pre('remove', function (next) {
 	}).catch(err => {
 		logger.error('Error in fetching App ' + this._doc.app, err);
 		return next(new Error('Error fetching app details'));
-	});	
+	});
 });
 
 

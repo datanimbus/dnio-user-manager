@@ -23,7 +23,7 @@ const options = {
 };
 
 
-schema.index({ name: 1, app: 1 }, { unique: 'UNIQUE_INDEX', name: '__UNIQUE__', collation: { locale: 'en', strength: 2 } });
+schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
 schema.index({ category: 1, type: 1 });
 
 

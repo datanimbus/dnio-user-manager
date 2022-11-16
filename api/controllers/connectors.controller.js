@@ -53,6 +53,10 @@ schema.pre('save', function (next) {
 	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
 		delete self._doc.options.default;
 	}
+	if (self.isNew && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		self._doc.options = self._doc.options || {};
+		self._doc.options.isValid = false;
+	}
 	next();
 });
 

@@ -51,7 +51,8 @@ async function updateExistingAppConnectors() {
 						connector.name = 'Default File Connector';
 						connector.app = doc._id;
 						connector.options = {
-							default: true
+							default: true,
+							isValid: true
 						};
 						connector.values = {
 							connectionString: config.mongoUrlAppcenter
@@ -73,7 +74,8 @@ async function updateExistingAppConnectors() {
 						connector.name = 'Default DB Connector';
 						connector.app = doc._id;
 						connector.options = {
-							default: true
+							default: true,
+							isValid: true
 						};
 						connector.values = {
 							connectionString: config.mongoUrlAppcenter

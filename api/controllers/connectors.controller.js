@@ -77,6 +77,7 @@ schema.pre('save', function (next) {
 				}
 			}
 		});
+		this._doc.options.isValid = true;
 	}
 	next();
 });

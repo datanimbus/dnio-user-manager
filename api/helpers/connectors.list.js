@@ -85,6 +85,21 @@ const data = [
 		]
 	},
 	{
+		category: 'DB',
+		type: 'MSSQL',
+		label: 'MSSQL',
+		fields: [
+			{
+				type: 'String',
+				key: 'connectionString',
+				label: 'Connection String',
+				htmlInputType: 'textarea',
+				encrypted: true,
+				required: true
+			}
+		]
+	},
+	{
 		category: 'FILE',
 		type: 'SFTP',
 		label: 'SFTP',

@@ -68,8 +68,11 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
+	if (!connectorDefinition) {
+		return next(new Error('Connector type not available for selected category'));
+	}
 	if (!this.isNew) {
-		let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
 		connectorDefinition.fields.forEach(field => {
 			if (field.required) {
 				if (!this._doc.values[field.key]) {

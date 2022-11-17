@@ -68,8 +68,11 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
+	if (!connectorDefinition) {
+		return next(new Error('Connector type not available for selected category'));
+	}
 	if (!this.isNew) {
-		let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
 		connectorDefinition.fields.forEach(field => {
 			if (field.required) {
 				if (!this._doc.values[field.key]) {
@@ -98,9 +101,9 @@ schema.pre('remove', function (next) {
 		logger.info('Services :: ', services);
 		let service;
 		if (this._doc.category === 'DB') {
-			service = _.find(services, services?.connectors?.data?._id === this._doc._id);
+			service = _.find(services, service => service?.connectors?.data?._id === this._doc._id);
 		} else {
-			service = _.find(services, services?.connectors?.file?._id === this._doc._id);
+			service = _.find(services, service => service?.connectors?.file?._id === this._doc._id);
 		}
 		if (service) {
 			return next(new Error('Cannot delete connector while it is in use by a data service'));
@@ -113,7 +116,7 @@ schema.pre('remove', function (next) {
 });
 
 schema.pre('remove', function (next) {
-	mongoose.model('app').find({ _id: this._doc.app }).then((app) => {
+	mongoose.model('app').findOne({ _id: this._doc.app }).lean().then((app) => {
 		logger.info('App details :: ', app);
 
 		if (app.connectors?.data?._id === this._doc._id || app.connectors?.file?._id === this._doc._id) {

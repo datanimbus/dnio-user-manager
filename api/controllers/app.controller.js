@@ -101,7 +101,6 @@ schema.pre('save', function (next) {
 			next(err);
 		});
 	}
-	next();
 });
 
 
@@ -140,7 +139,6 @@ schema.pre('save', function (next) {
 			next(err);
 		});
 	}
-	next();
 });
 
 

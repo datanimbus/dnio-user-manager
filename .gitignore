@@ -78,5 +78,6 @@ uploads/
 
 .DS_Store
 send.sh
+build.sh
 data-stack-users-template.csv
 tmp

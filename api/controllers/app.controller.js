@@ -100,6 +100,8 @@ schema.pre('save', function (next) {
 			logger.error('Error in creating default connector for App ' + this._doc._id, err);
 			next(err);
 		});
+	} else {
+		next();
 	}
 });
 
@@ -138,6 +140,8 @@ schema.pre('save', function (next) {
 			logger.error('Error in creating default GridFS connector for App ' + this._doc._id, err);
 			next(err);
 		});
+	} else {
+		next();
 	}
 });
 

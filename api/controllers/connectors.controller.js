@@ -159,16 +159,19 @@ async function testConnector(req, res) {
 	try {
 		if (payload.type === 'MONGODB') {
 			const { MongoClient } = require('mongodb');
-			await MongoClient.connect(payload.values.connectionString);
+			let connection = await MongoClient.connect(payload.values.connectionString);
+			connection.db(payload.values.database);
 
 		} else if (payload.type === 'MSSQL') {
 			let crud = new restCrud.mssql({ connectionString: payload.values.connectionString });
 			await crud.connect();
 
-		} else {
+		} else if (payload.type === 'MYSQL' || payload.type === 'PGSQL') {
 			let sql = restCrud[payload.type.toLowerCase()];
 			let crud = await new sql(payload.values);
 			await crud.connect();
+		} else {
+			return res.status(500).json({ message: 'Testing not supported for connector type' });
 		}
 		return res.status(200).json({ message: 'Connection Successful' });
 	} catch (err) {
@@ -179,6 +182,40 @@ async function testConnector(req, res) {
 	}
 }
 
+async function fetchTables(req, res) {
+	try {
+		let id = req.params.id;
+		let data = await mongoose.model('config.connectors').findById(id).lean();
+		let tables = [];
+
+		if (data.type === 'MONGODB') {
+			const { MongoClient } = require('mongodb');
+			let  client = await MongoClient.connect(data.values.connectionString);
+			let db = await client.db(data.values.database);
+			
+			tables = await db.listCollections().toArray();
+			tables =  tables.map(table => { return { name: table.name, type: table.type } });
+
+		} else if (data.type === 'MSSQL') {
+			let crud = new restCrud.mssql({ connectionString: data.values.connectionString });
+			await crud.connect();
+
+			let tableCheckSql = `SELECT * FROM sysobjects WHERE xtype='U'`;
+			let result = await crud.sqlQuery(tableCheckSql);
+
+			tables = result.recordset.map(record => { return {"name": record.name, "type": record.type } });
+			
+		} else {
+			return res.status(500).json({ message: 'Fetch not supported' });
+		}
+		return res.status(200).json(tables);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({
+			message: err.message
+		});
+	}
+}
 
 module.exports = {
 	listOptions: listOptions,
@@ -188,5 +225,6 @@ module.exports = {
 	show: crudder.show,
 	destroy: crudder.destroy,
 	update: crudder.update,
-	test: testConnector
+	test: testConnector,
+	fetchTables: fetchTables
 };

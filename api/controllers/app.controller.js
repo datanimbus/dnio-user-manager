@@ -86,7 +86,8 @@ schema.pre('save', function (next) {
 			isValid: true
 		};
 		connector.values = {
-			connectionString: config.mongoUrlAppcenter
+			connectionString: config.mongoUrlAppcenter,
+			database: config.dataStackNS + '-' + this._doc._id
 		};
 
 		let connectorDoc = new mongoose.model('config.connectors')(connector);

@@ -19,6 +19,7 @@
   "dependencies": {
     "@appveen/data.stack-utils": "^1.0.19",
     "@appveen/ds-auth-cache": "^1.0.6",
+    "@appveen/rest-crud": "^0.0.3",
     "@appveen/swagger-mongoose-crud": "github:appveen/swagger-mongoose-crud",
     "@appveen/utils": "^2.1.9",
     "@azure/msal-node": "^1.9.0",

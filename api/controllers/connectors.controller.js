@@ -4,6 +4,7 @@ const _ = require('lodash');
 const { default: mongoose } = require('mongoose');
 
 const utils = require('@appveen/utils');
+const restCrud = require('@appveen/rest-crud');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 
@@ -153,6 +154,31 @@ async function listOptions(req, res) {
 	res.json(availableConnectors);
 }
 
+async function testConnector(req, res) {
+	let payload = req.body;
+	try {
+		if (payload.type === 'MONGODB') {
+			const { MongoClient } = require('mongodb');
+			await MongoClient.connect(payload.values.connectionString);
+
+		} else if (payload.type === 'MSSQL') {
+			let crud = new restCrud.mssql({ connectionString: payload.values.connectionString });
+			await crud.connect();
+
+		} else {
+			let sql = restCrud[payload.type.toLowerCase()];
+			let crud = await new sql(payload.values);
+			await crud.connect();
+		}
+		return res.status(200).json({ message: 'Connection Successful' });
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({
+			message: err.message
+		});
+	}
+}
+
 
 module.exports = {
 	listOptions: listOptions,
@@ -161,5 +187,6 @@ module.exports = {
 	index: crudder.index,
 	show: crudder.show,
 	destroy: crudder.destroy,
-	update: crudder.update
+	update: crudder.update,
+	test: testConnector
 };

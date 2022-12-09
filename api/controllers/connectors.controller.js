@@ -162,21 +162,20 @@ async function testConnector(req, res) {
 			let connection = await MongoClient.connect(payload.values.connectionString);
 			connection.db(payload.values.database);
 
-		} else if (payload.type === 'MSSQL') {
-			let crud = new restCrud.mssql({ connectionString: payload.values.connectionString });
-			await crud.connect();
-
-		} else if (payload.type === 'MYSQL' || payload.type === 'PGSQL') {
+		} else if (payload.type === 'MYSQL' || payload.type === 'PGSQL' || payload.type === 'MSSQL') {
 			let sql = restCrud[payload.type.toLowerCase()];
 			let crud = await new sql(payload.values);
 			await crud.connect();
+			await crud.disconnect();
+
 		} else {
 			return res.status(500).json({ message: 'Testing not supported for connector type' });
 		}
+
 		return res.status(200).json({ message: 'Connection Successful' });
 	} catch (err) {
 		logger.error(err);
-		res.status(500).json({
+		return res.status(500).json({
 			message: err.message
 		});
 	}
@@ -184,34 +183,56 @@ async function testConnector(req, res) {
 
 async function fetchTables(req, res) {
 	try {
-		let id = req.params.id;
-		let data = await mongoose.model('config.connectors').findById(id).lean();
-		let tables = [];
+		let data = await mongoose.model('config.connectors').findById(req.params.id).lean();
+		
+		if (data.category === 'DB') {
+			let tables = [];
+			if (data.type === 'MONGODB') {
+				const { MongoClient } = require('mongodb');
+				let client = await MongoClient.connect(data.values.connectionString);
+				let db = await client.db(data.values.database);
 
-		if (data.type === 'MONGODB') {
-			const { MongoClient } = require('mongodb');
-			let  client = await MongoClient.connect(data.values.connectionString);
-			let db = await client.db(data.values.database);
-			
-			tables = await db.listCollections().toArray();
-			tables =  tables.map(table => { return { name: table.name, type: table.type } });
+				tables = await db.listCollections().toArray();
+				tables = tables.map(table => { return { name: table.name, type: table.type } });
 
-		} else if (data.type === 'MSSQL') {
-			let crud = new restCrud.mssql({ connectionString: data.values.connectionString });
-			await crud.connect();
+			} else {
+				let sql = restCrud[data.type.toLowerCase()];
+				let crud = new sql(data.values);
+				await crud.connect();
 
-			let tableCheckSql = `SELECT * FROM sysobjects WHERE xtype='U'`;
-			let result = await crud.sqlQuery(tableCheckSql);
+				let tableCheckSql;
 
-			tables = result.recordset.map(record => { return {"name": record.name, "type": record.type } });
-			
+				if (data.type === 'MSSQL') {
+					tableCheckSql = `SELECT * FROM sysobjects WHERE xtype='U'`;
+				} else if (data.type === 'MYSQL') {
+					tableCheckSql = `SHOW TABLES`;
+				} else if (data.type === 'PGSQL') {
+					tableCheckSql = `SELECT * FROM pg_catalog.pg_tables WHERE schemaname='public'`;
+				} else {
+					return res.status(500).json({ message: 'DB type not supported' });
+				}
+
+				let result = await crud.sqlQuery(tableCheckSql);
+				await crud.disconnect();
+
+				if (data.type === 'MSSQL') {
+					tables = result.recordset.map(record => { return { "name": record.name, "type": record.type } });
+
+				} else if (data.type === 'MYSQL') {
+					tables = result[0].map(record => { return { "name": record.Tables_in_testdb } });
+	
+				} else if (data.type === 'PGSQL') {
+					tables = result.rows.map(record => { return { "name": record.tablename } });
+				}
+			}
+
+			return res.status(200).json(tables);
 		} else {
-			return res.status(500).json({ message: 'Fetch not supported' });
+			return res.status(500).json({ message: 'Not a DB connector, can\'t fetch tables' });
 		}
-		return res.status(200).json(tables);
 	} catch (err) {
 		logger.error(err);
-		res.status(500).json({
+		return res.status(500).json({
 			message: err.message
 		});
 	}

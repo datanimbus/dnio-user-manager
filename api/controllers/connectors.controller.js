@@ -50,11 +50,14 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	logger.info(`Removing default and isValid fields for connector :: ${self._doc.name}`);
 	let self = this;
 	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		logger.info(`${self._doc.name} is not a default connector, removing default value`);
 		delete self._doc.options.default;
 	}
 	if (self.isNew && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		logger.info(`${self._doc.name} is not a default connector, removing isValid value`);
 		self._doc.options = self._doc.options || {};
 		self._doc.options.isValid = false;
 	}
@@ -158,8 +161,12 @@ async function testConnector(req, res) {
 	let payload = req.body;
 	try {
 		if (payload.type === 'MONGODB') {
+			let connectionString = payload.values.connectionString;
+			if ((!connectionString || connectionString == '') && payload.options.default && payload.options.isValid) {
+				connectionString = config.mongoUrlAppcenter
+			}
 			const { MongoClient } = require('mongodb');
-			let connection = await MongoClient.connect(payload.values.connectionString);
+			let connection = await MongoClient.connect(connectionString);
 			connection.db(payload.values.database);
 
 		} else if (payload.type === 'MYSQL' || payload.type === 'PGSQL' || payload.type === 'MSSQL') {
@@ -184,13 +191,20 @@ async function testConnector(req, res) {
 async function fetchTables(req, res) {
 	try {
 		let data = await mongoose.model('config.connectors').findById(req.params.id).lean();
-		
+
 		if (data.category === 'DB') {
 			let tables = [];
 			if (data.type === 'MONGODB') {
+				let connectionString = data.values.connectionString;
+				let database = data.values.database;
+				if ((!connectionString || connectionString == '') && data.options.default && data.options.isValid) {
+					connectionString = config.mongoUrlAppcenter;
+					database = config.dataStackNS + '-' + data.app;
+				}
+
 				const { MongoClient } = require('mongodb');
-				let client = await MongoClient.connect(data.values.connectionString);
-				let db = await client.db(data.values.database);
+				let client = await MongoClient.connect(connectionString);
+				let db = await client.db(database);
 
 				tables = await db.listCollections().toArray();
 				tables = tables.map(table => { return { name: table.name, type: table.type } });
@@ -220,7 +234,7 @@ async function fetchTables(req, res) {
 
 				} else if (data.type === 'MYSQL') {
 					tables = result[0].map(record => { return { "name": record.Tables_in_testdb } });
-	
+
 				} else if (data.type === 'PGSQL') {
 					tables = result.rows.map(record => { return { "name": record.tablename } });
 				}

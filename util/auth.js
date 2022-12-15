@@ -100,7 +100,9 @@ const commonUrls = [
 	'/rbac/{app}/connector/utils/count',
 	'/rbac/{app}/connector',
 	'/rbac/{app}/connector/{id}',
-	'/rbac/{app}/connector/utils/availableConnectors'
+	'/rbac/{app}/connector/utils/availableConnectors',
+	'/rbac/{app}/connector/utils/test',
+	'/rbac/{app}/connector/{id}/utils/fetchTables'
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));

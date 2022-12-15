@@ -4,6 +4,7 @@ const _ = require('lodash');
 const { default: mongoose } = require('mongoose');
 
 const utils = require('@appveen/utils');
+const restCrud = require('@appveen/rest-crud');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 
@@ -49,11 +50,14 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
+	logger.info(`Removing default and isValid fields for connector :: ${self._doc.name}`);
 	let self = this;
 	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		logger.info(`${self._doc.name} is not a default connector, removing default value`);
 		delete self._doc.options.default;
 	}
 	if (self.isNew && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
+		logger.info(`${self._doc.name} is not a default connector, removing isValid value`);
 		self._doc.options = self._doc.options || {};
 		self._doc.options.isValid = false;
 	}
@@ -153,6 +157,100 @@ async function listOptions(req, res) {
 	res.json(availableConnectors);
 }
 
+async function testConnector(req, res) {
+	let payload = req.body;
+	try {
+		if (payload.type === 'MONGODB') {
+			let connectionString = payload.values.connectionString;
+			if ((!connectionString || connectionString == '') && payload.options.default && payload.options.isValid) {
+				connectionString = config.mongoUrlAppcenter
+			}
+			const { MongoClient } = require('mongodb');
+			let connection = await MongoClient.connect(connectionString);
+			connection.db(payload.values.database);
+
+		} else if (payload.type === 'MYSQL' || payload.type === 'PGSQL' || payload.type === 'MSSQL') {
+			let sql = restCrud[payload.type.toLowerCase()];
+			let crud = await new sql(payload.values);
+			await crud.connect();
+			await crud.disconnect();
+
+		} else {
+			return res.status(500).json({ message: 'Testing not supported for connector type' });
+		}
+
+		return res.status(200).json({ message: 'Connection Successful' });
+	} catch (err) {
+		logger.error(err);
+		return res.status(500).json({
+			message: err.message
+		});
+	}
+}
+
+async function fetchTables(req, res) {
+	try {
+		let data = await mongoose.model('config.connectors').findById(req.params.id).lean();
+
+		if (data.category === 'DB') {
+			let tables = [];
+			if (data.type === 'MONGODB') {
+				let connectionString = data.values.connectionString;
+				let database = data.values.database;
+				if ((!connectionString || connectionString == '') && data.options.default && data.options.isValid) {
+					connectionString = config.mongoUrlAppcenter;
+					database = config.dataStackNS + '-' + data.app;
+				}
+
+				const { MongoClient } = require('mongodb');
+				let client = await MongoClient.connect(connectionString);
+				let db = await client.db(database);
+
+				tables = await db.listCollections().toArray();
+				tables = tables.map(table => { return { name: table.name, type: table.type } });
+
+			} else {
+				let sql = restCrud[data.type.toLowerCase()];
+				let crud = new sql(data.values);
+				await crud.connect();
+
+				let tableCheckSql;
+
+				if (data.type === 'MSSQL') {
+					tableCheckSql = `SELECT * FROM sysobjects WHERE xtype='U'`;
+				} else if (data.type === 'MYSQL') {
+					tableCheckSql = `SHOW TABLES`;
+				} else if (data.type === 'PGSQL') {
+					tableCheckSql = `SELECT * FROM pg_catalog.pg_tables WHERE schemaname='public'`;
+				} else {
+					return res.status(500).json({ message: 'DB type not supported' });
+				}
+
+				let result = await crud.sqlQuery(tableCheckSql);
+				await crud.disconnect();
+
+				if (data.type === 'MSSQL') {
+					tables = result.recordset.map(record => { return { "name": record.name, "type": record.type } });
+
+				} else if (data.type === 'MYSQL') {
+					tables = result[0].map(record => { return { "name": record.Tables_in_testdb } });
+
+				} else if (data.type === 'PGSQL') {
+					tables = result.rows.map(record => { return { "name": record.tablename } });
+				}
+			}
+
+			return res.status(200).json(tables);
+		} else {
+			return res.status(500).json({ message: 'Not a DB connector, can\'t fetch tables' });
+		}
+	} catch (err) {
+		logger.error(err);
+		return res.status(500).json({
+			message: err.message
+		});
+	}
+}
 
 module.exports = {
 	listOptions: listOptions,
@@ -161,5 +259,7 @@ module.exports = {
 	index: crudder.index,
 	show: crudder.show,
 	destroy: crudder.destroy,
-	update: crudder.update
+	update: crudder.update,
+	test: testConnector,
+	fetchTables: fetchTables
 };

@@ -50,8 +50,8 @@ schema.pre('save', function (next) {
 });
 
 schema.pre('save', function (next) {
-	logger.info(`Removing default and isValid fields for connector :: ${self._doc.name}`);
 	let self = this;
+	logger.info(`Removing default and isValid fields for connector :: ${self._doc.name}`);
 	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
 		logger.info(`${self._doc.name} is not a default connector, removing default value`);
 		delete self._doc.options.default;

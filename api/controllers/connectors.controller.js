@@ -35,6 +35,7 @@ schema.pre('save', function (next) {
 	if (self._metadata.version) {
 		self._metadata.version.release = process.env.RELEASE;
 	}
+	logger.trace(`Connector Details :: ${JSON.stringify(self._doc)}`);
 	next();
 });
 
@@ -51,13 +52,17 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let self = this;
-	logger.info(`Removing default and isValid fields for connector :: ${self._doc.name}`);
+	logger.debug(`Removing default and isValid fields for connector :: ${self._doc.name}`);
+
 	if (self._doc?.options?.default && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
-		logger.info(`${self._doc.name} is not a default connector, removing default value`);
+		logger.debug(`${self._doc.name} is not a default connector, removing default value`);
+
 		delete self._doc.options.default;
 	}
+
 	if (self.isNew && self._doc?.name !== 'Default DB Connector' && self._doc?.name !== 'Default File Connector') {
-		logger.info(`${self._doc.name} is not a default connector, removing isValid value`);
+		logger.debug(`${self._doc.name} is not a default connector, removing isValid value`);
+
 		self._doc.options = self._doc.options || {};
 		self._doc.options.isValid = false;
 	}
@@ -73,9 +78,12 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	let connectorDefinition = _.find(availableConnectors, conn => conn.category === this._doc?.category && conn.type === this._doc?.type);
+	logger.trace(`Connector definition :: ${JSON.stringify(connectorDefinition)}`);
+
 	if (!connectorDefinition) {
 		return next(new Error('Connector type not available for selected category'));
 	}
+
 	if (!this.isNew) {
 		connectorDefinition.fields.forEach(field => {
 			if (field.required) {
@@ -100,9 +108,10 @@ schema.pre('remove', function (next) {
 
 schema.pre('remove', function (next) {
 	let qs = { filter: JSON.stringify({ 'app': this._doc.app }) };
+	logger.debug(`Checking if connector is in use by a data service :: ${this._doc._id}`);
 
 	appHook.sendRequest(config.baseUrlSM + `/${this._doc.app}/service`, 'GET', qs, null, this._req).then((services) => {
-		logger.info('Services :: ', services);
+		logger.trace(`Services found for app :: ${JSON.stringify(services)}`);
 		let service;
 		if (this._doc.category === 'DB') {
 			service = _.find(services, service => service?.connectors?.data?._id === this._doc._id);
@@ -110,6 +119,7 @@ schema.pre('remove', function (next) {
 			service = _.find(services, service => service?.connectors?.file?._id === this._doc._id);
 		}
 		if (service) {
+			logger.trace(`Service details :: ${JSON.stringify(service)}`);
 			return next(new Error('Cannot delete connector while it is in use by a data service'));
 		}
 		next();
@@ -121,7 +131,7 @@ schema.pre('remove', function (next) {
 
 schema.pre('remove', function (next) {
 	mongoose.model('app').findOne({ _id: this._doc.app }).lean().then((app) => {
-		logger.info('App details :: ', app);
+		logger.trace(`App details :: ${JSON.stringify(app)}`);
 
 		if (app.connectors?.data?._id === this._doc._id || app.connectors?.file?._id === this._doc._id) {
 			return next(new Error('Cannot delete connector while it is set as default for app'));
@@ -158,12 +168,18 @@ async function listOptions(req, res) {
 }
 
 async function testConnector(req, res) {
-	let payload = req.body;
 	try {
+		let payload = req.body;
+
+		logger.info(`Testing connector details :: ${JSON.stringify(payload)}`);
+		logger.debug(`Connector Type :: ${payload.type}`);
+
 		if (payload.type === 'MONGODB') {
 			let connectionString = payload.values.connectionString;
 			if ((!connectionString || connectionString == '') && payload.options.default && payload.options.isValid) {
-				connectionString = config.mongoUrlAppcenter
+
+				logger.debug(`Default Connector :: using mongo url from env variables :: ${config.mongoUrlAppcenter}`);
+				connectionString = config.mongoUrlAppcenter;
 			}
 			const { MongoClient } = require('mongodb');
 			let connection = await MongoClient.connect(connectionString);
@@ -176,7 +192,7 @@ async function testConnector(req, res) {
 			await crud.disconnect();
 
 		} else {
-			return res.status(500).json({ message: 'Testing not supported for connector type' });
+			return res.status(400).json({ message: 'Testing not supported for connector type' });
 		}
 
 		return res.status(200).json({ message: 'Connection Successful' });
@@ -190,14 +206,26 @@ async function testConnector(req, res) {
 
 async function fetchTables(req, res) {
 	try {
-		let data = await mongoose.model('config.connectors').findById(req.params.id).lean();
+		let id = req.params.id;
+		logger.info(`Fetching tables for connector :: ${id}`);
+
+		let data = await mongoose.model('config.connectors').findById(id).lean();
+		if (!data) {
+			return res.status(404).json({ message: `Connector ${id} not found` });
+		}
+		logger.trace(`Connector details :: ${JSON.stringify(data)}`);
+		logger.debug(`Connector Category :: ${data.category} :: :: Connector type :: ${data.type}`);
 
 		if (data.category === 'DB') {
 			let tables = [];
 			if (data.type === 'MONGODB') {
 				let connectionString = data.values.connectionString;
 				let database = data.values.database;
+
 				if ((!connectionString || connectionString == '') && data.options.default && data.options.isValid) {
+
+					logger.debug(`Default Connector :: using mongo url from env variables :: ${config.mongoUrlAppcenter}`);
+					logger.debug(`Default Connector :: using db name from env variables :: ${config.dataStackNS}-${data.app}`);
 					connectionString = config.mongoUrlAppcenter;
 					database = config.dataStackNS + '-' + data.app;
 				}
@@ -207,6 +235,9 @@ async function fetchTables(req, res) {
 				let db = await client.db(database);
 
 				tables = await db.listCollections().toArray();
+
+				logger.trace(`Tables fetched from DB :: ${JSON.stringify(tables)}`);
+
 				tables = tables.map(table => { return { name: table.name, type: table.type } });
 
 			} else {
@@ -223,11 +254,13 @@ async function fetchTables(req, res) {
 				} else if (data.type === 'PGSQL') {
 					tableCheckSql = `SELECT * FROM pg_catalog.pg_tables WHERE schemaname='public'`;
 				} else {
-					return res.status(500).json({ message: 'DB type not supported' });
+					return res.status(400).json({ message: 'DB type not supported' });
 				}
 
 				let result = await crud.sqlQuery(tableCheckSql);
 				await crud.disconnect();
+
+				logger.trace(`Tables fetched from DB :: ${JSON.stringify(result)}`);
 
 				if (data.type === 'MSSQL') {
 					tables = result.recordset.map(record => { return { "name": record.name, "type": record.type } });
@@ -240,9 +273,11 @@ async function fetchTables(req, res) {
 				}
 			}
 
+			logger.trace(`List of Tables :: ${JSON.stringify(tables)}`);
+
 			return res.status(200).json(tables);
 		} else {
-			return res.status(500).json({ message: 'Not a DB connector, can\'t fetch tables' });
+			return res.status(400).json({ message: 'Not a DB connector, can\'t fetch tables' });
 		}
 	} catch (err) {
 		logger.error(err);

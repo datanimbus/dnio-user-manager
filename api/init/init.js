@@ -78,7 +78,8 @@ async function updateExistingAppConnectors() {
 							isValid: true
 						};
 						connector.values = {
-							connectionString: ''
+							connectionString: '',
+							database: ''
 						};
 
 						let dbConnDoc = new connectorsModel(connector);

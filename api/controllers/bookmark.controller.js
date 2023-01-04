@@ -12,7 +12,7 @@ var options = {
 	collectionName: 'userMgmt.bookmark'
 };
 
-schema.index({ name: 1, app: 1 }, { unique: '__CUSTOM_NAME_DUPLICATE_ERROR__' });
+schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.pre('save', utils.counter.getIdGenerator('BM', 'bookmark', null, null, 1000));
 

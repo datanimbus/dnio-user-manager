@@ -20,7 +20,7 @@
     "@appveen/data.stack-utils": "^1.0.19",
     "@appveen/ds-auth-cache": "^1.0.7",
     "@appveen/rest-crud": "^0.0.4",
-    "@appveen/swagger-mongoose-crud": "github:appveen/swagger-mongoose-crud",
+    "@appveen/swagger-mongoose-crud": "^2.0.1",
     "@appveen/utils": "^2.1.13",
     "@azure/msal-node": "^1.14.5",
     "@fidm/x509": "^1.2.1",

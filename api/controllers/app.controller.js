@@ -2,8 +2,8 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/app.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
-const schema = new mongoose.Schema(definition);
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const schema = MakeSchema(definition);
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
@@ -63,6 +63,89 @@ schema.pre('save', function (next) {
 	}
 	next();
 });
+
+
+schema.pre('save', function (next) {
+	if (this.isNew) {
+		if (!this._doc.connectors){
+			this._doc.connectors = {
+				data: {},
+				file: {}
+			};
+		}
+		
+		logger.info('Creating default connector for MongoDB');
+		let connector = {};
+		
+		connector.category = 'DB';
+		connector.type = 'MONGODB';
+		connector.name = 'Default DB Connector';
+		connector.app = this._doc._id;
+		connector.options = {
+			default: true,
+			isValid: true
+		};
+		connector.values = {
+			connectionString: '',
+			database: ''
+		};
+
+		let connectorDoc = new mongoose.model('config.connectors')(connector);
+		connectorDoc.save().then((doc) => {
+			logger.debug(doc._id + 'Connector created.');
+			this._doc.connectors.data = {
+				_id: doc._id
+			};
+			next();
+		}).catch(err => {
+			logger.error('Error in creating default connector for App ' + this._doc._id, err);
+			next(err);
+		});
+	} else {
+		next();
+	}
+});
+
+
+schema.pre('save', function (next) {
+	if (this.isNew) {
+		if (!this._doc.connectors || _.isEmpty(this._doc.connectors)) {
+			this._doc.connectors = {
+				data: {},
+				file: {}
+			};
+		}
+
+		logger.info('Creating default connector for MongoDB GridFS');
+		let connector = {};
+		connector.category = 'STORAGE';
+		connector.type = 'GRIDFS';
+		connector.name = 'Default File Connector';
+		connector.app = this._doc._id;
+		connector.options = {
+			default: true,
+			isValid: true
+		};
+		connector.values = {
+			connectionString: ''
+		};
+	
+		let connectorDoc = new mongoose.model('config.connectors')(connector);
+		connectorDoc.save().then((doc) => {
+			logger.debug(doc._id + 'Connector created.');
+			this._doc.connectors.file = {
+				_id: doc._id
+			};
+			next();
+		}).catch(err => {
+			logger.error('Error in creating default GridFS connector for App ' + this._doc._id, err);
+			next(err);
+		});
+	} else {
+		next();
+	}
+});
+
 
 schema.pre('save', function (next, req) {
 	this._req = req;
@@ -203,21 +286,21 @@ schema.post('remove', (_doc) => {
 				logger.info('Deleted kubernetes namespace :: ' + ns);
 				kubeutil.namespace.getNamespace(ns)
 					.then(nsData => {
-						logger.trace("Namespace data ", nsData);
-                        nsData.body.spec.finalizers = [];
+						logger.trace('Namespace data ', nsData);
+						nsData.body.spec.finalizers = [];
 
 						kubeutil.namespace.updateNamespace(ns, nsData.body)
 							.then(_ => {
-								logger.trace("Updated NS :: ", JSON.stringify(_));
+								logger.trace('Updated NS :: ', JSON.stringify(_));
 								logger.info('Updated kubernetes namespace :: ' + ns);
-								}, _ => {
-									logger.trace(_);
-									logger.info('Unable to update kubernetes namespace :: ' + ns);
-								});
+							}, _ => {
+								logger.trace(_);
+								logger.info('Unable to update kubernetes namespace :: ' + ns);
+							});
 					}, _ => {
 						logger.trace(_);
-						logger.info('Unable to get kubernetes namespace :: ' + ns);		
-					})
+						logger.info('Unable to get kubernetes namespace :: ' + ns);
+					});
 			}, _ => {
 				logger.debug(_);
 				logger.info('Unable to delete kubernetes namespace :: ' + ns);
@@ -230,6 +313,13 @@ schema.post('remove', (_doc) => {
 		.catch(err => {
 			logger.error(err.message);
 		});
+	mongoose.model('config.connectors').remove({ app: _doc._id }).then(_d => {
+			logger.info('App deleted removing related Connectors');
+			logger.debug(_d);
+		})
+			.catch(err => {
+				logger.error(err.message);
+			});
 	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
 		logger.info('Sec Keys Deleted');
 		logger.debug(_d);
@@ -400,33 +490,38 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 	usrIds = _.difference(usrIds, usrIdArray);
 	let app = req.params.app;
 	usrIds = _.uniq(usrIds);
-	return mongoose.model('user').find({ _id: { $in: usrIds }, bot: isBot })
+	const UserModel = mongoose.model('user');
+	const GroupModel = mongoose.model('group');
+
+	return UserModel.find({ _id: { $in: usrIds }, bot: isBot })
 		.then(_usr => {
 			if (_usr.length != usrIds.length) {
 				let usrNotFound = _.difference(usrIds, _usr.map(_u => _u._id));
 				return res.status(400).json({ message: 'Could not find these ' + isBot ? 'bots ' : 'users ' + usrNotFound });
 			}
-			return mongoose.model('group').find({ users: { '$in': usrIds }, app: app })
+			return GroupModel.find({ users: { '$in': usrIds }, app: app })
 				.then(_grps => {
 					let promises = _grps.map(_grp => {
 						_grp.users = _grp.users.filter(_u => usrIds.indexOf(_u) === -1);
-						let model = mongoose.model('group');
-						let doc = new model(_grp);
-						return doc.save(req);
+						// let model = GroupModel;
+						// let doc = new model(_grp);
+						return _grp.save(req);
 					});
 					return Promise.all(promises);
 				})
 				.then(_rs => {
 					logger.info('Removed user ' + usrIds + ' from ' + _rs.map(_r => _r._id));
-					return mongoose.model('user').find({ _id: { $in: usrIds }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
+					return UserModel.find({ _id: { $in: usrIds }, 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': app });
 				})
 				.then(_users => {
 					let promises = _users.map(_usr => {
-						if (_usr.accessControl.apps) _usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app);
-						let model = mongoose.model('user');
-						let doc = new model(_usr);
-						doc.markModified('accessControl.apps');
-						return doc.save(req);
+						if (_usr.accessControl.apps && _usr.accessControl.apps.length > 0) {
+							_usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app)
+						};
+						// let model = UserModel;
+						// let doc = new model(_usr);
+						_usr.markModified('accessControl.apps');
+						return _usr.save(req);
 					});
 					return Promise.all(promises);
 				})
@@ -481,7 +576,7 @@ e.customDestroy = (req, res) => {
 			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
 		json: true,
-		qs: { filter: { status: { $eq: 'Active' }, 'app': req.params.id }, select: 'name,status,app' }
+		qs: { filter: JSON.stringify({ 'status': { '$eq': 'Active' }, 'app': req.params.id }), select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 
@@ -600,12 +695,14 @@ e.deleteUserDoc = (req, usrIds, app) => {
 		.then(usrs => {
 			newUsrId = usrs.filter(usr => !usr.isSuperAdmin);
 			pr = newUsrId.map(usrId => {
-				let url = config.baseUrlSM + `/userDeletion/${app}/${usrId._id}`;
+				let url = config.baseUrlSM + `/${app}/internal/userDeletion/${usrId._id}`;
+				logger.error('Trying to delete user doc in SM: ', usrId, url);
 				return e.sendRequest(url);
 			});
 			return Promise.all(pr);
 		})
 		.catch(err => {
+			logger.error('Unable to delete user doc in SM');
 			logger.debug(err);
 		});
 };
@@ -613,7 +710,7 @@ e.deleteUserDoc = (req, usrIds, app) => {
 e.sendRequest = (url) => {
 	var options = {
 		url: url,
-		method: 'POST',
+		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
 		},

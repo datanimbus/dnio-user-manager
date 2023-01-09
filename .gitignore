@@ -77,5 +77,7 @@ downloads/
 uploads/
 
 .DS_Store
-build.sh
 send.sh
+build.sh
+data-stack-users-template.csv
+tmp

@@ -5,7 +5,7 @@ const _ = require('lodash');
 const config = require('../config/config');
 
 const logger = global.logger;
-global.USER_TOKEN = JWT.sign({ name: 'USER', _id: 'admin', isSuperAdmin: true }, config.TOKEN_SECRET);
+global.USER_TOKEN = JWT.sign({ name: 'USER', _id: 'admin', isSuperAdmin: true }, config.RBAC_JWT_KEY);
 
 const permittedUrls = [
 	'/rbac/auth/authType/{id}',
@@ -15,7 +15,7 @@ const permittedUrls = [
 	'/rbac/auth/ldap/login',
 	'/rbac/auth/authType/{id}',
 	'/rbac/internal/health/live',
-	'/rbac/internal/health/ready',
+	'/rbac/internal/health/ready'
 ];
 
 const onlyAuthUrls = [
@@ -62,9 +62,9 @@ const commonUrls = [
 	'/rbac/{app}/user',
 	'/rbac/{app}/user/utils/count',
 	'/rbac/{app}/user/{id}',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}/validate',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}',
-	'/rbac/{app}/user/utils/bulkCreate/{fileId}/download',
+	'/rbac/{app}/user/utils/bulkCreate/template',
+	'/rbac/{app}/user/utils/bulkCreate/upload',
+	'/rbac/{app}/user/utils/bulkCreate/fileTransfers',
 	'/rbac/{app}/user/utils/bulkCreate/{fileId}/count',
 	'/rbac/{app}/user/utils/bulkCreate/{fileId}/userList',
 	'/rbac/{app}/user/utils/distinctAttributes/{id}',
@@ -92,9 +92,20 @@ const commonUrls = [
 	'/rbac/{app}/bookmark',
 	'/rbac/{app}/bookmark/utils/bulkDelete',
 	'/rbac/{app}/bookmark/{id}',
+	'/rbac/{app}/user/utils/azure/token/new',
+	'/rbac/{app}/user/utils/azure/token',
+	'/rbac/{app}/user/utils/azure/search',
+	'/rbac/{app}/user/utils/azure/import',
+	'/rbac/{app}/connector/count',
+	'/rbac/{app}/connector/utils/count',
+	'/rbac/{app}/connector',
+	'/rbac/{app}/connector/{id}',
+	'/rbac/{app}/connector/utils/availableConnectors',
+	'/rbac/{app}/connector/utils/test',
+	'/rbac/{app}/connector/{id}/utils/fetchTables'
 ];
 
-router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.TOKEN_SECRET, decodeOnly: true }));
+router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
 
 router.use((req, res, next) => {
 	if (!req.locals) {
@@ -213,6 +224,21 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/user', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/template', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/upload', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/fileTransfers', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/{fileId}/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/bulkCreate/{fileId}/userList', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
 	if (compareURL('/rbac/{app}/user/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
 		return true;
 	}
@@ -232,6 +258,18 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/utils/closeAllSessions/{id}', req.path) && _.intersection(req.user.appPermissions, ['PMUA']).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/azure/token/new', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/azure/token', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/azure/search', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/user/utils/azure/import', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU'], comparator).length > 0) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/user/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMU', 'PVU', 'PMB', 'PVB'], comparator).length > 0) {
@@ -308,6 +346,35 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/group/{id}/{usrType}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMG', 'PVG'], comparator).length > 0) {
 		return true;
 	}
+
+
+	if (compareURL('/rbac/{app}/connector/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/utils/availableConnectors', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'PUT' || req.method === 'DELETE')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	return false;
 }
 

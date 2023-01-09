@@ -2,8 +2,8 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/group.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
-const schema = new mongoose.Schema(definition);
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const schema = MakeSchema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
 const cacheUtils = require('../../util/cache.utils').cache;
@@ -65,11 +65,13 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let users = _.uniq(this.users);
 	if (users) {
-		return mongoose.model('user').find({ _id: { $in: users } }, '_id')
+		return mongoose.model('user').find({ $or: [{ _id: { $in: users } }, { username: { $in: users } }] }, '_id')
 			.then(_u => {
 				if (_u.length != users.length) {
-					let invalidUsr = _.difference(users, _u.map(_o => _o._id));
-					next(new Error('Users with ' + invalidUsr + ' not found'));
+					// let invalidUsr = _.difference(users, _u.map(_o => _o._id));
+					// next(new Error('Users with ' + invalidUsr + ' not found'));
+					this.users = _u.map(_o => _o._id);
+					next();
 				} else {
 					next();
 				}

@@ -2,8 +2,8 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/bookmark.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
-const schema = new mongoose.Schema(definition);
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
+const schema = MakeSchema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
 
@@ -12,7 +12,7 @@ var options = {
 	collectionName: 'userMgmt.bookmark'
 };
 
-schema.index({ name: 1, app: 1 }, { unique: '__CUSTOM_NAME_DUPLICATE_ERROR__' });
+schema.index({ name: 1, app: 1 }, { unique: true });
 
 schema.pre('save', utils.counter.getIdGenerator('BM', 'bookmark', null, null, 1000));
 

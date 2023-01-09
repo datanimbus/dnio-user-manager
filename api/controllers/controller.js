@@ -11,7 +11,8 @@ const GroupController = require('./group.controller.js');
 const ConfigController = require('./config.controller');
 const FilterController = require('./filter.controller');
 const BulkCreateController = require('./bulkCreate.controller.js');
-const BookmarkController=require('./bookmark.controller.js');
+const BookmarkController = require('./bookmark.controller.js');
+const ConnectorController = require('./connectors.controller');
 
 
 AppController.init()
@@ -164,7 +165,7 @@ AppController.init()
 // module.exports = exports;
 
 
-const router = require('express').Router();
+const router = require('express').Router({ mergeParams: true });
 
 router.get('/admin/app', AppController.index);
 router.post('/admin/app', AppController.create);
@@ -194,11 +195,12 @@ router.get('/:app/user/utils/count', UserController.userInAppCount);
 router.get('/:app/user/:id', UserController.userInAppShow);
 router.put('/:app/user/:id', UserController.update);
 router.delete('/:app/user/:id', UserController.destroy);
-router.put('/:app/user/utils/bulkCreate/:fileId/validate', UserController.bulkAddUserValidate);
-router.post('/:app/user/utils/bulkCreate/:fileId', UserController.bulkAddUserCreate);
-router.get('/:app/user/utils/bulkCreate/:fileId/download', UserController.bulkAddUserDownload);
-router.get('/:app/user/utils/bulkCreate/:fileId/count', BulkCreateController.bulkUserCount);
-router.get('/:app/user/utils/bulkCreate/:fileId/userList', BulkCreateController.bulkUserIndex);
+// router.put('/:app/user/utils/bulkCreate/:fileId/validate', UserController.bulkAddUserValidate);
+// router.post('/:app/user/utils/bulkCreate/:fileId', UserController.bulkAddUserCreate);
+// router.get('/:app/user/utils/bulkCreate/:fileId/download', UserController.bulkAddUserDownload);
+// router.get('/:app/user/utils/bulkCreate/:fileId/count', BulkCreateController.bulkUserCount);
+// router.get('/:app/user/utils/bulkCreate/:fileId/userList', BulkCreateController.bulkUserIndex);
+router.use('/:app/user/utils/bulkCreate', BulkCreateController);
 router.get('/:app/user/utils/distinctAttributes', UserController.distinctUserAttribute);
 router.delete('/:app/user/utils/closeAllSessions/:id', UserController.closeAllSessionForUser);
 router.put('/:app/user/utils/appAdmin/:id/:action', UserController.editAppAdmin);
@@ -208,6 +210,10 @@ router.put('/:app/user/utils/removeFromGroups/:id', UserController.removeUserFro
 router.put('/:app/user/utils/import/:id', UserController.importUserToApp);
 router.put('/:app/user/utils/removeUsers', AppController.removeUserFromApp);
 router.put('/:app/user/utils/removeBots', AppController.removeBotFromApp);
+router.get('/:app/user/utils/azure/token/new', UserController.generateNewAzureToken);
+router.get('/:app/user/utils/azure/token', UserController.hasAzureToken);
+router.put('/:app/user/utils/azure/search', UserController.searchUsersInAzure);
+router.put('/:app/user/utils/azure/import', UserController.importUsersFromAzure);
 router.put('/:app/:userType/utils/status/:id/:userState', UserController.disableUser);
 router.get('/:app/bot', UserController.botInApp);
 router.post('/:app/bot', UserController.createUserinGroups);
@@ -228,6 +234,18 @@ router.delete('/:app/group/:id', GroupController.destroy);
 router.get('/:app/group/:id/:usrType/count', UserController.UserInGroupCount);
 router.get('/:app/group/:id/:usrType', UserController.UserInGroup);
 router.get('/:app/keys', KeyController.GetKeysOfApp);
+
+router.get('/:app/connector/utils/count', ConnectorController.count);
+router.get('/:app/connector', ConnectorController.index);
+router.post('/:app/connector', ConnectorController.create);
+router.get('/:app/connector/:id', ConnectorController.show);
+router.put('/:app/connector/:id', ConnectorController.update);
+router.delete('/:app/connector/:id', ConnectorController.destroy);
+router.get('/:app/connector/utils/availableConnectors', ConnectorController.listOptions);
+router.post('/:app/connector/utils/test', ConnectorController.test);
+router.get('/:app/connector/:id/utils/fetchTables', ConnectorController.fetchTables);
+
+
 router.get('/data/:id/allRoles', UserController.getAllRolesofUser);
 router.get('/data/:id/appList', UserController.getUserAppList);
 router.get('/data/preferences', PerferencesController.index);

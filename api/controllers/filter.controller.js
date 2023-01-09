@@ -2,9 +2,9 @@
 
 const mongoose = require('mongoose');
 const definition = require('../helpers/filter.definition').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const utils = require('@appveen/utils');
-const schema = new mongoose.Schema(definition);
+const schema = MakeSchema(definition);
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const logger = global.logger;
@@ -58,7 +58,7 @@ schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.fil
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
-schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.apps.audit', client, 'auditQueue'));
+schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt.filter.audit', client, 'auditQueue'));
 
 var crudder = new SMCrud(schema, 'userMgmt.filter', options);
 function customCreate(req, res) {

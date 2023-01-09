@@ -1,8 +1,8 @@
 'use strict';
-// const fs = require('fs');
-// const path = require('path');
-// const jsyaml = require('js-yaml');
-// const swaggerTools = require('swagger-tools');
+if (process.env.NODE_ENV != 'production') {
+	require('dotenv').config();
+}
+
 const express = require('express');
 const app = express();
 const utils = require('@appveen/utils');
@@ -14,11 +14,11 @@ const loggerName = (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETE
 
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
-const { MongoClient, Logger } = require('mongodb');
+const { MongoClient } = require('mongodb');
 const mongoose = require('mongoose');
 const passport = require('passport');
 var cookieParser = require('cookie-parser');
-// const fileUpload = require('express-fileupload');
+const fileUpload = require('express-fileupload');
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
 let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
 
@@ -64,16 +64,28 @@ let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 logger.debug('Mongo Author URL', mongoUrl);
 logger.debug('Mongo Author Options', conf.mongoOptions);
 
-mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
-	if (err) {
-		logger.error(err);
-	} else {
-		logger.info('Connected to Author DB');
+// mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
+// 	if (err) {
+// 		logger.error(err);
+// 	} else {
+// 		logger.info('Connected to Author DB');
+// 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
+// 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
+// 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+// 	}
+// });
+(async () => {
+	try {
+		await mongoose.connect(mongoUrl, conf.mongoOptions);
+		logger.info(`Connected to Author DB`);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+	} catch (err) {
+		logger.error(err);
 	}
-});
+})();
+
 
 logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
 logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
@@ -100,79 +112,13 @@ app.use(logMiddleware);
 
 require('./config/passport')(passport);
 app.use(passport.initialize());
-
 app.use(require('./util/auth'));
-
-// app.use(fileUpload());
+app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));
 
 let dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('./util/queueMgmt');
 dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
-// let logToQueue = dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName,'user.logs');
-//app.use(logToQueue);
-
-// Adds user info to req object.
-// let userInfoMiddleware = (req, res, next) => {
-// 	let user = req.get('User');
-// 	if (user) {
-// 		mongoose.model('user').findOne({ _id: user })
-// 			.then(usr => {
-// 				req.user = usr;
-// 				next();
-// 			})
-// 			.catch(err => {
-// 				logger.error(err.message);
-// 				next();
-// 			});
-// 	} else {
-// 		next();
-// 	}
-// };
-// app.use(userInfoMiddleware);
-
-// swaggerRouter configuration
-// var options = {
-// 	swaggerUi: path.join(__dirname, '/swagger.json'),
-// 	controllers: path.join(__dirname, './api/controllers'),
-// 	useStubs: process.env.NODE_ENV === 'development' // Conditionally turn on stubs (mock mode)
-// };
-
-// // The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
-// var spec = fs.readFileSync(path.join(__dirname, 'api/swagger/swagger.yaml'), 'utf8');
-// var swaggerDoc = jsyaml.safeLoad(spec);
-
-// swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
-
-// 	// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
-// 	app.use(middleware.swaggerMetadata());
-
-// 	// Validate Swagger requests
-// 	app.use(middleware.swaggerValidator());
-
-// 	// Route validated requests to appropriate controller
-// 	app.use(middleware.swaggerRouter(options));
-
-// 	// Serve the Swagger documents and Swagger UI
-// 	// app.use(middleware.swaggerUi());
-
-// 	// Start the server
-// 	var port = process.env.PORT || 10004;
-// 	var server = app.listen(port, (err) => {
-// 		if (!err) {
-// 			logger.info('Server started on port ' + port);
-// 			app.use((err, req, res, next) => {
-// 				if (err) {
-// 					if (!res.headersSent)
-// 						return res.status(500).json({ message: err.message });
-// 					return;
-// 				}
-// 				next();
-// 			});
-// 		} else
-// 			logger.error(err);
-// 	});
-// 	server.setTimeout(parseInt(timeOut) * 1000);
-// });
+app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, 'user.logs'));
 
 app.use('/rbac', require('./api/controllers/controller'));
 

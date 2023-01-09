@@ -3,21 +3,21 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const definition = require('../helpers/user.definition.js').definition;
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const dataStackUtils = require('@appveen/data.stack-utils');
-const schema = new mongoose.Schema(definition);
+const schema = MakeSchema(definition);
 let queueMgmt = require('../../util/queueMgmt');
 const cache = require('../../util/cache.utils').cache;
 var client = queueMgmt.client;
 const logger = global.logger;
 const utils = require('@appveen/utils');
 const envConfig = require('../../config/config');
-const jwtKey = envConfig.secret;
+const jwtKey = envConfig.RBAC_JWT_KEY;
 const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
-const azureAdUtil = require('../helpers/util/azureAd.util');
+const azureAdUtil = require('../utils/azure.ad.utils');
 const cacheUtil = utils.cache;
 const XLSX = require('xlsx');
 const fs = require('fs');
@@ -36,6 +36,12 @@ function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
+if (!envConfig.isK8sEnv()) {
+	require('../init/init')().catch(err => {
+		logger.error(err.message);
+	});
+}
+
 var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend, _botKey) {
 	logger.debug(`Generate token called for ${document._id}`);
 	let resObj = JSON.parse(JSON.stringify(document));
@@ -48,6 +54,7 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		isSuperAdmin: resObj.isSuperAdmin,
 		apps: (resObj.accessControl.apps || []).map(e => e._id)
 	};
+	cache.setData(resObj._id, { userData: resObj });
 	const deleteKeys = ['password', '_metadata', 'salt', '_v', 'roles', 'botKeys'];
 	deleteKeys.forEach(_k => delete resObj[_k]);
 	var token = null;
@@ -133,21 +140,21 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		})
 		.then(() => {
 			if (isHtml) {
-				// const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
-				// const expires = new Date(resObj.expiresIn).toISOString();
-				// let cookieJson = {};
-				// if (domain != 'localhost') {
-				// 	cookieJson = {
-				// 		expires: new Date(resObj.expiresIn),
-				// 		httpOnly: domain == 'localhost' ? false : true,
-				// 		sameSite: true,
-				// 		secure: true,
-				// 		domain: domain,
-				// 		path: '/api/'
-				// 	};
-				// }
-				// response.cookie('Authorization', 'JWT ' + resObj.token, cookieJson);
+				const domain = process.env.FQDN ? process.env.FQDN.split(':').shift() : 'localhost';
+				let cookieJson = {};
+				if (domain != 'localhost') {
+					cookieJson = {
+						expires: new Date(resObj.expiresIn),
+						httpOnly: domain == 'localhost' ? false : true,
+						sameSite: true,
+						secure: true,
+						domain: domain,
+						path: '/api'
+					};
+				}
+				response.cookie('Authorization', 'JWT ' + resObj.token, cookieJson);
 				return sendAzureCallbackResponse(response, 200, resObj);
+				// return response.redirect('/author');
 			}
 			return response.json(resObj);
 		})
@@ -716,7 +723,8 @@ async function validateLocalLogin(username, password, done) {
 }
 
 function localLogin(req, res) {
-	if (checkAuthMode(res, 'local')) {
+	//Allow Admin User to login and import AD/LDAP Users
+	if (checkAuthMode(res, 'local') || req.body.username == 'admin') {
 		passport.authenticate('local', function (err, user, info) {
 			if (err) {
 				logger.error('error in local login ::: ', err);
@@ -730,6 +738,8 @@ function localLogin(req, res) {
 				return handleSessionAndGenerateToken(req, res, user, botKey, false);
 			}
 		})(req, res);
+	} else {
+		res.status(400).json({ message: 'Local Login Mode is Disabled' });
 	}
 }
 
@@ -774,14 +784,14 @@ function ldapLogin(req, res) {
 }
 
 async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, done) {
-	if (!profile.oid || !(profile._json && profile._json.email)) {
+	if (!profile.oid || !(profile._json && (profile._json.email || profile._json.preferred_username))) {
 		logger.debug('profile:::: ', profile);
 		return done(new Error('No oid/email found in profile.'), null);
 	}
 	try {
 		logger.trace('azure acces token ::', accessToken);
 		// get user info from azure to get odp username
-		let userInfo = await azureAdUtil.getADUserInfo(accessToken);
+		let userInfo = await azureAdUtil.getCurrentUserInfo(accessToken);
 		logger.debug('search User :: ', userInfo);
 		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
 		logger.trace('dbUser :: ', dbUser.basicDetails);
@@ -802,32 +812,106 @@ async function validateAzureLogin(iss, sub, profile, accessToken, refreshToken, 
 	}
 }
 
-function azureLogin(req, res) {
-	logger.debug('Checking Azure Login.');
-	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureLogIn', { session: false })(req, res);
+async function customAzureAuthenticate(data, done) {
+	const account = data.account;
+	const accessToken = data.accessToken;
+	if (!account.username) {
+		logger.debug('account:::: ', account);
+		return done(new Error('No Username found in account.'), null);
+	}
+	try {
+		logger.trace('azure acces token ::', accessToken);
+		// get user info from azure to get odp username
+		let userInfo = await azureAdUtil.getCurrentUserInfo(accessToken);
+		logger.debug('search User :: ', userInfo);
+		let dbUser = await findActiveUserbyAuthtype(userInfo['username'], 'azure');
+		logger.trace('dbUser :: ', dbUser.basicDetails);
+		// For first time logging in user
+		if (dbUser && JSON.stringify(dbUser.basicDetails) === '{}') {
+			dbUser.basicDetails = {
+				name: userInfo.name,
+				alternateEmail: userInfo.email,
+				phone: userInfo.phone
+			};
+			await dbUser.save();
+		}
+		let userDoc = await getLoginUserdoc(dbUser);
+		done(null, userDoc);
+	} catch (err) {
+		logger.info('error in validate azure login:: ', err);
+		done(err, false);
 	}
 }
 
-function azureLoginCallback(req, res) {
-	logger.debug('login callback called : ', req.path);
-	if (checkAuthMode(res, 'azure')) {
-		passport.authenticate('AzureLogIn', {
-			response: res,
-			failureRedirect: '/'
-		},
-		function (err, user, info) {
-			if (err) {
-				logger.error('error in azureLoginCallback ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return sendAzureCallbackResponse(res, 500, { message: err.message });
-			} else if (!user) {
-				logger.error('Something went wrong in azureLoginCallback:: ', info);
-				return sendAzureCallbackResponse(res, 400, { meessage: info });
-			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, true);
+async function azureLogin(req, res) {
+	try {
+		logger.debug('Checking Azure Login.');
+		if (checkAuthMode(res, 'azure')) {
+			// passport.authenticate('AzureLogIn', { session: false })(req, res);
+			const url = await azureAdUtil.getAuthUrl();
+			return res.redirect(url);
+		}
+		if (req.header('content-type') == 'application/json') {
+			return res.status(400).json({ message: 'Azure auth mode not configured' });
+		}
+		return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+	} catch (err) {
+		logger.error(err);
+		return sendAzureCallbackResponse(res, 500, { message: Error.message });
+	}
+}
+
+async function azureLoginCallback(req, res) {
+	try {
+		logger.debug('login callback called : ', req.path);
+		if (checkAuthMode(res, 'azure')) {
+			const state = req.query.state;
+			let data;
+			try {
+				data = azureAdUtil.readStateToken(req, state);
+			} catch (err) {
+				logger.warn('State in Callback is not parseable');
 			}
-		})(req, res);
+			if (state && data) {
+				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
+				await cache.setData(data.userId, { azureToken: response.accessToken });
+				sendAzureCallbackResponse(res, 200, { message: 'Token Genrated' });
+			} else {
+				// passport.authenticate('AzureLogIn', {
+				// 	response: res,
+				// 	failureRedirect: '/'
+				// }, function (err, user, info) {
+				// 	if (err) {
+				// 		logger.error('error in azureLoginCallback ::: ', err);
+				// 		if (info) userLog.loginFailed(info, req, res);
+				// 		return sendAzureCallbackResponse(res, 500, { message: err.message });
+				// 	} else if (!user) {
+				// 		logger.error('Something went wrong in azureLoginCallback:: ', info);
+				// 		return sendAzureCallbackResponse(res, 400, { meessage: info });
+				// 	} else {
+				// 		return handleSessionAndGenerateToken(req, res, user, null, true);
+				// 	}
+				// })(req, res);
+				const response = await azureAdUtil.getAccessTokenByCode(req.query.code);
+				customAzureAuthenticate(response, function (err, user, info) {
+					if (err) {
+						logger.error('error in azureLoginCallback ::: ', err);
+						if (info) userLog.loginFailed(info, req, res);
+						return sendAzureCallbackResponse(res, 500, { message: err.message });
+					} else if (!user) {
+						logger.error('Something went wrong in azureLoginCallback:: ', info);
+						return sendAzureCallbackResponse(res, 400, { meessage: info });
+					} else {
+						return handleSessionAndGenerateToken(req, res, user, null, true);
+					}
+				});
+			}
+		} else {
+			sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+		}
+	} catch (err) {
+		logger.error(err);
+		sendAzureCallbackResponse(res, 500, { message: err.message });
 	}
 }
 
@@ -1453,28 +1537,28 @@ function extendSession(req, res) {
 	return checkAndExtendUserSession(req, res, true);
 }
 
-function init() {
-	let users = require('../../config/users.js');
-	return new Promise((_resolve, _reject) => {
-		crudder.model.find({}).count()
-			.then(_d => {
-				if (_d == 0) {
-					return users.reduce((_p, _c) => {
-						return _p.then(() => {
-							return crudder.model.create(_c)
-								.then(_d => {
-									logger.info('Added user :: ' + _d._id);
-								},
-								_e => {
-									logger.error('Error adding user :: ' + _c._id);
-									logger.error(_e);
-								});
-						});
-					}, new Promise(_resolve2 => _resolve2()))
-						.then(() => _resolve());
-				} else _resolve();
-			}, () => _reject());
-	});
+async function init() {
+	try {
+		let users = require('../../config/users.js');
+		await users.reduce(async (prev, curr) => {
+			try {
+				await prev;
+				const count = await crudder.model.find({ _id: curr.username }).count();
+				if (count === 0) {
+					await crudder.model.create(curr);
+					logger.info('Added User :: ' + curr._id);
+				} else {
+					logger.info('User Exists:: ' + curr._id);
+				}
+			} catch (err) {
+				logger.error('Error adding user :: ' + curr._id);
+				logger.error(err);
+			}
+		}, Promise.resolve());
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
 }
 
 var crudder = new SMCrud(schema, 'user', options);
@@ -2646,7 +2730,6 @@ function customDestroy(req, res) {
 		.then(() => dataStackUtils.eventsUtil.publishEvent('EVENT_USER_DELETE', 'user', req, userDoc))
 		.catch(err => {
 			logger.error('Error in User customDestroy :: ', err);
-
 			return res.status(400).json({
 				message: err.message
 			});
@@ -2678,7 +2761,7 @@ function addUserToApps(req, res) {
 
 	let usrId = req.params.id;
 	let apps = req.body.apps;
-	logger.info("Add to Apps ==== ", usrId, apps)
+	logger.info('Add to Apps ==== ', usrId, apps);
 	crudder.model.findOne({
 		_id: usrId
 	}).lean(true)
@@ -3167,7 +3250,7 @@ function modifyFilterForApp(req, isBot) {
 	}
 	return mongoose.model('group').find({
 		app: app
-	})
+	}).lean()
 		.then(_grps => {
 			let users = [].concat.apply([], _grps.map(_g => _g.users));
 			if (filter && typeof filter === 'object') {
@@ -3196,6 +3279,7 @@ function modifyFilterForApp(req, isBot) {
 				};
 			}
 			req.query.filter = JSON.stringify(filter);
+			logger.debug('User In App Filter:', req.query.filter);
 		});
 }
 
@@ -3421,6 +3505,201 @@ function distinctUserAttribute(req, res) {
 		});
 }
 
+async function hasAzureToken(req, res) {
+	try {
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		res.status(200).json({ message: 'Token is Valid' });
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+async function generateNewAzureToken(req, res) {
+	const stateToken = azureAdUtil.createStateToken(req, { userId: req.user._id, action: 'import-users' });
+	const url = await azureAdUtil.getAuthUrl(stateToken);
+	res.redirect(url);
+}
+
+async function searchUsersInAzure(req, res) {
+	try {
+		const users = req.body.users;
+		if (!users || users.length == 0) {
+			return res.status(400).json({ message: 'Users are Required in Body' });
+		}
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		let promises = users.map(async (username) => {
+			try {
+				const adUser = await azureAdUtil.getUserInfo(username, token);
+				if (!adUser) {
+					throw new Error('User Not Found');
+				}
+				return {
+					username,
+					statusCode: 200,
+					body: adUser
+				};
+			} catch (err) {
+				logger.error(err);
+				return {
+					username,
+					statusCode: 400,
+					body: { message: err.message }
+				};
+			}
+		});
+		let result = await Promise.all(promises);
+		res.status(200).json(result);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+async function importUsersFromAzure(req, res) {
+	try {
+		const groups = req.body.groups;
+		const users = req.body.users;
+		if (!users || users.length == 0) {
+			return res.status(400).json({ message: 'Users are Required in Body' });
+		}
+		const data = await cache.getData(req.user._id);
+		if (!data) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const token = data.azureToken;
+		if (!token) {
+			return res.status(400).json({ message: 'Token not Valid' });
+		}
+		const result = [];
+		await users.reduce(async (prev, user) => {
+			try {
+				await prev;
+				const adUser = await azureAdUtil.getUserInfo(user.username, token);
+				if (!adUser) {
+					throw new Error('User Not Found');
+				}
+				if (!adUser.email) {
+					adUser.email = user.basicDetails.alternateEmail;
+				}
+				if (!adUser.phone) {
+					adUser.phone = user.basicDetails.phone;
+				}
+				const newUser = await createUserForAzure(req, adUser);
+				await importUserToAppSimple(req, newUser, req.params.app);
+				if (groups && groups.length > 0) {
+					importUserToGroups(req, newUser, groups);
+				}
+				result.push({
+					username: user.username,
+					statusCode: 200,
+					body: adUser
+				});
+			} catch (err) {
+				logger.error(err);
+				result.push({
+					username: user.username,
+					statusCode: 400,
+					body: err
+				});
+			}
+		}, Promise.resolve());
+		res.status(200).json(result);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
+
+async function createUserForAzure(req, adUser) {
+	try {
+		const userModel = mongoose.model('user');
+		const userData = {
+			username: adUser.username,
+			basicDetails: {
+				name: adUser.name,
+				alternateEmail: adUser.email,
+				phone: adUser.phone
+			},
+			accessControl: {
+				accessLevel: 'Selected',
+				apps: []
+			},
+			auth: {
+				authType: 'azure'
+			}
+		};
+		const doc = new userModel(userData);
+		doc._req = req;
+		return await doc.save(req);
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
+async function importUserToAppSimple(req, user, app) {
+	try {
+		const groupModel = mongoose.model('group');
+		const group = await groupModel.findOne({ name: '#', app: app });
+		group.users.push(user.username);
+		group.users = _.uniq(group.users);
+		await group.save(req);
+		delete user.salt;
+		delete user.password;
+		userLog.addUserToApp(req, { statusCode: 200 }, user);
+		dataStackUtils.eventsUtil.publishEvent('EVENT_APP_USER_ADDED', 'app', req, Object.assign(user, { app: app }));
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
+async function importUserToGroups(req, user, groups) {
+	try {
+		const result = [];
+		const groupModel = mongoose.model('group');
+		await groups.reduce(async (prev, groupId) => {
+			try {
+				await prev;
+				const group = await groupModel.findOne({ _id: groupId });
+				group.users.push(user.username);
+				group.users = _.uniq(group.users);
+				await group.save(req);
+				result.push({
+					statusCode: 200,
+					data: { message: 'User Added to group' }
+				});
+			} catch (err) {
+				logger.error(err);
+				result.push({
+					statusCode: 400,
+					data: err
+				});
+			}
+		}, Promise.resolve());
+		return result;
+	} catch (err) {
+		logger.error(err);
+		throw err;
+	}
+}
+
 module.exports = {
 	init: init,
 	create: customCreate,
@@ -3483,5 +3762,9 @@ module.exports = {
 	azureLogin: azureLogin,
 	// azureUserFetch: azureUserFetch,
 	// azureUserFetchCallback: azureUserFetchCallback,
-	// validateAzureUserFetch: validateAzureUserFetch
+	// validateAzureUserFetch: validateAzureUserFetch,
+	hasAzureToken,
+	searchUsersInAzure,
+	importUsersFromAzure,
+	generateNewAzureToken
 };

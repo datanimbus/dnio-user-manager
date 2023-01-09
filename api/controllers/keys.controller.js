@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const SMCrud = require('@appveen/swagger-mongoose-crud');
+const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const utils = require('@appveen/utils');
 const { Certificate } = require('@fidm/x509');
 const _ = require('lodash');
@@ -9,7 +9,7 @@ const _ = require('lodash');
 const config = require('../../config/config');
 const cryptUtils = require('../helpers/util/crypto.utils');
 const definition = require('../helpers/key.definition.js').definition;
-const schema = new mongoose.Schema(definition);
+const schema = MakeSchema(definition);
 const logger = global.logger;
 
 var options = {

@@ -1,5 +1,13 @@
 var definition = {
-	'fileId': {
+	'_id': {
+		'type': 'String',
+		'required': true,
+	},
+	'app': {
+		'type': 'String',
+		'required': true,
+	},
+	'user': {
 		'type': 'String',
 		'required': true,
 	},
@@ -24,30 +32,24 @@ var definition = {
 	'fileName': {
 		'type': 'String'
 	},
-	'sNo': {
-		'type': 'Number'
-	},
-	'data': {
-		'type': 'Object'
-	},
-	'duplicate': {
-		'type': 'Boolean',
-		'default': false
-	},
-	'existsInApp': {
-		'type': 'Boolean',
-		'default': false
-	},
-	'existsInPlatform': {
-		'type': 'Boolean',
-		'default': false
-	},
 	'message': {
 		'type': 'String'
 	},
+	'totalCount': {
+		'type': 'Number'
+	},
+	'successCount': {
+		'type': 'Number'
+	},
+	'errorCount': {
+		'type': 'Number'
+	},
+	'ignoredCount': {
+		'type': 'Number'
+	},
 	'status': {
 		'type': 'String',
-		'enum': ['Pending', 'Validated', 'Created', 'Error', 'Ignored', 'Success']
+		'enum': ['Pending', 'Uploaded', 'Validating', 'Completed', 'Error', 'Ignored']
 	}
 };
 module.exports.definition = definition;

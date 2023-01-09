@@ -2,212 +2,251 @@
 
 // const request = require('request');
 const mongoose = require('mongoose');
+const _ = require('lodash');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const config = require('../../config/config');
+// const adUtils = require('../utils/azure.ad.utils');
 
 const logger = global.logger;
-// const appHook = require('../helpers/util/appHooks');
-// const pmRole = require('../../config/roles').find(_r => _r.entity == 'PM');
-// const nsRole = require('../../config/roles').find(_r => _r.entity == 'NS');
+const azureConfig = config.azureConfig;
 
 // let _ = require('lodash');
-let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
-let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
+// let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
+// let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
 
-function createNSifNotExist(ns) {
-	return kubeutil.namespace.getNamespace(ns)
-		.then(_d => {
-			if (_d && _d.statusCode >= 200 && _d.statusCode < 400) {
-				logger.debug(ns + ' already exist');
-				return _d;
-			} else {
-				logger.debug('Creating ' + ns);
-				return kubeutil.namespace.createNamespace(ns, release)
-					.then(_ => {
-						if (_.statusCode != 200 || _.statusCode != 202) {
-							logger.error(_.message);
-							logger.debug(JSON.stringify(_));
-							return Error(_.message);
-						}
-						return _;
-					});
-			}
-		})
-		.catch(err => {
-			logger.error('Error creating namespace ' + ns);
-			logger.error(err.message);
-		});
-}
+async function updateExistingAppConnectors() {
+	try {
+		logger.info(`=== Updating existing apps with default connectors ===`);
+		const connectorsModel = mongoose.model('config.connectors');
+		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } }).lean();
+		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
+		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
+		const promises = apps.map(async (doc) => {
+			try {
+				logger.info(`Processing App :: ${doc._id}`);
+				logger.trace(`Processing App :: ${JSON.stringify(doc)}`);
 
-function createSecurityKeys() {
-	const keysModel = mongoose.model('keys');
-	logger.info('Calling security model to create keys of app');
-	return mongoose.model('app').find({}).lean(true)
-		.then(apps => {
-			let promises = apps.map(async (doc) => {
-				try {
-					let body = { app: doc._id };
-					let keyDoc = await keysModel.findOne({ app: doc._id }).lean();
-					if (keyDoc) {
-						return;
-					}
-					keyDoc = new keysModel(body);
-					return keyDoc.save();
-				} catch (err) {
-					logger.error(err);
+				if (!doc.connectors || _.isEmpty(doc.connectors)) {
+					doc.connectors = {
+						data: {},
+						file: {}
+					};
 				}
-				// return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, null)
-				// 	.catch(err => logger.debug(err.message));
-			});
-			return Promise.all(promises);
-		})
-		.then(() => {
-			logger.debug('Created security keys for apps');
-		})
-		.catch(err => {
-			logger.debug(err.message);
+
+				let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ["Default DB Connector", "Default File Connector"] } }).lean();
+				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
+				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
+
+				let dbConnector = _.find(connectors, conn => conn.name === 'Default DB Connector');
+				let fileConnector = _.find(connectors, conn => conn.name === 'Default File Connector');
+
+				if (connectors.length !== 2) {
+					if (!fileConnector) {
+						logger.info(`File connector not found for app :: ${doc._id}`);
+						let connector = {};
+						connector.category = 'STORAGE';
+						connector.type = 'GRIDFS';
+						connector.name = 'Default File Connector';
+						connector.app = doc._id;
+						connector.options = {
+							default: true,
+							isValid: true
+						};
+						connector.values = {
+							connectionString: ''
+						};
+
+						let fileConnDoc = new connectorsModel(connector);
+						let status = await fileConnDoc.save();
+						logger.info(`File connector created for app :: ${doc._id} :: ${status._id}`);
+						doc.connectors.file = {
+							_id: status._id
+						};
+					}
+
+					if (!dbConnector) {
+						logger.info(`Data connector not found for app :: ${doc._id}`);
+						let connector = {};
+						connector.category = 'DB';
+						connector.type = 'MONGODB';
+						connector.name = 'Default DB Connector';
+						connector.app = doc._id;
+						connector.options = {
+							default: true,
+							isValid: true
+						};
+						connector.values = {
+							connectionString: '',
+							database: ''
+						};
+
+						let dbConnDoc = new connectorsModel(connector);
+						let status = await dbConnDoc.save();
+						logger.info(`Data connector created for app :: ${doc._id} :: ${status._id}`);
+						doc.connectors.data = {
+							_id: status._id
+						};
+					}
+				} else {
+					if (!doc.connectors?.data?._id) {
+						logger.info(`Setting data connector for app :: ${doc._id} :: ${dbConnector?._id}`);
+						doc.connectors.data._id = dbConnector?._id;
+					}
+
+					if (!doc.connectors?.file?._id) {
+						logger.info(`Setting file connector for app :: ${doc._id} :: ${fileConnector?._id}`);
+						doc.connectors.file._id = fileConnector?._id;
+					}
+				}
+				await mongoose.model('app').updateOne({ "_id": doc._id }, { "$set": doc });
+				logger.info(`Updated app :: ${doc._id} :: with connectors`);
+			} catch (err) {
+				logger.error(err);
+			}
 		});
+		await Promise.all(promises);
+		logger.info(`Updated all apps with default connectors`);
+	} catch (err) {
+		logger.error(err.message);
+	}
 }
 
-function createNS() {
-	let dataStackNS = config.dataStackNS;
-	if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
-	logger.info('Creating namespace if not exist');
-	return mongoose.model('app').find({}).lean(true)
-		.then(apps => {
-			let promises = apps.map(doc => {
-				const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
-				return createNSifNotExist(ns);
-			});
-			return Promise.all(promises);
-		})
-		.then(() => {
-			logger.debug('Created Namespaces');
-			return Promise.resolve();
-		})
-		.catch(err => {
-			logger.debug(err.message);
-		});
+async function createNSifNotExist(ns) {
+	try {
+		let response = await kubeutil.namespace.getNamespace(ns);
+		if (response && response.statusCode >= 200 && response.statusCode < 400) {
+			logger.debug('Namespace : ' + ns + ' already exist');
+			return response;
+		}
+		logger.debug('Creating Namespace : ' + ns);
+		response = await kubeutil.namespace.createNamespace(ns, release);
+		if (response.statusCode != 200 || response.statusCode != 202) {
+			logger.error(response.message);
+			logger.debug(JSON.stringify(response));
+			return Error(response.message);
+		}
+		return response;
+	} catch (err) {
+		logger.error('Error creating namespace ' + ns);
+		logger.error(err.message);
+	}
 }
 
-// function createPMrole() {
-// 	logger.debug('Creating PM roles');
-// 	let appList = [];
-// 	return mongoose.model('app').find({}).lean(true)
-// 		.then(apps => {
-// 			appList = apps.map(_d => _d._id);
-// 			return mongoose.model('roles').find({ entity: 'PM' }, { app: 1 }).lean(true);
-// 		})
-// 		.then(roles => {
-// 			let rolesAppList = roles.map(_r => _r.app);
-// 			let appRoleTobeCreated = _.difference(appList, rolesAppList);
-// 			let promises = appRoleTobeCreated.map(app => {
-// 				let roleObj = JSON.parse(JSON.stringify(pmRole));
-// 				roleObj.app = app;
-// 				roleObj.fields = JSON.stringify(roleObj.fields);
-// 				return mongoose.model('roles').create(roleObj)
-// 					.catch(err => { logger.debug(err); });
-// 			});
-// 			return Promise.all(promises);
-// 		})
-// 		.then(_d => {
-// 			logger.debug(JSON.stringify(_d));
-// 		})
-// 		.catch(err => {
-// 			logger.error(err);
-// 		});
-// }
+async function createSecurityKeys() {
+	try {
+		const keysModel = mongoose.model('keys');
+		logger.info('Calling security model to create keys of app');
+		const apps = await mongoose.model('app').find({}).lean();
+		const promises = apps.map(async (doc) => {
+			try {
+				let body = { app: doc._id };
+				let keyDoc = await keysModel.findOne({ app: doc._id }).lean();
+				if (keyDoc) {
+					logger.debug('Security keys exists for app : ', doc._id);
+					return;
+				}
+				logger.debug('Creating Security keys for app : ', doc._id);
+				keyDoc = new keysModel(body);
+				return keyDoc.save();
+			} catch (err) {
+				logger.error(err);
+			}
+		});
+		await Promise.all(promises);
+		logger.debug('Created security keys for apps');
+	} catch (err) {
+		logger.error(err.message);
+	}
+}
 
-// function createNSrole() {
-// 	logger.debug('Creating NS roles');
-// 	let appList = [];
-// 	return mongoose.model('app').find({}).lean(true)
-// 		.then(apps => {
-// 			appList = apps.map(_d => _d._id);
-// 			return mongoose.model('roles').find({ entity: 'NS' }, { app: 1 }).lean(true);
-// 		})
-// 		.then(roles => {
-// 			let rolesAppList = roles.map(_r => _r.app);
-// 			let appRoleTobeCreated = _.difference(appList, rolesAppList);
-// 			let promises = appRoleTobeCreated.map(app => {
-// 				let roleObj = JSON.parse(JSON.stringify(nsRole));
-// 				roleObj.app = app;
-// 				roleObj.fields = JSON.stringify(roleObj.fields);
-// 				return mongoose.model('roles').create(roleObj)
-// 					.catch(err => { logger.debug(err); });
-// 			});
-// 			return Promise.all(promises);
-// 		})
-// 		.then(_d => {
-// 			logger.debug(JSON.stringify(_d));
-// 		})
-// 		.catch(err => {
-// 			logger.error(err);
-// 		});
-// }
-
-// function checkDependency() {
-// 	var options = {
-// 		url: config.baseUrlSEC + '/health/ready',
-// 		method: 'GET',
-// 		headers: {
-// 			'Content-Type': 'application/json'
-// 		},
-// 		json: true
-// 	};
-// 	return new Promise((resolve, reject) => {
-// 		request(options, function (err, res, body) {
-// 			if (err) {
-// 				logger.error(err.message);
-// 				reject(err);
-// 			} else if (!res) {
-// 				logger.error('Server is DOWN');
-// 				reject(new Error('Server is down'));
-// 			}
-// 			else {
-// 				if (res.statusCode >= 200 && res.statusCode < 400) {
-// 					logger.info('Connected to Security');
-// 					resolve();
-// 				} else {
-// 					logger.debug(res.statusCode);
-// 					logger.debug(body);
-// 					reject(new Error('Request returned ' + res.statusCode));
-// 				}
-// 			}
-// 		});
-// 	});
-// }
+async function createNS() {
+	try {
+		let dataStackNS = config.dataStackNS;
+		if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
+		logger.info('Creating namespace if not exist');
+		const apps = await mongoose.model('app').find({}).lean();
+		let promises = apps.map(doc => {
+			const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
+			return createNSifNotExist(ns);
+		});
+		await Promise.all(promises);
+		logger.debug('Created Namespaces');
+	} catch (err) {
+		logger.error(err.message);
+	}
+}
 
 function checkDependency() {
 	return Promise.resolve();
 }
 
-function removeAuthMode(authMode, err) {
-	logger.error(`Removing auth mode ${authMode} due to error :: `, err);
+function removeAuthMode(authMode) {
 	config.RBAC_USER_AUTH_MODES = config.RBAC_USER_AUTH_MODES.filter(mode => mode != authMode);
 }
 
-function validateAuthModes() {
-	let authModes = config.RBAC_USER_AUTH_MODES;
-	logger.debug('validating auth modes :: ', authModes);
-	let validationArray = authModes.map(mode => {
-		if (mode == 'azure')
-			return validateAzureCredentials(config.azureConfig).catch((err) => removeAuthMode('azure', err));
-		else if (mode == 'ldap')
-			return validateLdapCredentials(config.ldapDetails)
-				.catch((err) => removeAuthMode('ldap', err));
-		else if (mode == 'local')
-			return Promise.resolve();
-		else {
-			logger.error('Unknow auth mode :: ', mode);
-			return Promise.reject(new Error('Unknown auth mode.'));
+async function checkAzureDependencies() {
+	try {
+		let flag = false;
+		if (!azureConfig.b2cTenant) {
+			logger.error('Missing AZURE.TENANT');
+			flag = true;
 		}
-	});
-	return Promise.all(validationArray)
-		.then(() => logger.info('Supported auth modes :: ', config.RBAC_USER_AUTH_MODES))
-		.catch(err => logger.error('Error in validateAuthModes :: ', err));
+		if (!azureConfig.clientId) {
+			logger.error('Missing AZURE.CLIENT_ID');
+			flag = true;
+		}
+		if (!azureConfig.clientSecret) {
+			logger.error('Missing AZURE.CLIENT_SECRET');
+			flag = true;
+		}
+		if (flag) {
+			logger.error('One or more Azure Configuration Parameters Missing.');
+			logger.error('Azure AD will not be Configured.');
+			return false;
+		}
+		logger.info('Please Ensure the Callback URL configured in Azure AD App is this:-');
+		logger.info(`https://${config.commonName}/api/a/rbac/auth/azure/login/callback`);
+		logger.info('');
+		// const url = await adUtils.getAuthUrl('initial-setup');
+		// logger.info('Please Use the Below URL and Login with the AD User that will be Super Admin of Data Stack.');
+		// logger.info(url);
+
+		return true;
+	} catch (err) {
+		logger.error(err);
+		return false;
+	}
+}
+
+async function validateAuthModes() {
+	const authModes = config.RBAC_USER_AUTH_MODES;
+	logger.info('validating auth modes :: ', authModes);
+	const localAvailable = authModes.indexOf('local') > -1;
+	await authModes.reduce(async (prev, curr) => {
+		await prev;
+		let flag = true;
+		if (curr == 'azure') {
+			flag = await checkAzureDependencies();
+			if (!flag && !localAvailable) {
+				logger.error('Local Auth Mode not configured and Azure Configuration Details missing.');
+				logger.error('Cannot Start Application until atleast one Valid Auth Mode Available');
+				process.exit(0);
+			}
+			if (!flag) {
+				removeAuthMode(curr, null);
+			}
+		} else if (curr == 'ldap') {
+			return Promise.resolve();
+		} else if (curr == 'local') {
+			return Promise.resolve();
+		} else {
+			logger.error('Unknow auth mode :: ', curr);
+			removeAuthMode(curr, null);
+		}
+	}, Promise.resolve());
+
 }
 
 async function createIndexForSession() {
@@ -224,7 +263,6 @@ async function createIndexForSession() {
 		);
 		logger.info('Successfully created indexes for sessions collection');
 	} catch (error) {
-		//
 		logger.error(error);
 	}
 }
@@ -232,11 +270,10 @@ async function createIndexForSession() {
 function init() {
 	return checkDependency()
 		.then(() => createNS())
-		// .then(() => createPMrole())
-		// .then(() => createNSrole())
+		.then(() => updateExistingAppConnectors())
 		.then(() => createSecurityKeys())
 		.then(() => validateAuthModes())
-		.then(() => createIndexForSession());
+		.then(() => createIndexForSession())
 }
 
 module.exports = init;

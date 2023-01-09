@@ -1,8 +1,14 @@
+const log4js = require('log4js');
 const dataStackUtils = require('@appveen/data.stack-utils');
+
+
 let debugDB = false;
 if (process.env.LOG_LEVEL == 'trace') { debugDB = true; }
 
 let logger = global.logger;
+if (!logger) {
+	logger = log4js.getLogger(process.env.IMAGE_TAG);
+}
 let dataStackNS = process.env.DATA_STACK_NAMESPACE;
 logger.debug(`DATA_STACK_NAMESPACE : ${process.env.DATA_STACK_NAMESPACE}`);
 
@@ -57,24 +63,29 @@ function get(_service) {
 }
 
 let ldapConfig = process.env.LDAP ? JSON.parse(process.env.LDAP) : {};
-let azureConfig = process.env.AZURE ? JSON.parse(process.env.AZURE) : {};
+const azureConfig = {
+	clientId: process.env['AZURE_AD_CLIENT_ID'],
+	clientSecret: process.env['AZURE_AD_CLIENT_SECRET'],
+	b2cTenant: process.env['AZURE_AD_TENANT'],
+	adUserAttribute: process.env['AZURE_AD_USER_ATTRIBUTE'] ? process.env['AZURE_AD_USER_ATTRIBUTE'] : 'userPrincipalName'
+};
 let allowedFileExtArr = ['ppt', 'xls', 'csv', 'doc', 'jpg', 'png', 'apng', 'gif', 'webp', 'flif', 'cr2', 'orf', 'arw', 'dng', 'nef', 'rw2', 'raf', 'tif', 'bmp', 'jxr', 'psd', 'zip', 'tar', 'rar', 'gz', 'bz2', '7z', 'dmg', 'mp4', 'mid', 'mkv', 'webm', 'mov', 'avi', 'mpg', 'mp2', 'mp3', 'm4a', 'oga', 'ogg', 'ogv', 'opus', 'flac', 'wav', 'spx', 'amr', 'pdf', 'epub', 'exe', 'swf', 'rtf', 'wasm', 'woff', 'woff2', 'eot', 'ttf', 'otf', 'ico', 'flv', 'ps', 'xz', 'sqlite', 'nes', 'crx', 'xpi', 'cab', 'deb', 'ar', 'rpm', 'Z', 'lz', 'msi', 'mxf', 'mts', 'blend', 'bpg', 'docx', 'pptx', 'xlsx', '3gp', '3g2', 'jp2', 'jpm', 'jpx', 'mj2', 'aif', 'qcp', 'odt', 'ods', 'odp', 'xml', 'mobi', 'heic', 'cur', 'ktx', 'ape', 'wv', 'wmv', 'wma', 'dcm', 'ics', 'glb', 'pcap', 'dsf', 'lnk', 'alias', 'voc', 'ac3', 'm4v', 'm4p', 'm4b', 'f4v', 'f4p', 'f4b', 'f4a', 'mie', 'asf', 'ogm', 'ogx', 'mpc'];
 let allowedFileExt = process.env.DATA_STACK_ALLOWED_FILE_TYPE ? process.env.DATA_STACK_ALLOWED_FILE_TYPE.split(',') : allowedFileExtArr;
 
 function azurePassportConfig(type) {
 	return {
-		identityMetadata: 'https://login.microsoftonline.com/' + azureConfig['B2C_TENANT'] + '/v2.0/.well-known/openid-configuration',
-		clientID: azureConfig['CLIENT_ID'],
+		identityMetadata: 'https://login.microsoftonline.com/' + azureConfig.b2cTenant + '/v2.0/.well-known/openid-configuration',
+		clientID: azureConfig.clientId,
 		responseType: 'code',
 		responseMode: 'query',
-		redirectUrl: (isK8sEnv() ? 'https://' : 'http://') + process.env.FQDN +
-			(type === 'login' ? '/api/a/rbac/azure/login/callback' : '/api/a/rbac/azure/userFetch/callback'),
+		redirectUrl: (isK8sEnv() ? 'https://' : 'https://') + process.env.FQDN +
+			(type === 'login' ? '/api/a/rbac/auth/azure/login/callback' : '/api/a/rbac/auth/azure/userFetch/callback'),
 		allowHttpForRedirectUrl: process.env.FQDN == 'localhost',
-		clientSecret: azureConfig['CLIENT_SECRET'],
+		clientSecret: azureConfig.clientSecret,
 		validateIssuer: true,
 		issuer: null,
 		passReqToCallback: false,
-		scope: ['profile', 'email', 'user.read'],
+		scope: ['profile', 'email', 'user.read', 'user.read.all'],
 		useCookieInsteadOfSession: true,
 		cookieEncryptionKeys: [
 			{ 'key': '12345678901234567890123456789012', 'iv': '123456789012' },
@@ -96,10 +107,12 @@ module.exports = {
 	baseUrlNE: get('ne') + '/ne',
 	baseUrlUSR: get('user') + '/rbac',
 	baseUrlPM: get('bm') + '/bm',
+	baseUrlGW: get('gw') + '/api/a/gw',
 	debugDB: debugDB,
 	validationApi: get('user') + '/rbac/validate',
 	baseUrlSEC: get('sec') + '/sec',
 	secret: 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
+	RBAC_JWT_KEY: process.env.RBAC_JWT_KEY || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn',
 	refreshSecret: 'iouhzsueiryozayvrhisjhtojgbaburaoganpatraoaptehjgcjgccjagaurnautbabubhaiyasdcsddscds',
 	adSecret: 'jkbwejkbchalchaiyachaiyachaiyasareishqkichavchalchaiyachaiyapavjannatchalechalchaiyachaiyadsc',
 	encryptionKey: process.env.ENCRYPTION_KEY || '34857057658800771270426551038148',
@@ -132,14 +145,14 @@ module.exports = {
 		stanMaxPingOut: process.env.STREAMING_RECONN_TIMEWAIT_MILLI || 500
 	},
 	mongoOptions: {
-		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		dbName: process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true,
 	},
 	mongoAppcenterOptions: {
-		reconnectTries: process.env.MONGO_RECONN_TRIES,
-		reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		// reconnectTries: process.env.MONGO_RECONN_TRIES,
+		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
 		useNewUrlParser: true
 	},
 	mongooseCustomLogger: (coll, op, doc, proj) => {
@@ -163,12 +176,7 @@ module.exports = {
 		baseFilter: ldapConfig['BASE_FILTER']
 	},
 	azurePassportConfig: azurePassportConfig,
-	azureConfig: {
-		clientId: azureConfig['CLIENT_ID'],
-		clientSecret: azureConfig['CLIENT_SECRET'],
-		b2cTenant: azureConfig['B2C_TENANT'],
-		adUserAttribute: azureConfig['AD_USER_ATTRIBUTE'] ? azureConfig['AD_USER_ATTRIBUTE'] : 'mail'
-	},
+	azureConfig: azureConfig,
 	dataStackDefaultTimezone: process.env.TZ_DEFAULT || 'Zulu',
 	disableInsightsApp: process.env.DISABLE_INSIGHTS ? parseBoolean(process.env.DISABLE_INSIGHTS) : false,
 	RBAC_USER_AUTH_MODES: process.env.RBAC_USER_AUTH_MODES ? (process.env.RBAC_USER_AUTH_MODES).split(',') : ['local'],

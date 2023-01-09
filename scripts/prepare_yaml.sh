@@ -1,22 +1,25 @@
 #!/bin/bash
 
+set -e
+
 echo "****************************************************"
 echo "data.stack:user :: Copying yaml file "
 echo "****************************************************"
-if [ ! -d $WORKSPACE/../yamlFiles ]; then
-    mkdir $WORKSPACE/../yamlFiles
+if [ ! -d yamlFiles ]; then
+    mkdir yamlFiles
 fi
 
-REL=$1
-if [ $2 ]; then
-    REL=$REL-$2
-fi
+TAG=`cat CURRENT_USER`
 
-rm -rf $WORKSPACE/../yamlFiles/user.*
-cp $WORKSPACE/user.yaml $WORKSPACE/../yamlFiles/user.$REL.yaml
-cd $WORKSPACE/../yamlFiles/
+rm -rf yamlFiles/user.*
+cp user.yaml yamlFiles/user.$TAG.yaml
+cd yamlFiles/
 echo "****************************************************"
 echo "data.stack:user :: Preparing yaml file "
 echo "****************************************************"
-sed -i.bak s/__release_tag__/"'$1'"/ user.$REL.yaml
-sed -i.bak s/__release__/$REL/ user.$REL.yaml
+
+sed -i.bak s/__release__/$TAG/ user.$TAG.yaml
+
+echo "****************************************************"
+echo "data.stack:user :: yaml file saved"
+echo "****************************************************"

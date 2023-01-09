@@ -1,4 +1,4 @@
-FROM node:fermium-alpine
+FROM node:18-alpine
 
 RUN apk update
 RUN apk upgrade
@@ -11,7 +11,7 @@ COPY package.json /app
 
 RUN npm install -g npm
 RUN npm install --production
-RUN npm audit fix
+RUN npm audit fix --production
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 
 COPY api /app/api
@@ -23,6 +23,7 @@ COPY config /app/config
 COPY util /app/util
 
 ENV IMAGE_TAG=__image_tag__
+ENV NODE_ENV=production
 
 EXPOSE 10004
 

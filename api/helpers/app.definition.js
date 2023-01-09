@@ -17,8 +17,10 @@ var definition = {
 	'_metadata': {
 		'type': {
 			'version': {
-				'release': {
-					'type': 'Number'
+				'type': {
+					'release': {
+						'type': Schema.Types.Mixed
+					}
 				}
 			}
 		}
@@ -35,7 +37,7 @@ var definition = {
 		},
 		'primaryColor': {
 			'type': 'String',
-			'default': '#03A9F4'
+			'default': '#44a8f1'
 		},
 		'textColor': {
 			'type': 'String',
@@ -83,6 +85,9 @@ var definition = {
 	'disableInsights': {
 		'type': 'Boolean',
 		'default': envConfig.disableInsightsApp
+	},
+	'connectors': {
+		'type': 'Object'
 	}
 };
 module.exports.definition = definition;

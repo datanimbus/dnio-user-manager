@@ -111,7 +111,7 @@ e.preRemovePMFaas = function () {
 	return function (next, req) {
 		let self = this;
 		let url = config.baseUrlPM + '/' + self._id + '/faas';
-		let qs = { filter: { status: { $eq: 'Active' }, 'app': self._id }, select: 'name' };
+		let qs = { filter: JSON.stringify({ status: { $eq: 'Active' }, 'app': self._id }), select: 'name' };
 		
 		return e.sendRequest(url, 'GET', qs, null, req)
 			.then(_body => {

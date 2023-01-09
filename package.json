@@ -18,10 +18,10 @@
   "license": "ISC",
   "dependencies": {
     "@appveen/data.stack-utils": "^1.0.19",
-    "@appveen/ds-auth-cache": "https://github.com/appveen/ds-auth-cache.git",
-    "@appveen/rest-crud": "https://github.com/appveen/rest-crud.git",
+    "@appveen/ds-auth-cache": "^1.0.7",
+    "@appveen/rest-crud": "^0.0.4",
     "@appveen/swagger-mongoose-crud": "github:appveen/swagger-mongoose-crud",
-    "@appveen/utils": "https://github.com/appveen/utils.git",
+    "@appveen/utils": "^2.1.13",
     "@azure/msal-node": "^1.14.5",
     "@fidm/x509": "^1.2.1",
     "@microsoft/microsoft-graph-client": "^3.0.2",
@@ -53,7 +53,7 @@
     "read-chunk": "^3.2.0",
     "uuid": "^3.4.0",
     "xlsx": "^0.18.5",
-    "mssql": "^8.1.0",
+    "mssql": "^9.0.1",
     "mysql2": "^2.3.3",
     "pg": "^8.7.3"
   },

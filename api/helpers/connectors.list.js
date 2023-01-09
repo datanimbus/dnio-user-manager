@@ -9,7 +9,15 @@ const data = [
 				key: 'connectionString',
 				label: 'Connection String',
 				htmlInputType: 'textarea',
-				encrypted: true,
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'database',
+				label: 'Database Name',
+				htmlInputType: 'text',
+				encrypted: false,
 				required: true
 			}
 		]
@@ -46,6 +54,13 @@ const data = [
 				htmlInputType: 'password',
 				encrypted: true,
 				required: true
+			},
+			{
+				type: 'String',
+				key: 'database',
+				label: 'MySQL Database Name',
+				htmlInputType: 'text',
+				required: true
 			}
 		]
 	},
@@ -80,6 +95,13 @@ const data = [
 				label: 'PostgreSQL Password',
 				htmlInputType: 'password',
 				encrypted: true,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'database',
+				label: 'PostgreSQL Database Name',
+				htmlInputType: 'text',
 				required: true
 			}
 		]

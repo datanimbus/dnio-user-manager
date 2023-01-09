@@ -86,7 +86,8 @@ schema.pre('save', function (next) {
 			isValid: true
 		};
 		connector.values = {
-			connectionString: config.mongoUrlAppcenter
+			connectionString: '',
+			database: ''
 		};
 
 		let connectorDoc = new mongoose.model('config.connectors')(connector);
@@ -126,7 +127,7 @@ schema.pre('save', function (next) {
 			isValid: true
 		};
 		connector.values = {
-			connectionString: config.mongoUrlAppcenter
+			connectionString: ''
 		};
 	
 		let connectorDoc = new mongoose.model('config.connectors')(connector);

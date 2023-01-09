@@ -55,7 +55,7 @@ async function updateExistingAppConnectors() {
 							isValid: true
 						};
 						connector.values = {
-							connectionString: config.mongoUrlAppcenter
+							connectionString: ''
 						};
 
 						let fileConnDoc = new connectorsModel(connector);
@@ -78,7 +78,8 @@ async function updateExistingAppConnectors() {
 							isValid: true
 						};
 						connector.values = {
-							connectionString: config.mongoUrlAppcenter
+							connectionString: '',
+							database: ''
 						};
 
 						let dbConnDoc = new connectorsModel(connector);

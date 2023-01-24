@@ -2596,7 +2596,7 @@ paths:
           description: Bad parameters
         '500':
           description: Internal server error
-  /auth/change-password:
+  /auth/change-password/{id}:
     x-swagger-router-controller: controller
     put:
       description: Update existing user password

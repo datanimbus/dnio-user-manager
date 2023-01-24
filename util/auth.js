@@ -28,7 +28,7 @@ const onlyAuthUrls = [
 	'/rbac/data/filter',
 	'/rbac/data/filter/{id}',
 	'/rbac/auth/logout',
-	'/rbac/auth/change-password',
+	'/rbac/auth/change-password/{id}',
 	'/rbac/auth/validate',
 	'/rbac/auth/check',
 	'/rbac/auth/extend',

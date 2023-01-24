@@ -269,7 +269,7 @@ router.post('/auth/ldap/login', UserController.ldapLogin);
 router.get('/auth/azure/login', UserController.azureLogin);
 router.get('/auth/azure/login/callback', UserController.azureLoginCallback);
 router.delete('/auth/logout', UserController.logout);
-router.put('/auth/change-password', UserController.updatePassword);
+router.put('/auth/change-password/:id', UserController.updatePassword);
 router.get('/auth/validate', UserController.validateUserSession);
 router.get('/auth/check', UserController.checkUserSession);
 router.get('/auth/extend', UserController.extendSession);

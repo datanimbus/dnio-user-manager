@@ -1,11 +1,14 @@
 'use strict';
-
+const crypto = require('crypto');
+const JWT = require('jsonwebtoken');
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const utils = require('@appveen/utils');
+const _ = require('lodash');
 
 const definition = require('../helpers/api-keys.definition').definition;
 const queueMgmt = require('../../util/queueMgmt');
+const config = require('../../config/config');
 
 const schema = MakeSchema(definition);
 const logger = global.logger;
@@ -14,6 +17,10 @@ const options = {
 	logger: logger,
 	collectionName: 'userMgmt.apiKeys'
 };
+
+function md5(data) {
+	return crypto.createHash('md5').update(data).digest('hex');
+}
 
 schema.index({ name: 1, app: 1, status: 1 });
 schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
@@ -36,6 +43,13 @@ schema.pre('save', function (next) {
 	const tempdate = new Date();
 	tempdate.setDate(tempdate.getDate() + this.expiryAfter);
 	this._expiryAfterDate = tempdate;
+	next();
+});
+
+schema.pre('save', function (next) {
+	const tempKey = JWT.sign({ name: this.name, _id: _.camelCase(this.name) }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
+	this._apiKey = tempKey;
+	this.tokenHash = md5(tempKey);
 	next();
 });
 
@@ -107,7 +121,7 @@ function modifyFilterForApp(req) {
 }
 
 function modifyBodyForApp(req) {
-	let app = req.swagger.params.app.value;
+	let app = req.params.app;
 	req.body.app = app;
 }
 

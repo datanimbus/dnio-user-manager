@@ -65,7 +65,7 @@ function modifyFilterForApp(req) {
 }
 
 // function modifyBodyForApp(req) {
-// 	let app = req.swagger.params.app.value;
+// 	let app = req.params.app;
 // 	req.body.app = app;
 // }
 

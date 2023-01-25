@@ -13,6 +13,7 @@ const FilterController = require('./filter.controller');
 const BulkCreateController = require('./bulkCreate.controller.js');
 const BookmarkController = require('./bookmark.controller.js');
 const ConnectorController = require('./connectors.controller');
+const APIKeyController = require('./api-keys.controller');
 
 
 AppController.init()
@@ -283,6 +284,14 @@ router.delete('/:app/bookmark/utils/bulkDelete', BookmarkController.bulkDelete);
 router.get('/:app/bookmark/:id', BookmarkController.show);
 router.put('/:app/bookmark/:id', BookmarkController.update);
 router.delete('/:app/bookmark/:id', BookmarkController.delete);
+
+router.get('/:app/apiKeys/utils/count', APIKeyController.apiKeyInAppCount);
+router.post('/:app/apiKeys', APIKeyController.apiKeyInAppCreate);
+router.get('/:app/apiKeys', APIKeyController.apiKeyInApp);
+router.get('/:app/apiKeys/:id', APIKeyController.apiKeyInAppShow);
+router.put('/:app/apiKeys/:id', APIKeyController.apiKeyInAppUpdate);
+router.delete('/:app/apiKeys/:id', APIKeyController.apiKeyInAppDestroy);
+
 router.get('/internal/health/live', UserController.health);
 router.get('/internal/health/ready', UserController.readiness);
 

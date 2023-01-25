@@ -102,7 +102,10 @@ const commonUrls = [
 	'/rbac/{app}/connector/{id}',
 	'/rbac/{app}/connector/utils/availableConnectors',
 	'/rbac/{app}/connector/utils/test',
-	'/rbac/{app}/connector/{id}/utils/fetchTables'
+	'/rbac/{app}/connector/{id}/utils/fetchTables',
+	'/rbac/{app}/apiKeys/utils/count',
+	'/rbac/{app}/apiKeys',
+	'/rbac/{app}/apiKeys/{id}',
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
@@ -367,6 +370,30 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/connector/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		if ((req.method === 'PUT' || req.method === 'DELETE')) {
 			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	if (compareURL('/rbac/{app}/apiKeys/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/apiKeys', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMAPI'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+	if (compareURL('/rbac/{app}/apiKeys/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+		if ((req.method === 'PUT' || req.method === 'DELETE')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMAPI'], comparator).length > 0) {
 				return true;
 			} else {
 				return false;

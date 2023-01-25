@@ -11,8 +11,7 @@ var definition = {
 		'required': true
 	},
 	'tokenHash': {
-		'type': 'String',
-		'required': true
+		'type': 'String'
 	},
 	'_metadata': {
 		'type': {
@@ -23,7 +22,9 @@ var definition = {
 	},
 	'status': {
 		'type': 'String',
-		'required': true
+		'required': true,
+		'default': 'Enabled',
+		'enum': ['Enabled', 'Disabled']
 	},
 	'expiryAfter': {
 		'type': 'Number',

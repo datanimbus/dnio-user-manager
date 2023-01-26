@@ -22,8 +22,9 @@ function md5(data) {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
-schema.index({ name: 1, app: 1, status: 1 });
 schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
+schema.index({ expiryAfterDate: 1 }, { expires: '30d' });
+schema.index({ name: 1, app: 1, status: 1 });
 
 schema.pre('validate', function (next) {
 	const idregex = '^[a-zA-Z0-9 -]*$';
@@ -134,7 +135,7 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 			await catchUtils.clearData(item._id);
 		});
 		logger.info('Marking all expired tokens as Disabled', records.length);
-		logger.debug(records);
+		logger.trace(records);
 
 	}
 	markDisabled();

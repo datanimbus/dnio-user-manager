@@ -23,7 +23,7 @@ function md5(data) {
 }
 
 schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
-schema.index({ expiryAfterDate: 1 }, { expires: '30d' });
+schema.index({ expiryAfterDate: 1 }, { expires: '45d' });
 schema.index({ name: 1, app: 1, status: 1 });
 
 schema.virtual('apiKey').get(function () {

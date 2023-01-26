@@ -127,6 +127,20 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 			await catchUtils.whitelistToken(item._id, item.tokenHash);
 		}
 	});
+	async function markDisabled() {
+		const records = await crudder.model.updateMany({ expiryAfterDate: { $lte: new Date() } }, { $set: { status: 'Disabled' } }, { new: true }).exec();
+		records.forEach(async (item) => {
+			await catchUtils.unsetUserPermissions(item._id + '_' + item.app);
+			await catchUtils.clearData(item._id);
+		});
+		logger.info('Marking all expired tokens as Disabled', records.length);
+		logger.debug(records);
+
+	}
+	markDisabled();
+	setInterval(() => {
+		markDisabled();
+	}, 30000);
 })();
 
 function customCreate(req, res) {

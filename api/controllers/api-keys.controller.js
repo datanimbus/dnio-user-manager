@@ -26,6 +26,18 @@ schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collatio
 schema.index({ expiryAfterDate: 1 }, { expires: '30d' });
 schema.index({ name: 1, app: 1, status: 1 });
 
+schema.virtual('apiKey').get(function () {
+	return this.__apiKey;
+}).set(function (val) {
+	this.__apiKey = val;
+});
+
+schema.virtual('wasNew').get(function () {
+	return this.__wasNew;
+}).set(function (val) {
+	this.__wasNew = val;
+});
+
 schema.pre('validate', function (next) {
 	const idregex = '^[a-zA-Z0-9 -]*$';
 	if (!this.name.match(idregex)) {
@@ -41,22 +53,12 @@ schema.pre('validate', function (next) {
 schema.pre('save', utils.counter.getIdGenerator('API', 'apiKeys', null, null, 1000));
 
 schema.pre('save', function (next) {
-	const tempdate = new Date();
-	tempdate.setDate(tempdate.getDate() + this.expiryAfter);
-	this.expiryAfterDate = tempdate;
+	if (this.isNew) {
+		const tempdate = new Date();
+		tempdate.setDate(tempdate.getDate() + this.expiryAfter);
+		this.expiryAfterDate = tempdate;
+	}
 	next();
-});
-
-schema.virtual('apiKey').get(function () {
-	return this.__apiKey;
-}).set(function (val) {
-	this.__apiKey = val;
-});
-
-schema.virtual('wasNew').get(function () {
-	return this.__wasNew;
-}).set(function (val) {
-	this.__wasNew = val;
 });
 
 schema.pre('save', function (next) {

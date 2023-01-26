@@ -31,8 +31,24 @@ var definition = {
 		'required': true,
 		'default': 365
 	},
-	'_expiryAfterDate': {
+	'expiryAfterDate': {
 		'type': 'Date'
+	},
+	'roles': {
+		'type': [{
+			'id': {
+				'type': 'String'
+			},
+			'app': {
+				'type': 'String'
+			},
+			'entity': {
+				'type': 'String'
+			},
+			'type': {
+				'type': 'String'
+			}
+		}]
 	}
 };
 module.exports.definition = definition;

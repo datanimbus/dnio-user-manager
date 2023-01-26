@@ -8,6 +8,7 @@ const utils = require('@appveen/utils');
 const definition = require('../helpers/api-keys.definition').definition;
 const queueMgmt = require('../../util/queueMgmt');
 const config = require('../../config/config');
+const catchUtils = require('../../util/cache.utils').cache;
 
 const schema = MakeSchema(definition);
 const logger = global.logger;
@@ -41,7 +42,7 @@ schema.pre('save', utils.counter.getIdGenerator('API', 'apiKeys', null, null, 10
 schema.pre('save', function (next) {
 	const tempdate = new Date();
 	tempdate.setDate(tempdate.getDate() + this.expiryAfter);
-	this._expiryAfterDate = tempdate;
+	this.expiryAfterDate = tempdate;
 	next();
 });
 
@@ -89,6 +90,17 @@ schema.post('save', function (doc) {
 	dataStackUtils.eventsUtil.publishEvent(eventId, 'apikeys', doc._req, doc);
 });
 
+schema.post('save', async function (doc) {
+	await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
+	await catchUtils.setUserPermissions(doc._id + '_' + doc.app, doc.roles.map(e => e.id));
+	await catchUtils.whitelistToken(doc._id, doc.tokenHash);
+});
+
+schema.post('remove', async function (doc) {
+	await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
+	await catchUtils.clearData(doc._id);
+	await catchUtils.blacklistToken(doc.tokenHash);
+});
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 
@@ -100,6 +112,14 @@ schema.post('remove', function (doc) {
 
 const crudder = new SMCrud(schema, 'apiKeys', options);
 
+(async () => {
+	const docs = await crudder.model.find({}).exec();
+	docs.forEach(async (item) => {
+		await catchUtils.unsetUserPermissions(item._id + '_' + item.app);
+		await catchUtils.setUserPermissions(item._id + '_' + item.app, item.roles.map(e => e.id));
+		await catchUtils.whitelistToken(item._id, item.tokenHash);
+	});
+})();
 
 function customCreate(req, res) {
 	crudder.create(req, res);
@@ -149,6 +169,8 @@ async function apiKeyInAppCreate(req, res) {
 	try {
 		modifyBodyForApp(req);
 		const payload = req.body;
+		delete payload.__v;
+		delete payload._metadata;
 		const doc = crudder.model(payload);
 		doc._req = req;
 		const status = await doc.save(req);
@@ -164,6 +186,8 @@ async function apiKeyInAppCreate(req, res) {
 
 function apiKeyInAppUpdate(req, res) {
 	modifyBodyForApp(req);
+	delete req.body.__v;
+	delete req.body._metadata;
 	crudder.update(req, res);
 }
 function apiKeyInAppDestroy(req, res) {

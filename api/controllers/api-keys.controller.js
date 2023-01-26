@@ -121,8 +121,11 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 	const docs = await crudder.model.find({}).exec();
 	docs.forEach(async (item) => {
 		await catchUtils.unsetUserPermissions(item._id + '_' + item.app);
-		await catchUtils.setUserPermissions(item._id + '_' + item.app, item.roles.map(e => e.id));
-		await catchUtils.whitelistToken(item._id, item.tokenHash);
+		await catchUtils.clearData(item._id);
+		if (item.status == 'Enabled') {
+			await catchUtils.setUserPermissions(item._id + '_' + item.app, item.roles.map(e => e.id));
+			await catchUtils.whitelistToken(item._id, item.tokenHash);
+		}
 	});
 })();
 

@@ -53,10 +53,19 @@ schema.virtual('apiKey').get(function () {
 	this.__apiKey = val;
 });
 
+schema.virtual('wasNew').get(function () {
+	return this.__wasNew;
+}).set(function (val) {
+	this.__wasNew = val;
+});
+
 schema.pre('save', function (next) {
-	const tempKey = JWT.sign({ name: this.name, _id: this._id, type: 'API-Key' }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
-	this.apiKey = tempKey;
-	this.tokenHash = md5(tempKey);
+	if (this.isNew) {
+		const tempKey = JWT.sign({ name: this.name, _id: this._id, type: 'API-Key' }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
+		this.apiKey = tempKey;
+		this.tokenHash = md5(tempKey);
+	}
+	this.wasNew = this.isNew;
 	next();
 });
 
@@ -130,7 +139,7 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 	});
 	async function markDisabled() {
 		const status = await crudder.model.updateMany({ expiryAfterDate: { $lte: new Date() } }, { $set: { status: 'Disabled' } }).exec();
-		logger.info('Marking all expired tokens as Disabled');
+		logger.info('Marking all expired tokens as Disabled', status.modifiedCount);
 		logger.debug(status);
 		const records = await crudder.model.find({ expiryAfterDate: { $lte: new Date() } }).exec();
 		records.forEach(async (item) => {

@@ -4,7 +4,6 @@ const JWT = require('jsonwebtoken');
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const utils = require('@appveen/utils');
-const _ = require('lodash');
 
 const definition = require('../helpers/api-keys.definition').definition;
 const queueMgmt = require('../../util/queueMgmt');
@@ -53,7 +52,7 @@ schema.virtual('apiKey').get(function () {
 });
 
 schema.pre('save', function (next) {
-	const tempKey = JWT.sign({ name: this.name, _id: _.camelCase(this.name) }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
+	const tempKey = JWT.sign({ name: this.name, _id: this._id, type: 'API-Key' }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
 	this.apiKey = tempKey;
 	this.tokenHash = md5(tempKey);
 	next();

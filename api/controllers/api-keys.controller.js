@@ -26,7 +26,7 @@ schema.index({ name: 1, app: 1, status: 1 });
 schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
 
 schema.pre('validate', function (next) {
-	const idregex = '^[a-zA-Z0-9 ]*$';
+	const idregex = '^[a-zA-Z0-9 -]*$';
 	if (!this.name.match(idregex)) {
 		return next(new Error('Connector name must consist of alphanumeric characters .'));
 	} else if (this.name.length > 40) {
@@ -46,9 +46,15 @@ schema.pre('save', function (next) {
 	next();
 });
 
+schema.virtual('apiKey').get(function () {
+	return this.__apiKey;
+}).set(function (val) {
+	this.__apiKey = val;
+});
+
 schema.pre('save', function (next) {
 	const tempKey = JWT.sign({ name: this.name, _id: _.camelCase(this.name) }, config.RBAC_JWT_KEY, { expiresIn: this.expiryAfter + ' days' });
-	this._apiKey = tempKey;
+	this.apiKey = tempKey;
 	this.tokenHash = md5(tempKey);
 	next();
 });
@@ -140,9 +146,21 @@ function apiKeyInAppCount(req, res) {
 }
 
 
-function apiKeyInAppCreate(req, res) {
-	modifyBodyForApp(req);
-	crudder.create(req, res);
+async function apiKeyInAppCreate(req, res) {
+	try {
+		modifyBodyForApp(req);
+		const payload = req.body;
+		const doc = crudder.model(payload);
+		doc._req = req;
+		const status = await doc.save(req);
+		logger.debug(status);
+		const data = status.toObject();
+		data.apiKey = status.apiKey;
+		res.status(200).json(data);
+	} catch (err) {
+		res.status(500).json(err);
+	}
+	// crudder.create(req, res);
 }
 
 function apiKeyInAppUpdate(req, res) {

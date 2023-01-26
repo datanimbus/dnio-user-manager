@@ -129,14 +129,14 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 		}
 	});
 	async function markDisabled() {
-		const records = await crudder.model.updateMany({ expiryAfterDate: { $lte: new Date() } }, { $set: { status: 'Disabled' } }, { new: true }).exec();
+		const status = await crudder.model.updateMany({ expiryAfterDate: { $lte: new Date() } }, { $set: { status: 'Disabled' } }).exec();
+		logger.info('Marking all expired tokens as Disabled');
+		logger.debug(status);
+		const records = await crudder.model.find({ expiryAfterDate: { $lte: new Date() } }).exec();
 		records.forEach(async (item) => {
 			await catchUtils.unsetUserPermissions(item._id + '_' + item.app);
 			await catchUtils.clearData(item._id);
 		});
-		logger.info('Marking all expired tokens as Disabled', records.length);
-		logger.trace(records);
-
 	}
 	markDisabled();
 	setInterval(() => {

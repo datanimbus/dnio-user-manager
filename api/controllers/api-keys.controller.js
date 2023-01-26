@@ -91,9 +91,14 @@ schema.post('save', function (doc) {
 });
 
 schema.post('save', async function (doc) {
-	await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
-	await catchUtils.setUserPermissions(doc._id + '_' + doc.app, doc.roles.map(e => e.id));
-	await catchUtils.whitelistToken(doc._id, doc.tokenHash);
+	if (doc.status == 'Enabled') {
+		await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
+		await catchUtils.setUserPermissions(doc._id + '_' + doc.app, doc.roles.map(e => e.id));
+		await catchUtils.whitelistToken(doc._id, doc.tokenHash);
+	} else {
+		await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
+		await catchUtils.clearData(doc._id);
+	}
 });
 
 schema.post('remove', async function (doc) {

@@ -111,6 +111,11 @@ schema.post('save', async function (doc) {
 		await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
 		await catchUtils.clearData(doc._id);
 	}
+	if (doc._metadata.deleted) {
+		await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
+		await catchUtils.clearData(doc._id);
+		await catchUtils.blacklistToken(doc.tokenHash);
+	}
 });
 
 schema.post('remove', async function (doc) {
@@ -134,7 +139,9 @@ const crudder = new SMCrud(schema, 'apiKeys', options);
 	docs.forEach(async (item) => {
 		await catchUtils.unsetUserPermissions(item._id + '_' + item.app);
 		await catchUtils.clearData(item._id);
-		if (item.status == 'Enabled') {
+		if (item._metadata.deleted) {
+			await catchUtils.blacklistToken(item.tokenHash);
+		} else if (item.status == 'Enabled') {
 			await catchUtils.setUserPermissions(item._id + '_' + item.app, item.roles.map(e => e.id));
 			await catchUtils.whitelistToken(item._id, item.tokenHash);
 		}
@@ -224,9 +231,23 @@ function apiKeyInAppUpdate(req, res) {
 	delete req.body._metadata;
 	crudder.update(req, res);
 }
-function apiKeyInAppDestroy(req, res) {
-	modifyBodyForApp(req);
-	crudder.destroy(req, res);
+async function apiKeyInAppDestroy(req, res) {
+	try {
+		modifyBodyForApp(req);
+		const id = req.params.id;
+		const doc = crudder.model.findOne({ _id: id });
+		doc._metadata.deleted = true;
+		doc.status = 'Disabled';
+		doc._req = req;
+		const status = await doc.save(req);
+		logger.debug(status);
+		res.status(200).json({ message: 'API Key Deleted' });
+	} catch (err) {
+		res.status(500).json(err);
+	}
+	// modifyBodyForApp(req);
+	// crudder.destroy(req, res);
+
 }
 
 module.exports = {

@@ -3303,7 +3303,7 @@ function userInAppShow(req, res) {
 		if (groups && groups.length > 0) {
 			return crudder.show(req, res);
 		}
-		return res.status(400).json({ message: 'User Not Found' });
+		return res.status(404).json({ message: 'User Not Found' });
 	}).catch(err => {
 		logger.error(err.message);
 		res.status(500).json({

@@ -332,65 +332,15 @@ const data = [
 			{
 				type: 'String',
 				key: 'projectId',
-				label: 'GCS Project ID',
+				label: 'GCS Project Id',
 				htmlInputType: 'text',
 				required: true
 			},
 			{
 				type: 'String',
-				key: 'privateKeyId',
-				label: 'GCS IAM Service Account Private Key ID',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'privateKey',
-				label: 'GCS IAM Service Account Private Key ID',
+				key: 'gcsKeyFile',
+				label: 'GCS Service Account Key File',
 				htmlInputType: 'textarea',
-				encrypted: true,
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'clientEmail',
-				label: 'GCS Service Account Email',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'clientId',
-				label: 'GCS Service Account Unique Client ID',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'authURI',
-				label: 'GCS Service Account Auth URI',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'tokenURI',
-				label: 'GCS Service Account Token URI',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'authCertURL',
-				label: 'GCS Auth Provider Cert URL',
-				htmlInputType: 'text',
-				required: true
-			},
-			{
-				type: 'String',
-				key: 'clientCertURL',
-				label: 'GCS Client Cert URL',
-				htmlInputType: 'text',
 				required: true
 			},
 			{

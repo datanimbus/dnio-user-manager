@@ -10,8 +10,8 @@ WORKDIR /app
 COPY package.json /app
 
 RUN npm install -g npm
-RUN npm install --production
-RUN npm audit fix --production
+RUN npm install --production --no-audit
+# RUN npm audit fix --production
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 
 COPY api /app/api

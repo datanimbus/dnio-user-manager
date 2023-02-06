@@ -26,8 +26,9 @@ function createKeyCert(app) {
 		logger.debug(pemOptions);
 		return pem.createCertificate(pemOptions, function (err, keys) {
 			if (err) {
+				logger.error('Error While Creating Certificates');
 				logger.error(err);
-				reject(err);
+				return reject(err);
 			}
 			resolve(keys);
 		});

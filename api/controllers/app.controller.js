@@ -13,6 +13,7 @@ const appInit = require('../../config/apps');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
 var userLog = require('./insight.log.controller');
+const cryptUtils = require('../helpers/util/crypto.utils');
 const dataStackNS = config.dataStackNS;
 const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
@@ -67,16 +68,16 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	if (this.isNew) {
-		if (!this._doc.connectors){
+		if (!this._doc.connectors) {
 			this._doc.connectors = {
 				data: {},
 				file: {}
 			};
 		}
-		
+
 		logger.info('Creating default connector for MongoDB');
 		let connector = {};
-		
+
 		connector.category = 'DB';
 		connector.type = 'MONGODB';
 		connector.name = 'Default DB Connector';
@@ -129,7 +130,7 @@ schema.pre('save', function (next) {
 		connector.values = {
 			connectionString: ''
 		};
-	
+
 		let connectorDoc = new mongoose.model('config.connectors')(connector);
 		connectorDoc.save().then((doc) => {
 			logger.debug(doc._id + 'Connector created.');
@@ -193,6 +194,21 @@ schema.pre('save', function (next) {
 	}
 });
 
+schema.pre('save', function (next) {
+	if (!this.encryptionKey) {
+		let randomString = "";
+		const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for (let i = 0; i < len; i++) {
+			randomString += possible.charAt(Math.floor(Math.random() * possible.length));
+		}
+	
+		const Key = cryptUtils.encrypt(randomString, config.encryptionKey);
+	
+		this.encryptionKey = Key;	
+	}
+	next();
+});
+
 schema.pre('save', dataStackUtils.auditTrail.getAuditPreSaveHook('userMgmt.apps'));
 
 schema.post('save', dataStackUtils.auditTrail.getAuditPostSaveHook('userMgmt.apps.audit', client, 'auditQueue'));
@@ -241,18 +257,18 @@ schema.post('save', function (doc) {
 						}
 					}
 				})
-				.then(() => {
-					var body = { app: doc._id };
-					// return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
-					const keysModel = mongoose.model('keys');
-					const keyDoc = new keysModel(body);
-					return keyDoc.save();
-				})
-				.then(
-					() => {
-						logger.info('Security key created');
-					}
-				)
+				// .then(() => {
+				// 	var body = { app: doc._id };
+				// 	// return appHook.sendRequest(config.baseUrlSEC + `/app/${doc._id}`, 'post', null, body, doc._req);
+				// 	// const keysModel = mongoose.model('keys');
+				// 	// const keyDoc = new keysModel(body);
+				// 	// return keyDoc.save();
+				// })
+				// .then(
+				// 	() => {
+				// 		logger.info('Security key created');
+				// 	}
+				// )
 				.catch(err => logger.error(err));
 		}
 	}
@@ -314,12 +330,12 @@ schema.post('remove', (_doc) => {
 			logger.error(err.message);
 		});
 	mongoose.model('config.connectors').remove({ app: _doc._id }).then(_d => {
-			logger.info('App deleted removing related Connectors');
-			logger.debug(_d);
-		})
-			.catch(err => {
-				logger.error(err.message);
-			});
+		logger.info('App deleted removing related Connectors');
+		logger.debug(_d);
+	})
+		.catch(err => {
+			logger.error(err.message);
+		});
 	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
 		logger.info('Sec Keys Deleted');
 		logger.debug(_d);
@@ -483,6 +499,22 @@ e.init = () => {
 			}, () => _reject());
 	});
 };
+
+
+e.sendEncryptionKey = async (req, res) => {
+	try {
+		const keys = {};
+		keys.encryptionKey = config.encryptionKey;
+		const app = req.params.app;
+		const doc = await crudder.model.findOne({ app }).lean();
+		keys.appEncryptionKey = doc.encryptionKey;
+		res.status(200).json(keys);
+	} catch (err) {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
+	}
+}
+
 
 e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 	let usrIds = req.body.userIds;
@@ -804,5 +836,6 @@ module.exports = {
 	fetchIPwhitelisting: e.fetchIPwhitelisting,
 	validateUser: e.validateUser,
 	deleteUserDoc: e.deleteUserDoc,
-	sendRequest: e.sendRequest
+	sendRequest: e.sendRequest,
+	sendEncryptionKey: e.sendEncryptionKey
 };

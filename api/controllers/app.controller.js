@@ -198,7 +198,7 @@ schema.pre('save', function (next) {
 	if (!this.encryptionKey) {
 		let randomString = "";
 		const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		for (let i = 0; i < len; i++) {
+		for (let i = 0; i < 5; i++) {
 			randomString += possible.charAt(Math.floor(Math.random() * possible.length));
 		}
 	

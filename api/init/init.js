@@ -136,9 +136,9 @@ async function createNSifNotExist(ns) {
 
 async function createSecurityKeys() {
 	try {
-		const keysModel = mongoose.model('keys');
+		// const keysModel = mongoose.model('keys');
 		logger.info('Calling security model to create keys of app');
-		const apps = await mongoose.model('app').find({}).lean();
+		const apps = await mongoose.model('app').find({});
 		const promises = apps.map(async (doc) => {
 			try {
 				if (!doc.encryptionKey) {

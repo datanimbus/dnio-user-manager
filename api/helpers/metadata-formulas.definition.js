@@ -21,6 +21,9 @@ var definition = {
 			}
 		}]
 	},
+	'code': {
+		'type': 'String'
+	},
 	'_metadata': {
 		'type': {
 			'version': {

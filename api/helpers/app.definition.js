@@ -25,6 +25,9 @@ var definition = {
 			}
 		}
 	},
+	'encryptionKey': {
+		'type': 'String'
+	},
 	'appCenterStyle': {
 		'theme': {
 			'type': 'String',

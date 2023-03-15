@@ -97,7 +97,7 @@ router.put('/:app/group/:id', GroupController.update);
 router.delete('/:app/group/:id', GroupController.destroy);
 router.get('/:app/group/:id/:usrType/count', UserController.UserInGroupCount);
 router.get('/:app/group/:id/:usrType', UserController.UserInGroup);
-router.get('/:app/keys', KeyController.GetKeysOfApp);
+router.get('/:app/keys', AppController.sendEncryptionKey);
 
 router.get('/:app/connector/utils/count', ConnectorController.count);
 router.get('/:app/connector', ConnectorController.index);

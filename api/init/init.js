@@ -136,20 +136,34 @@ async function createNSifNotExist(ns) {
 
 async function createSecurityKeys() {
 	try {
-		const keysModel = mongoose.model('keys');
+		// const keysModel = mongoose.model('keys');
 		logger.info('Calling security model to create keys of app');
-		const apps = await mongoose.model('app').find({}).lean();
+		const apps = await mongoose.model('app').find({});
 		const promises = apps.map(async (doc) => {
 			try {
-				let body = { app: doc._id };
-				let keyDoc = await keysModel.findOne({ app: doc._id }).lean();
-				if (keyDoc) {
-					logger.debug('Security keys exists for app : ', doc._id);
-					return;
+				if (!doc.encryptionKey) {
+					// generate random key and encrypt using global enc key
+					// let randomString = "";
+					// const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+					// for (let i = 0; i < len; i++) {
+					// 	randomString += possible.charAt(Math.floor(Math.random() * possible.length));
+					// }
+
+					// const Key = cryptUtils.encrypt(randomString, config.encryptionKey);
+
+					// doc.encryptionKey = Key;
+
+					return doc.save();
 				}
-				logger.debug('Creating Security keys for app : ', doc._id);
-				keyDoc = new keysModel(body);
-				return keyDoc.save();
+				// let body = { app: doc._id };
+				// let keyDoc = await keysModel.findOne({ app: doc._id }).lean();
+				// if (keyDoc) {
+				// 	logger.debug('Security keys exists for app : ', doc._id);
+				// 	return;
+				// }
+				// logger.debug('Creating Security keys for app : ', doc._id);
+				// keyDoc = new keysModel(body);
+				// return keyDoc.save();
 			} catch (err) {
 				logger.error(err);
 			}

@@ -162,6 +162,29 @@ schema.post('save', function (doc) {
 });
 
 
+schema.post('save', async function (doc) {
+	let users = doc.users;
+	const model = mongoose.model('group');
+
+	await users.reduce(async (prev, user) => {
+		await prev;
+
+		const permissions = await model.aggregate([
+			{ $match: { users: user } },
+			{ $unwind: "$roles" },
+			{ $group: { _id: "$roles.app", perms: { $addToSet: "$roles.id" } } }
+		]);
+		if (permissions && permissions.length > 0) {
+			let promises = permissions.map(async (element) => {
+				return await cacheUtils.setUserPermissions(user + "_" + element._id, element.perms);
+			});
+			await Promise.all(promises);
+		}
+
+	}, Promise.resolve());
+})
+
+
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.pre('remove', function (next, req) {
 	this._req = req;

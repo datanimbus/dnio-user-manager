@@ -174,10 +174,12 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 };
 
 function handleLoginFailure(res, error) {
-	res.status(400);
-	res.json({
-		'message': error && error.message ? error.message : error
-	});
+	if (!res.headersSent) {
+		res.status(400);
+		res.json({
+			'message': error && error.message ? error.message : error
+		});
+	}
 }
 
 function serverIssues(err, res) {
@@ -745,7 +747,7 @@ function localLogin(req, res) {
 
 function validateLdapLogin(ldapUser, done) {
 	logger.trace('Validating ldap user :: ', ldapUser);
-	findActiveUserbyAuthtype(ldapUser.cn, 'ldap')
+	findActiveUserbyAuthtype(ldapUser.uid, 'ldap')
 		.then(dbUser => {
 			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
 			// For first time logging users

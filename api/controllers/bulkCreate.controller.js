@@ -316,7 +316,7 @@ async function startValidation(req, fileData, records) {
 					await importUserToApp(req, item, fileData);
 					await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { message: 'User Imported to App', status: 'Success' } });
 				} else {
-					if (item.data.type == 'local') {
+					if (item.data.type == 'local' || item.data.type == 'ldap') {
 						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Creating New User' } });
 					} else {
 						await crudder.model.findOneAndUpdate({ fileId: fileData._id, 'data.username': item.data.username }, { $set: { duplicate: false, existsInApp: false, existsInPlatform: false, message: 'User doesn\'t Exists in Platform, Importing User from Azure' } });

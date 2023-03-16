@@ -62,7 +62,12 @@ function get(_service) {
 	}
 }
 
-let ldapConfig = process.env.LDAP ? JSON.parse(process.env.LDAP) : {};
+// let ldapConfig = {
+// 	url: process.env['LDAP_URL'],
+// 	bindDN: process.env['LDAP_BIND_DN'],
+// 	bindCredentials: process.env['LDAP_BIND_CREDENTIALS'],
+// 	searchBase: process.env['LDAP_SEARCH_BASE'],
+// };
 const azureConfig = {
 	clientId: process.env['AZURE_AD_CLIENT_ID'],
 	clientSecret: process.env['AZURE_AD_CLIENT_SECRET'],
@@ -162,18 +167,18 @@ module.exports = {
 	},
 	ldapDetails: {
 		ldapServerDetails: {
-			'url': ldapConfig['SERVER_URL'],
-			'bindDN': ldapConfig['BIND_DN'],
-			'bindCredentials': ldapConfig['BIND_PASSWORD'],
-			'searchBase': ldapConfig['BASE_DN'],
-			'searchFilter': ldapConfig['USER_ID_ATTRIBUTE'] ? `(${ldapConfig['USER_ID_ATTRIBUTE']}={{username}})` : '(cn={{username}})',
+			'url': process.env['LDAP_SERVER_URL'],
+			'adminDN': process.env['LDAP_BIND_DN'],
+			'bindCredentials': process.env['LDAP_BIND_PASSWORD'],
+			'searchBase': process.env['LDAP_BASE_DN'],
+			'searchFilter': process.env['LDAP_USER_ID_ATTRIBUTE'] ? `(${process.env['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})',
 		},
 		mapping: {
-			username: ldapConfig['USER_ID_ATTRIBUTE'] ? ldapConfig['USER_ID_ATTRIBUTE'] : 'cn',
-			name: ldapConfig['USER_NAME_ATTRIBUTE'] ? ldapConfig['USER_NAME_ATTRIBUTE'] : 'sn',
-			email: ldapConfig['USER_EMAIL_ATTRIBUTE'] ? ldapConfig['USER_EMAIL_ATTRIBUTE'] : 'mail'
+			username: process.env['LDAP_USER_ID_ATTRIBUTE'] ? process.env['LDAP_USER_ID_ATTRIBUTE'] : 'cn',
+			name: process.env['LDAP_USER_NAME_ATTRIBUTE'] ? process.env['LDAP_USER_NAME_ATTRIBUTE'] : 'sn',
+			email: process.env['LDAP_USER_EMAIL_ATTRIBUTE'] ? process.env['LDAP_USER_EMAIL_ATTRIBUTE'] : 'mail'
 		},
-		baseFilter: ldapConfig['BASE_FILTER']
+		baseFilter: process.env['LDAP_BASE_FILTER']
 	},
 	azurePassportConfig: azurePassportConfig,
 	azureConfig: azureConfig,

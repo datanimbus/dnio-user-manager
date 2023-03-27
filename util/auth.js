@@ -360,6 +360,13 @@ function canAccessPath(req) {
 	if (compareURL('/rbac/{app}/connector/utils/availableConnectors', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		return true;
 	}
+	if (compareURL('/rbac/{app}/connector/utils/test', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/{id}/utils/fetchTables', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+
 	if (compareURL('/rbac/{app}/connector', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		if ((req.method === 'POST')) {
 			if (_.intersectionWith(req.user.appPermissions, ['PMCON'], comparator).length > 0) {

@@ -14,7 +14,7 @@ const loggerName = (process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETE
 
 const logger = log4js.getLogger(loggerName);
 const bluebird = require('bluebird');
-const { MongoClient } = require('mongodb');
+// const { MongoClient } = require('mongodb');
 const mongoose = require('mongoose');
 const passport = require('passport');
 var cookieParser = require('cookie-parser');
@@ -77,27 +77,32 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 (async () => {
 	try {
 		await mongoose.connect(mongoUrl, conf.mongoOptions);
-		logger.info(`Connected to Author DB`);
+		logger.info('Connected to Author DB');
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+		logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
+		logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
+		await mongoose.createConnection(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions);
+		global.mongoConnection = mongoose.connections[1];
+		logger.info('Connected to Appcenter DB');
+		await mongoUtil.setIsTransactionAllowed();
 	} catch (err) {
 		logger.error(err);
 	}
 })();
 
 
-logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
-logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
 
-MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
-	if (error) logger.error(error.message);
-	if (db) {
-		global.mongoConnection = db;
-		logger.info('Connected to Appcenter DB');
-		await mongoUtil.setIsTransactionAllowed();
-	}
-});
+
+// MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
+// 	if (error) logger.error(error.message);
+// 	if (db) {
+// 		global.mongoConnection = db;
+// 		logger.info('Connected to Appcenter DB');
+// 		await mongoUtil.setIsTransactionAllowed();
+// 	}
+// });
 
 cacheUtil.init();
 globalCache.init();

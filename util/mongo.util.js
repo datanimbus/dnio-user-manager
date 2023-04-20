@@ -3,7 +3,7 @@ const logger = global.logger;
 async function getMongoDbVersion() {
 	try {
 		if (global.mongoDbVersion) return Promise.resolve(global.mongoDbVersion);
-		let mongoDbVersion = (await global.mongoConnection.db().admin().serverInfo()).version;
+		let mongoDbVersion = (await global.mongoConnection.db.admin().serverInfo()).version;
 		logger.info(`Appcenter MongoDB version - ${mongoDbVersion}`);
 		global.mongoDbVersion = mongoDbVersion;
 		return mongoDbVersion;
@@ -16,7 +16,7 @@ async function getMongoDbVersion() {
 async function setIsTransactionAllowed() {
 	try {
 		global.isTransactionAllowed = false;
-		let replicaSetStatus = await global.mongoConnection.db().admin().command({ 'replSetGetStatus': 1 });
+		let replicaSetStatus = await global.mongoConnection.db.admin().command({ 'replSetGetStatus': 1 });
 		logger.trace('Appcenter Replica Status :: ', replicaSetStatus);
 		if (replicaSetStatus) {
 			let mongoDbVersion = await getMongoDbVersion();

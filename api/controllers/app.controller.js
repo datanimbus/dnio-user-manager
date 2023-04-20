@@ -196,8 +196,8 @@ schema.pre('save', function (next) {
 
 schema.pre('save', function (next) {
 	if (!this.encryptionKey) {
-		let randomString = "";
-		const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		let randomString = '';
+		const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 		for (let i = 0; i < 16; i++) {
 			randomString += possible.charAt(Math.floor(Math.random() * possible.length));
 		}
@@ -513,7 +513,7 @@ e.sendEncryptionKey = async (req, res) => {
 		logger.error(err);
 		res.status(500).json({ message: err.message });
 	}
-}
+};
 
 
 e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
@@ -548,8 +548,8 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 				.then(_users => {
 					let promises = _users.map(_usr => {
 						if (_usr.accessControl.apps && _usr.accessControl.apps.length > 0) {
-							_usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app)
-						};
+							_usr.accessControl.apps = _usr.accessControl.apps.filter(_a => _a._id != app);
+						}
 						// let model = UserModel;
 						// let doc = new model(_usr);
 						_usr.markModified('accessControl.apps');

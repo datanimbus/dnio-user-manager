@@ -115,19 +115,6 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
 
-app.use(async (req, res, next) => {
-	let tempUrlSegment = req.path.split('/').filter(_d => _d != '');
-	let error;
-	tempUrlSegment.map(e => { 
-		if(e.search(/[&\/\\#, +()$~%.'":*?<>{}]/g) > -1) {
-			error = 'Path cannot contain special characters';
-		}
-	});
-	if (error) {
-		next(new Error(error));
-	}
-	next();
-});
 
 require('./config/passport')(passport);
 app.use(passport.initialize());

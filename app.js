@@ -115,6 +115,7 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
 
+
 require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(require('./util/auth'));

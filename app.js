@@ -128,6 +128,23 @@ app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, '
 
 app.use('/rbac', require('./api/controllers/controller'));
 
+app.use(function (error, req, res, next) {
+	if (error) {
+		logger.error(error);
+		if (!res.headersSent) {
+			let statusCode = error.statusCode || 500;
+			if (error.message.includes('APP_NAME_ERROR')) {
+				statusCode = 400;
+			} 
+			res.status(statusCode).json({
+				message: error.message
+			});
+		}
+	} else {
+		next();
+	}
+});
+
 const port = process.env.PORT || 10004;
 const server = app.listen(port, (err) => {
 	if (!err) {

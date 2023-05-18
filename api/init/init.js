@@ -1,28 +1,27 @@
 'use strict';
 
-// const request = require('request');
-const mongoose = require('mongoose');
 const _ = require('lodash');
+const mongoose = require('mongoose');
+
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
 
 const config = require('../../config/config');
-// const adUtils = require('../utils/azure.ad.utils');
 
 const logger = global.logger;
 const azureConfig = config.azureConfig;
-
-// let _ = require('lodash');
-// let validateAzureCredentials = require('../helpers/util/azureAd.util').validateAzureCredentials;
-// let validateLdapCredentials = require('../helpers/util/ldap.util').validateLdapCredentials;
 let release = process.env.RELEASE;
+
 
 async function updateExistingAppConnectors() {
 	try {
-		logger.info(`=== Updating existing apps with default connectors ===`);
+		logger.info('=== Updating existing apps with default connectors ===');
+
 		const connectorsModel = mongoose.model('config.connectors');
-		const apps = await mongoose.model('app').find({ "connectors": { "$exists": false } }).lean();
+		const apps = await mongoose.model('app').find({ 'connectors': { '$exists': false } }).lean();
+		
 		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
 		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
+
 		const promises = apps.map(async (doc) => {
 			try {
 				logger.info(`Processing App :: ${doc._id}`);
@@ -35,7 +34,7 @@ async function updateExistingAppConnectors() {
 					};
 				}
 
-				let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ["Default DB Connector", "Default File Connector"] } }).lean();
+				let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ['Default DB Connector', 'Default File Connector'] } }).lean();
 				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
 				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
 
@@ -100,18 +99,64 @@ async function updateExistingAppConnectors() {
 						doc.connectors.file._id = fileConnector?._id;
 					}
 				}
-				await mongoose.model('app').updateOne({ "_id": doc._id }, { "$set": doc });
+				await mongoose.model('app').updateOne({ '_id': doc._id }, { '$set': doc });
 				logger.info(`Updated app :: ${doc._id} :: with connectors`);
 			} catch (err) {
 				logger.error(err);
 			}
 		});
 		await Promise.all(promises);
-		logger.info(`Updated all apps with default connectors`);
+		logger.info('=== Updated all apps with default connectors ===');
 	} catch (err) {
 		logger.error(err.message);
 	}
 }
+
+
+async function updateExistingServiceConnectors() {
+	try {
+		logger.info('=== Updating existing services with default connectors ===');
+		
+		const appModel = mongoose.model('app');
+		const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
+		let services = await db.collection('services').find({ 'status': { '$nin': [ 'Draft' ] }, 'connectors': { '$exists': false } }).toArray();
+		
+		logger.info(`Total no. of services without connectors :: ${services.length}`);
+		logger.trace(`Services :: ${JSON.stringify(services)}`);
+
+		let apps = services.map(e => e.app);
+		apps = _.uniq(apps);
+		let appsList = [];
+
+		let promises = await apps.map(async e => {
+			let app = await appModel.findById(e, {'connectors': 1}).lean();
+			appsList.push(app);
+		});
+		await Promise.all(promises);
+		
+		promises = services.map(async (doc) => {
+			try {
+				logger.debug(`Processing Service :: ${doc._id} :: app :: ${doc.app}`);
+				logger.trace(`Processing Service :: ${JSON.stringify(doc)}`);
+
+				let app = _.find(appsList, a => a._id == doc.app);
+
+				logger.debug(`Default connectors for the app :: ${JSON.stringify(app)}`);
+
+				doc.connectors = app.connectors;
+
+				await db.collection('services').updateOne({ '_id': doc._id }, { '$set': doc });
+			} catch(err) {
+				logger.error(err);
+			}
+		});
+		await Promise.all(promises);
+		logger.info('=== Updated existing services with default connectors ===');
+	} catch(err) {
+		logger.error(err);
+	}
+}
+
 
 async function createNSifNotExist(ns) {
 	try {
@@ -133,6 +178,7 @@ async function createNSifNotExist(ns) {
 		logger.error(err.message);
 	}
 }
+
 
 async function createSecurityKeys() {
 	try {
@@ -175,6 +221,7 @@ async function createSecurityKeys() {
 	}
 }
 
+
 async function createNS() {
 	try {
 		let dataStackNS = config.dataStackNS;
@@ -192,13 +239,16 @@ async function createNS() {
 	}
 }
 
+
 function checkDependency() {
 	return Promise.resolve();
 }
 
+
 function removeAuthMode(authMode) {
 	config.RBAC_USER_AUTH_MODES = config.RBAC_USER_AUTH_MODES.filter(mode => mode != authMode);
 }
+
 
 async function checkAzureDependencies() {
 	try {
@@ -234,6 +284,7 @@ async function checkAzureDependencies() {
 	}
 }
 
+
 async function validateAuthModes() {
 	const authModes = config.RBAC_USER_AUTH_MODES;
 	logger.info('validating auth modes :: ', authModes);
@@ -260,8 +311,8 @@ async function validateAuthModes() {
 			removeAuthMode(curr, null);
 		}
 	}, Promise.resolve());
-
 }
+
 
 async function createIndexForSession() {
 	const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
@@ -281,13 +332,16 @@ async function createIndexForSession() {
 	}
 }
 
+
 function init() {
 	return checkDependency()
 		.then(() => createNS())
 		.then(() => updateExistingAppConnectors())
+		.then(() => updateExistingServiceConnectors())
 		.then(() => createSecurityKeys())
 		.then(() => validateAuthModes())
 		.then(() => createIndexForSession())
 }
+
 
 module.exports = init;

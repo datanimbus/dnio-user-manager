@@ -1665,6 +1665,8 @@ function customUpdate(req, res) {
 			return updated.save(req);
 		})
 		.then(() => {
+			delete updated._doc.password;
+			delete updated._doc.salt;
 			publishUserOrBotUpdates(isBot, updated, oldValues, req);
 			return res.status(200).json(updated);
 		})
@@ -2303,6 +2305,9 @@ function createUserinGroups(req, res) {
 			message: authType + ' auth mode is not supported.'
 		});
 	}
+	if (!req.user.isSuperAdmin && user.isSuperAdmin) {
+		return res.status(400).json({ message: 'You can\'t create a superAdmin user' });
+	} 
 	if (user && user.bot) {
 		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;

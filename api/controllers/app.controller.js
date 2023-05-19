@@ -822,13 +822,37 @@ e.customAppIndex = (_req, _res) => {
 		});
 };
 
+e.showApp = (req, res) => {
+	logger.debug('Show App called');
+	let app = req.params.id;
+
+	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
+		return crudder.show(req, res);
+	} else {
+		res.status(400).json({ message: 'You don\'t have permission to view this app' });
+	}
+};
+
+e.updateApp = (req, res) => {
+	logger.debug('Update App called');
+	let app = req.params.id;
+
+	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
+		return crudder.update(req, res);
+	} else {
+		res.status(400).json({ message: 'You don\'t have permission to view this app' });
+	}
+};
+
 module.exports = {
 	init: e.init,
-	create: crudder.create,
 	index: e.customAppIndex,
 	show: crudder.show,
-	destroy: e.customDestroy,
+	create: crudder.create,
 	update: crudder.update,
+	showApp: e.showApp,
+	updateApp: e.updateApp,
+	destroy: e.customDestroy,
 	removeUserFromApp: e.removeUserFromApp,
 	removeBotFromApp: e.removeBotFromApp,
 	removeUserBotFromApp: e.removeUserBotFromApp,

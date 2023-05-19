@@ -1647,9 +1647,6 @@ function customUpdate(req, res) {
 			message: 'Username cannot be changed.'
 		});
 	}
-	if (req.body.user.isSuperAdmin && !req.user.isSuperAdmin) {
-		return res.status(400).json({ message: 'You can\'t make the user superAdmin.' });
-	}
 	return crudder.model.findOne({
 		'_id': id,
 		'_metadata.deleted': false
@@ -1668,6 +1665,8 @@ function customUpdate(req, res) {
 			return updated.save(req);
 		})
 		.then(() => {
+			delete updated._doc.password;
+			delete updated._doc.salt;
 			publishUserOrBotUpdates(isBot, updated, oldValues, req);
 			return res.status(200).json(updated);
 		})

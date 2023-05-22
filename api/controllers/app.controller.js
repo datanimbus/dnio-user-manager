@@ -823,9 +823,13 @@ e.customAppIndex = (_req, _res) => {
 };
 
 e.showApp = (req, res) => {
-	logger.debug('Show App called');
 	let app = req.params.id;
 
+	logger.info(`Fetching App details :: ${app}`);
+	logger.debug(`User fetching app details :: ${req.user._id}`);
+	logger.debug(`${req.user._id} :: Is Super Admin? :: ${req.user.isSuperAdmin}`);
+	logger.debug(`${req.user._id} :: app permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
+	
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
 		return crudder.show(req, res);
 	} else {
@@ -834,8 +838,12 @@ e.showApp = (req, res) => {
 };
 
 e.updateApp = (req, res) => {
-	logger.debug('Update App called');
 	let app = req.params.id;
+
+	logger.info(`Updating App details :: ${app}`);
+	logger.debug(`User updating app details :: ${req.user._id}`);
+	logger.debug(`${req.user._id} :: Is Super Admin? :: ${req.user.isSuperAdmin}`);
+	logger.debug(`${req.user._id} :: App permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
 
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
 		return crudder.update(req, res);

@@ -3,7 +3,6 @@
 
 'use strict';
 //controllers
-const KeyController = require('./keys.controller');
 const UserController = require('./user.controller.js');
 const AppController = require('./app.controller.js');
 const PerferencesController = require('./preferences.controller.js');
@@ -124,8 +123,8 @@ router.put('/data/filter/:id', FilterController.update);
 router.delete('/data/filter/:id', FilterController.destroy);
 router.get('/data/config', ConfigController.index);
 router.get('/data/config/:id', ConfigController.show);
-router.get('/data/app/:id', AppController.show);
-router.put('/data/app/:id', AppController.update);
+router.get('/data/app/:id', AppController.showApp);
+router.put('/data/app/:id', AppController.updateApp);
 router.get('/data/app', AppController.index);
 router.get('/auth/authType/:id', UserController.authType);
 router.post('/auth/login', UserController.localLogin);

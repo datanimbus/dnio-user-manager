@@ -1621,6 +1621,24 @@ function customIndex(_req, _res) {
 	return crudder.index(_req, _res);
 }
 
+function customShow(_req, _res) {
+	let omitKeys = ['-salt', '-password'];
+	let select = _req.query.select ? _req.query.select.split(',') : [];
+	let _idIndex = select.indexOf('-_id');
+	if (_idIndex > -1) select.splice(_idIndex, 1);
+	if (select.indexOf('password') > -1) select.splice(select.indexOf('password'), 1);
+	if (select.indexOf('salt') > -1) select.splice(select.indexOf('salt'), 1);
+	if (select.length == 0) select = select.concat(omitKeys);
+	_idIndex > -1 ? select.push('-_id') : null;
+	select = select.join(',');
+	_req.query.select = select;
+	// let apps = _req.params.apps;
+	// if (apps) {
+	// 	return modifyFilter(_req).then(() => crudder.index(_req, _res));
+	// }
+	return crudder.show(_req, _res);
+}
+
 function customCount(_req, _res) {
 	let apps = _req.params.apps;
 	if (apps) {
@@ -1705,7 +1723,7 @@ function customizer(objValue, srcValue) {
 	}
 }
 
-function customCreate(req, res) {
+async function customCreate(req, res) {
 	req.body._id = (!req.body._id && req.body.bot) ? cacheUtil.uuid() : req.body._id;
 	let authType = req.body.auth && req.body.auth.authType ? req.body.auth.authType : 'local';
 	if (!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
@@ -1723,7 +1741,13 @@ function customCreate(req, res) {
 	let password = req.body.password;
 	let result = checkPassword(password);
 	if (result.success) {
-		crudder.create(req, res);
+		let doc = await crudder.model(req.body);
+		let user = await doc.save(req);
+		
+		delete user._doc.password;
+		delete user._doc.salt;
+
+		return res.status(200).json(user);
 	} else {
 		return res.status(400).json({
 			message: result.message
@@ -3291,6 +3315,17 @@ function modifyFilterForApp(req, isBot) {
 }
 
 function userInApp(req, res) {
+	let omitKeys = ['-salt', '-password'];
+	let select = req.query.select ? req.query.select.split(',') : [];
+	let _idIndex = select.indexOf('-_id');
+	if (_idIndex > -1) select.splice(_idIndex, 1);
+	if (select.indexOf('password') > -1) select.splice(select.indexOf('password'), 1);
+	if (select.indexOf('salt') > -1) select.splice(select.indexOf('salt'), 1);
+	if (select.length == 0) select = select.concat(omitKeys);
+	_idIndex > -1 ? select.push('-_id') : null;
+	select = select.join(',');
+	req.query.select = select;
+
 	modifyFilterForApp(req, false)
 		.then(() => {
 			crudder.index(req, res);
@@ -3304,6 +3339,17 @@ function userInApp(req, res) {
 }
 
 function userInAppShow(req, res) {
+	let omitKeys = ['-salt', '-password'];
+	let select = req.query.select ? req.query.select.split(',') : [];
+	let _idIndex = select.indexOf('-_id');
+	if (_idIndex > -1) select.splice(_idIndex, 1);
+	if (select.indexOf('password') > -1) select.splice(select.indexOf('password'), 1);
+	if (select.indexOf('salt') > -1) select.splice(select.indexOf('salt'), 1);
+	if (select.length == 0) select = select.concat(omitKeys);
+	_idIndex > -1 ? select.push('-_id') : null;
+	select = select.join(',');
+	req.query.select = select;
+	
 	const app = req.params.app.trim();
 	const userId = req.params.id.trim();
 	mongoose.model('group').find({ app: app, users: userId }).lean().then(groups => {
@@ -3712,7 +3758,7 @@ module.exports = {
 	create: customCreate,
 	authType: authType,
 	index: customIndex,
-	show: crudder.show,
+	show: customShow,
 	destroy: customDestroy,
 	update: customUpdate,
 	count: customCount, //crudder.count,

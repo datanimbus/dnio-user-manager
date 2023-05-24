@@ -3,6 +3,7 @@
 
 'use strict';
 //controllers
+const KeyController = require('./keys.controller');
 const UserController = require('./user.controller.js');
 const AppController = require('./app.controller.js');
 const PerferencesController = require('./preferences.controller.js');

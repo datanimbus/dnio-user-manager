@@ -1101,51 +1101,61 @@ function updatePassword(request, response) {
 		});
 }
 
-function resetPassword(req, res) {
+async function resetPassword(req, res) {
 	var credentials = req.body;
 	let userDoc = null;
 	let id = req.params.id;
+	let app = req.params.app;
 	if (credentials.password == credentials.cpassword) {
 		let result = checkPassword(credentials.password);
 		if (result.success) {
 			let salt = new Date().toJSON();
 			let password = crypto.createHash('md5').update(credentials.password + salt).digest('hex');
-			crudder.model.findOne({
-				'_id': id
-			})
-				.then(doc => {
-					if (doc) {
-						userDoc = doc;
-						doc.password = password;
-						doc.salt = salt;
-						return doc.save(req);
-					} else {
-						res.status(400).send({
-							message: 'User not valid.'
-						});
-						throw new Error('User not valid');
-					}
-				})
-				.then(() => {
-					userLog.resetPassword(JSON.parse(JSON.stringify(userDoc)), req, res);
-				})
-				.then(() => {
-					if (res.status(200)) {
-						closeAllSessionForUser(req, res);
+			
+			let groups = await mongoose.model('group').find({'app': app, 'users': id}).lean();
 
-						return res.status(200).send({
-							message: 'Updated Password Successfully.'
-						});
-					}
+			if (req.user.isSuperAdmin || groups.length > 0) {
+				crudder.model.findOne({
+					'_id': id
 				})
-				.catch(err => {
-					logger.error(err);
-					if (!res.headersSent) {
-						return res.status(500).send({
-							message: 'Something went wrong while resetting password! Try again later.'
-						});
-					}
+					.then(doc => {
+						if (doc) {
+							userDoc = doc;
+							doc.password = password;
+							doc.salt = salt;
+							return doc.save(req);
+						} else {
+							res.status(400).send({
+								message: 'User not valid.'
+							});
+							throw new Error('User not valid');
+						}
+					})
+					.then(() => {
+						userLog.resetPassword(JSON.parse(JSON.stringify(userDoc)), req, res);
+					})
+					.then(() => {
+						if (res.status(200)) {
+							closeAllSessionForUser(req, res);
+	
+							return res.status(200).send({
+								message: 'Updated Password Successfully.'
+							});
+						}
+					})
+					.catch(err => {
+						logger.error(err);
+						if (!res.headersSent) {
+							return res.status(500).send({
+								message: 'Something went wrong while resetting password! Try again later.'
+							});
+						}
+					});
+			} else {
+				return res.status(400).json({
+					message: 'You can\'t update password of a user not in your app.'
 				});
+			}
 		} else {
 			return res.status(400).json({
 				message: result.message

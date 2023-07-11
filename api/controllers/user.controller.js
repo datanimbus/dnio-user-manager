@@ -1111,8 +1111,8 @@ async function resetPassword(req, res) {
 		if (result.success) {
 			let salt = new Date().toJSON();
 			let password = crypto.createHash('md5').update(credentials.password + salt).digest('hex');
-			
-			let groups = await mongoose.model('group').find({'app': app, 'users': id}).lean();
+
+			let groups = await mongoose.model('group').find({ 'app': app, 'users': id }).lean();
 
 			if (req.user.isSuperAdmin || groups.length > 0) {
 				crudder.model.findOne({
@@ -1137,7 +1137,7 @@ async function resetPassword(req, res) {
 					.then(() => {
 						if (res.status(200)) {
 							closeAllSessionForUser(req, res);
-	
+
 							return res.status(200).send({
 								message: 'Updated Password Successfully.'
 							});
@@ -1753,7 +1753,7 @@ async function customCreate(req, res) {
 	if (result.success) {
 		let doc = await crudder.model(req.body);
 		let user = await doc.save(req);
-		
+
 		delete user._doc.password;
 		delete user._doc.salt;
 
@@ -2341,7 +2341,7 @@ function createUserinGroups(req, res) {
 	}
 	if (!req.user.isSuperAdmin && user.isSuperAdmin) {
 		return res.status(400).json({ message: 'You can\'t create a superAdmin user' });
-	} 
+	}
 	if (user && user.bot) {
 		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;
@@ -2412,51 +2412,44 @@ function createUserinGroups(req, res) {
 		});
 }
 
-function addUserToGroups(req, res) {
+async function addUserToGroups(req, res) {
 	let usrId = req.params.id;
 	let groups = req.body.groups;
 	let groupDocs = null;
 	let data = null;
-	let app;
-	return mongoose.model('group').find({ _id: { '$in': groups } })
-		.then(_grps => {
-			groupDocs = _grps;
-			let promises = _grps.map(_grp => {
-				app = _grp.app;
-				_grp.users.push(usrId);
-				return _grp.save(req);
+	let app = req.params.app;
+
+	try {
+		let hashGroup = await mongoose.model('group').findOne({ name: '#', app: app }).lean();
+
+		if (hashGroup && _.find(hashGroup.users, e => e == usrId)) {
+
+			let groupsDocs = await mongoose.model('group').find({ _id: { '$in': groups } });
+
+			let promises = groupsDocs.map(grp => {
+				app = grp.app;
+				_.find(grp.users, g => g == usrId) ? null : grp.users.push(usrId);
+				return grp.save(req);
 			});
-			return Promise.all(promises);
-		})
-		.then(async (_d) => {
-			data = _d;
-			const hashGroup = await mongoose.model('group').findOne({ name: '#', app: app });
-			if (hashGroup) {
-				hashGroup.users.push(usrId);
-				return await hashGroup.save(req);
-			}
-			return;
-		})
-		.then(() => {
-			return crudder.model.findOne({
-				_id: usrId
-			});
-		})
-		.then(docs => {
-			return userLog.userAddedInTeam(req, res, docs, groupDocs);
-		})
-		.then(() => {
-			res.json({
+			data = await Promise.all(promises);
+
+			let userDoc = await crudder.model.findOne({ _id: usrId });
+
+			userLog.userAddedInTeam(req, res, userDoc, groupsDocs);
+
+			return res.status(200).json({
 				user: usrId,
 				groups: data.map(_o => _o._id)
 			});
-		})
-		.catch(err => {
-			logger.error(err.message);
-			res.status(500).json({
-				message: err.message
-			});
+		} else {
+			return res.status(404).json({ "message": "User not found in App." })
+		}
+	} catch (err) {
+		logger.error(err.message);
+		res.status(500).json({
+			message: err.message
 		});
+	}
 }
 
 function removeUserFromGroups(req, res) {
@@ -3359,7 +3352,7 @@ function userInAppShow(req, res) {
 	_idIndex > -1 ? select.push('-_id') : null;
 	select = select.join(',');
 	req.query.select = select;
-	
+
 	const app = req.params.app.trim();
 	const userId = req.params.id.trim();
 	mongoose.model('group').find({ app: app, users: userId }).lean().then(groups => {

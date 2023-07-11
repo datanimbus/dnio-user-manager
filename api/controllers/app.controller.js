@@ -201,10 +201,10 @@ schema.pre('save', function (next) {
 		for (let i = 0; i < 16; i++) {
 			randomString += possible.charAt(Math.floor(Math.random() * possible.length));
 		}
-	
+
 		const Key = cryptUtils.encrypt(randomString, config.encryptionKey);
-	
-		this.encryptionKey = Key;	
+
+		this.encryptionKey = Key;
 	}
 	next();
 });
@@ -822,16 +822,18 @@ e.customAppIndex = (_req, _res) => {
 		});
 };
 
-e.showApp = (req, res) => {
+e.showApp = async (req, res) => {
 	let app = req.params.id;
 
 	logger.info(`Fetching App details :: ${app}`);
 	logger.debug(`User fetching app details :: ${req.user._id}`);
 	logger.debug(`${req.user._id} :: Is Super Admin? :: ${req.user.isSuperAdmin}`);
 	logger.debug(`${req.user._id} :: app permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
-	
+
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
-		return crudder.show(req, res);
+		let data = await crudder.model.find({ "_id": app }).lean();
+		delete data[0].encryptionKey;
+		return res.status(200).json(data);
 	} else {
 		res.status(400).json({ message: 'You don\'t have permission to view this app' });
 	}

@@ -86,9 +86,17 @@ function customDestroy(req, res) {
 	// modifyBodyForApp(req);
 	crudder.destroy(req, res);
 }
-function customUpdate(req, res) {
+async function customUpdate(req, res) {
 	// modifyBodyForApp(req);
-	crudder.update(req, res);
+	// crudder.update(req, res);
+	if (req.body.userId !== req.user._id) {
+		return res.status(403).json({ "message": "You don't have permissions for this API"});
+	}
+	let data =  await crudder.model.findOneAndUpdate({ "_id": req.params.id }, req.body).lean();
+	delete data.userId;
+	delete data.value;
+
+	return res.json(data);
 }
 
 

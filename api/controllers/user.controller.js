@@ -2669,15 +2669,15 @@ function editSuperAdmin(req, res) {
 				});
 			}
 		})
-		.then(_grps => {
-			if (_grps) {
-				let promises = _grps.map(_g => {
-					_g.users = _g.users.filter(_u => _u != userId);
-					return _g.save(req);
-				});
-				return Promise.all(promises);
-			}
-		})
+		// .then(_grps => {
+		// 	if (_grps) {
+		// 		let promises = _grps.map(_g => {
+		// 			_g.users = _g.users.filter(_u => _u != userId);
+		// 			return _g.save(req);
+		// 		});
+		// 		return Promise.all(promises);
+		// 	}
+		// })
 		.then(() => {
 			let pr = [];
 			let usrIds = [];

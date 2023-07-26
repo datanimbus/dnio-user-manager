@@ -260,14 +260,33 @@ function modifyBodyForApp(req) {
 	req.body.app = app;
 }
 
-function groupInApp(req, res) {
-	modifyFilterForApp(req);
-	crudder.index(req, res);
+async function groupInApp(req, res) {
+	try {
+		modifyFilterForApp(req);
+		let data =  await crudder.model.find(JSON.parse(req.query.filter), req.query.select, { "count": req.query.count, "page": req.query.page }).lean();
+
+		if (!data) {
+			return res.status(404).json({ message: 'Group not found for id' });
+		}
+	
+		return res.status(200).json(data);
+	} catch (err) {
+		if (!res.headersSent) return res.status(500).json({ "message": err.message || err });
+	}
 }
 
-function groupInAppShow(req, res) {
-	//modifyFilterForApp(req);
-	crudder.show(req, res);
+async function groupInAppShow(req, res) {
+	try {
+		let data =  await crudder.model.find({ _id: req.params.id, app: req.params.app }, req.query.select).lean();
+
+		if (!data || !data[0]) {
+			return res.status(404).json({ message: 'Group not found for id' });
+		}
+	
+		return res.status(200).json(data);
+	} catch (err) {
+		if (!res.headersSent) return res.status(500).json({ "message": err.message || err });
+	}
 }
 function groupInAppCount(req, res) {
 	modifyFilterForApp(req);

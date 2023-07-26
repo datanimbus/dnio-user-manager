@@ -277,9 +277,9 @@ async function groupInApp(req, res) {
 
 async function groupInAppShow(req, res) {
 	try {
-		let data =  await crudder.model.find({ _id: req.params.id, app: req.params.app }, req.query.select).lean();
+		let data =  await crudder.model.findOne({ _id: req.params.id, app: req.params.app }, req.query.select).lean();
 
-		if (!data || !data[0]) {
+		if (!data) {
 			return res.status(404).json({ message: 'Group not found for id' });
 		}
 	

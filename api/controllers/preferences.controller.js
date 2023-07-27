@@ -93,10 +93,11 @@ async function customUpdate(req, res) {
 		return res.status(403).json({ "message": "You don't have permissions for this API"});
 	}
 	let data =  await crudder.model.findOneAndUpdate({ "_id": req.params.id }, req.body).lean();
-	delete data.userId;
-	delete data.value;
-
-	return res.json(data);
+	if (data) {
+		return res.status(200).json(data);
+	} else {
+		return res.status(404).json({ message: 'Preferences not found' });
+	}
 }
 
 

@@ -235,10 +235,17 @@ function customCreate(req, res) {
 	crudder.create(req, res);
 }
 
-function customUpdate(req, res) {
-	delete req.body.app;
+async function customUpdate(req, res) {
+	delete req.body.__v;
+	delete req.body._metadata;
 	logger.debug('Update Group ' + JSON.stringify(req.body));
-	crudder.update(req, res);
+	let data = await crudder.model.findOne({ _id: req.params.id, app: req.params.app });
+
+	if (data) {
+		crudder.update(req, res);
+	} else {
+		return res.status(404).json({ message: 'Group not found.'});
+	}
 }
 
 function modifyFilterForApp(req) {
@@ -263,10 +270,11 @@ function modifyBodyForApp(req) {
 async function groupInApp(req, res) {
 	try {
 		modifyFilterForApp(req);
-		let data =  await crudder.model.find(JSON.parse(req.query.filter), req.query.select, { "count": req.query.count, "page": req.query.page }).lean();
+		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
+		let data =  await crudder.model.find(JSON.parse(req.query.filter), select, { "count": req.query.count, "page": req.query.page }).lean();
 
 		if (!data) {
-			return res.status(404).json({ message: 'Group not found for id' });
+			return res.status(404).json({ message: 'Group not found.' });
 		}
 	
 		return res.status(200).json(data);
@@ -277,10 +285,11 @@ async function groupInApp(req, res) {
 
 async function groupInAppShow(req, res) {
 	try {
-		let data =  await crudder.model.findOne({ _id: req.params.id, app: req.params.app }, req.query.select).lean();
+		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
+		let data =  await crudder.model.findOne({ _id: req.params.id, app: req.params.app }, select).lean();
 
 		if (!data) {
-			return res.status(404).json({ message: 'Group not found for id' });
+			return res.status(404).json({ message: 'Group not found.' });
 		}
 	
 		return res.status(200).json(data);

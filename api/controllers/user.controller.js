@@ -2177,6 +2177,10 @@ function getAllRolesofUser(req, res) {
 	let id = req.params.id;
 	let user = null;
 	let filter = req.query.filter;
+
+	if (req.user._id !== id) {
+		return res.status(400).json({ message: "You can't access roles of another user." })
+	}
 	try {
 		if (filter && typeof filter == 'string') filter = JSON.parse(filter);
 	} catch (err) {
@@ -2425,23 +2429,28 @@ async function addUserToGroups(req, res) {
 
 		if (hashGroup && _.find(hashGroup.users, e => e == usrId) || user.isSuperAdmin) {
 
-			let groupsDocs = await mongoose.model('group').find({ _id: { '$in': groups } });
+			let groupsDocs = await mongoose.model('group').find({ _id: { '$in': groups }, app: app });
 
-			let promises = groupsDocs.map(grp => {
-				app = grp.app;
-				_.find(grp.users, g => g == usrId) ? null : grp.users.push(usrId);
-				return grp.save(req);
-			});
-			data = await Promise.all(promises);
-
-			let userDoc = await crudder.model.findOne({ _id: usrId });
-
-			userLog.userAddedInTeam(req, res, userDoc, groupsDocs);
-
-			return res.status(200).json({
-				user: usrId,
-				groups: data.map(_o => _o._id)
-			});
+			if (groupsDocs && groupsDocs[0]) {
+				let promises = groupsDocs.map(grp => {
+					app = grp.app;
+					_.find(grp.users, g => g == usrId) ? null : grp.users.push(usrId);
+					return grp.save(req);
+				});
+				data = await Promise.all(promises);
+	
+				let userDoc = await crudder.model.findOne({ _id: usrId });
+	
+				userLog.userAddedInTeam(req, res, userDoc, groupsDocs);
+	
+				return res.status(200).json({
+					user: usrId,
+					groups: data.map(_o => _o._id)
+				});
+			} else {
+				return res.status(404).json({ "message": "Group not found in App." })
+			}
+			
 		} else {
 			return res.status(404).json({ "message": "User not found in App." })
 		}
@@ -2775,15 +2784,26 @@ function customDestroy(req, res) {
 async function closeAllSessionForUser(req, res) {
 	try {
 		let userId = req.params.id;
-		const status = await cache.endSession(userId);
-		await cacheUtil.removeUser(`U:${userId}`);
-		logger.debug('Cache remove user');
-		logger.trace(JSON.stringify(status));
-		if (!res.headersSent) {
-			res.json({
-				message: 'All user session closed.'
-			});
+		let app = req.params.app;
+
+		let groups = await mongoose.model('group').find({ 'users': userId }, 'name app').lean();
+
+		if (groups.find(g => g.app == app)) {
+			const status = await cache.endSession(userId);
+			await cacheUtil.removeUser(`U:${userId}`);
+			logger.debug('Cache remove user');
+			logger.trace(JSON.stringify(status));
+			if (!res.headersSent) {
+				res.json({
+					message: 'All user session closed.'
+				});
+			}
+		} else {
+			if (!res.headersSent) {
+				return res.status(404).json({ message: 'User is not present in your app.' })
+			}
 		}
+		
 	} catch (err) {
 		logger.error(err.message);
 		res.status(500).json({

@@ -130,6 +130,7 @@ router.use((req, res, next) => {
 	} else if (req.body.app) {
 		req.locals.app = req.body.app;
 	}
+
 	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
 	if (matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
@@ -139,7 +140,7 @@ router.use((req, res, next) => {
 		}
 
 		if (req.locals.app && params && req.locals.app !== params['{app}']) {
-			return next(new Error("Appname in url and body/filter do not match."));
+			return next(new Error("App in url does not match with one in either body or filter."));
 		}
 
 		if (!req.locals.app && params && params['{app}']) req.locals.app = params['{app}'];
@@ -161,7 +162,6 @@ router.use((req, res, next) => {
 });
 
 router.use((req, res, next) => {
-
 	// Check if path required only authentication checks.
 	if (_.concat(onlyAuthUrls, permittedUrls).some(e => compareURL(e, req.path))) {
 		return next();
@@ -188,7 +188,6 @@ router.use((req, res, next) => {
 		return next(new Error('APP_NAME_ERROR :: App name must consist of alphanumeric characters or \'-\' , and must start and end with an alphanumeric character.'));
 	}
 
-
 	// All these paths required permissions check.
 	if (commonUrls.some(e => compareURL(e, req.path))) {
 		// Pass if user is admin or super admin.
@@ -211,6 +210,7 @@ router.use((req, res, next) => {
 			return next();
 		}
 	}
+
 	res.status(403).json({ message: 'You don\'t have access for this API' });
 	return next(new Error('You don\'t have access for this API'));
 });

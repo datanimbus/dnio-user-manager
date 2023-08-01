@@ -5,8 +5,8 @@ set -e
 TAG=`cat CURRENT_USER`
 
 echo "****************************************************"
-echo "data.stack:user :: Cleaning Up Local Images :: $TAG"
+echo "datanimbus.io.user :: Cleaning Up Local Images :: $TAG"
 echo "****************************************************"
 
 
-docker rmi data.stack.user:$TAG -f
+docker rmi datanimbus.io.user:$TAG -f

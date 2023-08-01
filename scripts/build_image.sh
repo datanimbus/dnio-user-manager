@@ -2,8 +2,8 @@
 set -e
 if [ -f $WORKSPACE/../TOGGLE ]; then
     echo "****************************************************"
-    echo "data.stack.user :: Toggle mode is on, terminating build"
-    echo "data.stack.user :: BUILD CANCLED"
+    echo "datanimbus.io.user :: Toggle mode is on, terminating build"
+    echo "datanimbus.io.user :: BUILD CANCLED"
     echo "****************************************************"
 	exit 0
 fi
@@ -28,8 +28,8 @@ if [ $1 ]; then
 fi
 if [ ! $REL ]; then
     echo "****************************************************"
-    echo "data.stack.user :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
-    echo "data.stack.user :: BUILD FAILED"
+    echo "datanimbus.io.user :: Please Create file DATA_STACK_RELEASE with the releaese at $WORKSPACE or provide it as 1st argument of this script."
+    echo "datanimbus.io.user :: BUILD FAILED"
     echo "****************************************************"
     exit 0
 fi
@@ -42,13 +42,13 @@ if [ $3 ]; then
 fi
 if [ $CICD ]; then
     echo "****************************************************"
-    echo "data.stack.user :: CICI env found"
+    echo "datanimbus.io.user :: CICI env found"
     echo "****************************************************"
     TAG=$TAG"_"$cDate
     if [ ! -f $WORKSPACE/../DATA_STACK_NAMESPACE ]; then
         echo "****************************************************"
-        echo "data.stack.user :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
-        echo "data.stack.user :: BUILD FAILED"
+        echo "datanimbus.io.user :: Please Create file DATA_STACK_NAMESPACE with the namespace at $WORKSPACE"
+        echo "datanimbus.io.user :: BUILD FAILED"
         echo "****************************************************"
         exit 0
     fi
@@ -58,26 +58,26 @@ fi
 sh $WORKSPACE/scripts/prepare_yaml.sh $REL $2
 
 echo "****************************************************"
-echo "data.stack.user :: Using build :: "$TAG
+echo "datanimbus.io.user :: Using build :: "$TAG
 echo "****************************************************"
 
 cd $WORKSPACE
 
 echo "****************************************************"
-echo "data.stack.user :: Adding IMAGE_TAG in Dockerfile :: "$TAG
+echo "datanimbus.io.user :: Adding IMAGE_TAG in Dockerfile :: "$TAG
 echo "****************************************************"
 sed -i.bak s#__image_tag__#$TAG# Dockerfile
 
 if [ -f $WORKSPACE/../CLEAN_BUILD_USER ]; then
     echo "****************************************************"
-    echo "data.stack.user :: Doing a clean build"
+    echo "datanimbus.io.user :: Doing a clean build"
     echo "****************************************************"
     
-    docker build --no-cache -t data.stack.user:$TAG .
+    docker build --no-cache -t datanimbus.io.user:$TAG .
     rm $WORKSPACE/../CLEAN_BUILD_USER
 
     echo "****************************************************"
-    echo "data.stack.user :: Copying deployment files"
+    echo "datanimbus.io.user :: Copying deployment files"
     echo "****************************************************"
 
     if [ $CICD ]; then
@@ -96,26 +96,26 @@ if [ -f $WORKSPACE/../CLEAN_BUILD_USER ]; then
 
 else
     echo "****************************************************"
-    echo "data.stack.user :: Doing a normal build"
+    echo "datanimbus.io.user :: Doing a normal build"
     echo "****************************************************"
-	docker build -t data.stack.user:$TAG .
+	docker build -t datanimbus.io.user:$TAG .
     if [ $CICD ]; then
         if [ $DOCKER_REG ]; then
-            kubectl set image deployment/user user=$DOCKER_REG/data.stack.user:$TAG -n $DATA_STACK_NS --record=true
+            kubectl set image deployment/user user=$DOCKER_REG/datanimbus.io.user:$TAG -n $DATA_STACK_NS --record=true
         else 
-            kubectl set image deployment/user user=data.stack.user:$TAG -n $DATA_STACK_NS --record=true
+            kubectl set image deployment/user user=datanimbus.io.user:$TAG -n $DATA_STACK_NS --record=true
         fi
     fi
 fi
 if [ $DOCKER_REG ]; then
     echo "****************************************************"
-    echo "data.stack.user :: Docker Registry found, pushing image"
+    echo "datanimbus.io.user :: Docker Registry found, pushing image"
     echo "****************************************************"
 
-    docker tag data.stack.user:$TAG $DOCKER_REG/data.stack.user:$TAG
-    docker push $DOCKER_REG/data.stack.user:$TAG
+    docker tag datanimbus.io.user:$TAG $DOCKER_REG/datanimbus.io.user:$TAG
+    docker push $DOCKER_REG/datanimbus.io.user:$TAG
 fi
 echo "****************************************************"
-echo "data.stack.user :: BUILD SUCCESS :: data.stack.user:$TAG"
+echo "datanimbus.io.user :: BUILD SUCCESS :: datanimbus.io.user:$TAG"
 echo "****************************************************"
 echo $TAG > $WORKSPACE/../LATEST_USER

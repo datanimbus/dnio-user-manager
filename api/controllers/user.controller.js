@@ -2427,7 +2427,7 @@ async function addUserToGroups(req, res) {
 		let hashGroup = await mongoose.model('group').findOne({ name: '#', app: app }).lean();
 		let user = await crudder.model.findOne({ _id: usrId }).lean();
 
-		if (hashGroup && _.find(hashGroup.users, e => e == usrId) || user.isSuperAdmin) {
+		if (user && hashGroup && (_.find(hashGroup.users, e => e == usrId) || user.isSuperAdmin)) {
 
 			let groupsDocs = await mongoose.model('group').find({ _id: { '$in': groups }, app: app });
 

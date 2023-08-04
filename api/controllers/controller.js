@@ -45,12 +45,12 @@ router.get('/admin/group/:id', GroupController.show);
 router.put('/admin/group/:id', GroupController.update);
 router.delete('/admin/group/:id', GroupController.destroy);
 
-router.get('/admin/metadata/mapper/formula/count', MetadataController.count);
-router.get('/admin/metadata/mapper/formula', MetadataController.index);
-router.post('/admin/metadata/mapper/formula', MetadataController.create);
-router.get('/admin/metadata/mapper/formula/:id', MetadataController.show);
-router.put('/admin/metadata/mapper/formula/:id', MetadataController.update);
-router.delete('/admin/metadata/mapper/formula/:id', MetadataController.destroy);
+router.get('/:app/metadata/mapper/formula/count', MetadataController.count);
+router.get('/:app/metadata/mapper/formula', MetadataController.index);
+router.post('/:app/metadata/mapper/formula', MetadataController.create);
+router.get('/:app/metadata/mapper/formula/:id', MetadataController.show);
+router.put('/:app/metadata/mapper/formula/:id', MetadataController.update);
+router.delete('/:app/metadata/mapper/formula/:id', MetadataController.destroy);
 
 
 router.get('/:app/user', UserController.userInApp);

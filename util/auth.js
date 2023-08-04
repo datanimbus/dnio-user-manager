@@ -55,10 +55,7 @@ const superAdminOnlyUrls = [
 	'/rbac/admin/user/{id}/superAdmin/{action}',
 	'/rbac/admin/group/count',
 	'/rbac/admin/group',
-	'/rbac/admin/group/{id}',
-	'/rbac/admin/metadata/mapper/formula/count',
-	'/rbac/admin/metadata/mapper/formula',
-	'/rbac/admin/metadata/mapper/formula/{id}'
+	'/rbac/admin/group/{id}'
 ];
 
 const commonUrls = [
@@ -109,6 +106,9 @@ const commonUrls = [
 	'/rbac/{app}/apiKeys/utils/count',
 	'/rbac/{app}/apiKeys',
 	'/rbac/{app}/apiKeys/{id}',
+	'/rbac/{app}/metadata/mapper/formula/:id',
+	'/rbac/{app}/metadata/mapper/formula/',
+	'/rbac/{app}/metadata/mapper/formula/count',
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
@@ -134,7 +134,7 @@ router.use((req, res, next) => {
 	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
 	if (matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
-		
+
 		if (params && params['{app}'] && !params['{app}'].match(/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]+$/)) {
 			return next(new Error('APP_NAME_ERROR :: App name must consist of alphanumeric characters or \'-\' , and must start and end with an alphanumeric character.'));
 		}
@@ -431,6 +431,30 @@ function canAccessPath(req) {
 			}
 		}
 		return true;
+	}
+
+	// Mapper Formulas
+	if (compareURL('/rbac/{app}/metadata/mapper/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'GET')) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	if (compareURL('/rbac/{app}/metadata/mapper/formula/:id', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		if ((req.method === 'GET')) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	if (compareURL('/rbac/{app}/metadata/mapper/formula/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+		if ((req.method === 'GET')) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	return false;

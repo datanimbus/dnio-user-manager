@@ -14,7 +14,7 @@ var options = {
 	collectionName: 'metadata.mapper.formulas'
 };
 
-schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
+schema.index({ name: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
 
 schema.pre('save', utils.counter.getIdGenerator('PREF', 'metadata.mapper.formulas', null, null, 1000));
 
@@ -62,11 +62,11 @@ function customCreate(req, res) {
 	crudder.create(req, res);
 }
 function customIndex(req, res) {
-	modifyFilterForApp(req);
+	// modifyFilterForApp(req);
 	crudder.index(req, res);
 }
 function customShow(req, res) {
-	modifyFilterForApp(req);
+	// modifyFilterForApp(req);
 	crudder.show(req, res);
 }
 function customDestroy(req, res) {

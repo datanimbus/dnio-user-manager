@@ -106,7 +106,7 @@ const commonUrls = [
 	'/rbac/{app}/apiKeys/utils/count',
 	'/rbac/{app}/apiKeys',
 	'/rbac/{app}/apiKeys/{id}',
-	'/rbac/{app}/metadata/mapper/formula/:id',
+	'/rbac/{app}/metadata/mapper/formula/{id}',
 	'/rbac/{app}/metadata/mapper/formula/',
 	'/rbac/{app}/metadata/mapper/formula/count',
 ];
@@ -140,7 +140,7 @@ router.use((req, res, next) => {
 		}
 
 		if (req.locals.app && params && req.locals.app !== params['{app}']) {
-			return next(new Error("App in url does not match with one in either body or filter."));
+			return next(new Error('App in url does not match with one in either body or filter.'));
 		}
 
 		if (!req.locals.app && params && params['{app}']) req.locals.app = params['{app}'];
@@ -201,8 +201,8 @@ router.use((req, res, next) => {
 		}
 
 		if (!req.user.isSuperAdmin && !req.user.allPermissions.find(e => e.app === req.locals.app) && !req.user.apps.includes(req.locals.app)) {
-			res.status(403).json({ "message": "You don't have permissions for this app." });
-			return next(new Error("You don't have permissions for this app."));
+			res.status(403).json({ 'message': 'You don\'t have permissions for this app.' });
+			return next(new Error('You don\'t have permissions for this app.'));
 		}
 
 		// Check if user has permission for the path.

@@ -13,8 +13,9 @@ var options = {
 	logger: logger,
 	collectionName: 'metadata.mapper.formulas'
 };
-schema.index({ name: 1 });
+
 schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
+
 schema.pre('save', utils.counter.getIdGenerator('PREF', 'metadata.mapper.formulas', null, null, 1000));
 
 schema.pre('save', function (next) {

@@ -2438,11 +2438,11 @@ async function addUserToGroups(req, res) {
 					return grp.save(req);
 				});
 				data = await Promise.all(promises);
-	
+
 				let userDoc = await crudder.model.findOne({ _id: usrId });
-	
+
 				userLog.userAddedInTeam(req, res, userDoc, groupsDocs);
-	
+
 				return res.status(200).json({
 					user: usrId,
 					groups: data.map(_o => _o._id)
@@ -2450,7 +2450,6 @@ async function addUserToGroups(req, res) {
 			} else {
 				return res.status(404).json({ "message": "Group not found in App." })
 			}
-			
 		} else {
 			return res.status(404).json({ "message": "User not found in App." })
 		}
@@ -2800,10 +2799,9 @@ async function closeAllSessionForUser(req, res) {
 			}
 		} else {
 			if (!res.headersSent) {
-				return res.status(404).json({ message: 'User is not present in your app.' })
+				return res.status(404).json({ message: 'User is not present in your app or is a Super Admin user.' })
 			}
 		}
-		
 	} catch (err) {
 		logger.error(err.message);
 		res.status(500).json({

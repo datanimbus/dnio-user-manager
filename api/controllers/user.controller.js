@@ -2297,6 +2297,9 @@ function getUserAppList(req, res) {
 	let usrId = req.params.id;
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
+	if (!req.user.isSuperAdmin) {
+		return res.status(403).json({ "message": "You don't have permission for this API." });
+	}
 	if (req.user.isSuperAdmin) {
 		return getAppList(usrId)
 			.then(_apps => {

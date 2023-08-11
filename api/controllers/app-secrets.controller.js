@@ -70,7 +70,10 @@ router.put('/', async function show(req, res) {
 			type: 'Opaque',
 			data: {}
 		};
-		(req.body || []).forEach((item) => {
+		if (!req.body) {
+			req.body = [];
+		}
+		req.body.forEach((item) => {
 			let formattedKey = _.toLower(_.snakeCase(item.key));
 			let formattedValue = Buffer.from(item.value).toString('base64');
 			payload.data[formattedKey] = formattedValue;
@@ -111,7 +114,10 @@ router.post('/', async function update(req, res) {
 			type: 'Opaque',
 			data: {}
 		};
-		(req.body || []).forEach((item) => {
+		if (!req.body) {
+			req.body = [];
+		}
+		req.body.forEach((item) => {
 			let formattedKey = _.toLower(_.snakeCase(item.key));
 			let formattedValue = Buffer.from(item.value).toString('base64');
 			payload.data[formattedKey] = formattedValue;

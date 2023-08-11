@@ -163,7 +163,7 @@ router.delete('/:app/apiKeys/:id', APIKeyController.apiKeyInAppDestroy);
 // router.put('/:app/secrets/:id', SecretsController.update);
 // router.delete('/:app/secrets/:id', SecretsController.destroy);
 
-router.get('/:app/secrets', SecretsController);
+router.use('/:app/secrets', SecretsController);
 
 router.get('/internal/health/live', UserController.health);
 router.get('/internal/health/ready', UserController.readiness);

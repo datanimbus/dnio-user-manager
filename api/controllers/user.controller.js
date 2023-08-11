@@ -2464,37 +2464,46 @@ async function addUserToGroups(req, res) {
 	}
 }
 
-function removeUserFromGroups(req, res) {
+async function removeUserFromGroups(req, res) {
 	let usrId = req.params.id;
+	let app = req.params.app;
 	let groups = req.body.groups;
-	return mongoose.model('group').find({
-		_id: {
-			'$in': groups
-		}
-	})
-		.then(_grps => {
-			let promises = _grps.map(_grp => {
-				//_grp.users.push(usrId);
-				_grp.users = _grp.users.filter(function remove(value) {
-					return value != usrId;
+
+	let hashGroup = await mongoose.model('group').findOne({ name: '#', app: app }).lean();
+	let user = await crudder.model.findOne({ _id: usrId }).lean();
+
+	if (user && hashGroup && (_.find(hashGroup.users, e => e == usrId))) {
+		return mongoose.model('group').find({
+			_id: {
+				'$in': groups
+			}
+		})
+			.then(_grps => {
+				let promises = _grps.map(_grp => {
+					//_grp.users.push(usrId);
+					_grp.users = _grp.users.filter(function remove(value) {
+						return value != usrId;
+					});
+					return _grp.save(req);
 				});
-				return _grp.save(req);
+				return Promise.all(promises);
+			})
+			.then(groupDocs => {
+				userLog.userRemovedFromTeam(req, res, groupDocs, usrId);
+				return res.json({
+					user: usrId,
+					groups: groupDocs.map(_g => _g._id)
+				});
+			})
+			.catch(err => {
+				logger.error(err);
+				res.status(500).json({
+					message: err.message
+				});
 			});
-			return Promise.all(promises);
-		})
-		.then(groupDocs => {
-			userLog.userRemovedFromTeam(req, res, groupDocs, usrId);
-			return res.json({
-				user: usrId,
-				groups: groupDocs.map(_g => _g._id)
-			});
-		})
-		.catch(err => {
-			logger.error(err);
-			res.status(500).json({
-				message: err.message
-			});
-		});
+	} else {
+		return res.status(404).json({ "message": "User not found in app." });
+	}
 }
 
 function editAppAdmin(req, res) {

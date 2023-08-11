@@ -248,6 +248,17 @@ async function customUpdate(req, res) {
 	}
 }
 
+async function customDelete(req, res) {
+	logger.debug('Delete Group ' + JSON.stringify(req.body));
+	let data = await crudder.model.deleteOne({ _id: req.params.id, app: req.params.app });
+
+	if (data.deletedCount > 0) {
+		return res.status(200).json({ message: "Deleted" });
+	} else {
+		return res.status(404).json({ message: 'Group not found'});
+	}
+}
+
 function modifyFilterForApp(req) {
 	let filter = req.query.filter;
 	let app = req.params.app;
@@ -321,7 +332,7 @@ module.exports = {
 	create: customCreate,
 	index: crudder.index,
 	show: crudder.show,
-	destroy: crudder.destroy,
+	destroy: customDelete,
 	update: customUpdate,
 	count: crudder.count,
 	groupInApp,

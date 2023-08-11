@@ -44,6 +44,9 @@ const adminOnlyUrls = [
 	'/rbac/{app}/app/{id}',
 	'/rbac/{app}/app',
 	'/rbac/{app}/app/ipwhitelisting',
+	'/rbac/{app}/secrets',
+	'/rbac/{app}/secrets/utils/count',
+	'/rbac/{app}/secrets/:id',
 ];
 
 const superAdminOnlyUrls = [

@@ -3,7 +3,7 @@
 
 'use strict';
 //controllers
-const KeyController = require('./keys.controller');
+// const KeyController = require('./keys.controller');
 const UserController = require('./user.controller.js');
 const AppController = require('./app.controller.js');
 const PerferencesController = require('./preferences.controller.js');
@@ -15,6 +15,7 @@ const BookmarkController = require('./bookmark.controller.js');
 const ConnectorController = require('./connectors.controller');
 const APIKeyController = require('./api-keys.controller');
 const MetadataController = require('./metadata.controller');
+const SecretsController = require('./app-secrets.controller.js');
 
 
 AppController.init()
@@ -154,6 +155,15 @@ router.get('/:app/apiKeys', APIKeyController.apiKeyInApp);
 router.get('/:app/apiKeys/:id', APIKeyController.apiKeyInAppShow);
 router.put('/:app/apiKeys/:id', APIKeyController.apiKeyInAppUpdate);
 router.delete('/:app/apiKeys/:id', APIKeyController.apiKeyInAppDestroy);
+
+// router.get('/:app/secrets', SecretsController.list);
+// router.post('/:app/secrets', SecretsController.create);
+// router.get('/:app/secrets/utils/count', SecretsController.count);
+// router.get('/:app/secrets/:id', SecretsController.show);
+// router.put('/:app/secrets/:id', SecretsController.update);
+// router.delete('/:app/secrets/:id', SecretsController.destroy);
+
+router.get('/:app/secrets', SecretsController);
 
 router.get('/internal/health/live', UserController.health);
 router.get('/internal/health/ready', UserController.readiness);

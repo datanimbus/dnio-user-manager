@@ -4,7 +4,7 @@ const _ = require('lodash');
 const mongoose = require('mongoose');
 
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
-
+const k8sUtils = require('../utils/k8s.api.utils');
 const config = require('../../config/config');
 
 const logger = global.logger;
@@ -18,7 +18,7 @@ async function updateExistingAppConnectors() {
 
 		const connectorsModel = mongoose.model('config.connectors');
 		const apps = await mongoose.model('app').find({ 'connectors': { '$exists': false } }).lean();
-		
+
 		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
 		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
 
@@ -116,11 +116,11 @@ async function updateExistingAppConnectors() {
 async function updateExistingServiceConnectors() {
 	try {
 		logger.info('=== Updating existing services with default connectors ===');
-		
+
 		const appModel = mongoose.model('app');
 		const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
-		let services = await db.collection('services').find({ 'status': { '$nin': [ 'Draft' ] }, 'connectors': { '$exists': false } }).toArray();
-		
+		let services = await db.collection('services').find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
+
 		logger.info(`Total no. of services without connectors :: ${services.length}`);
 		logger.trace(`Services :: ${JSON.stringify(services)}`);
 
@@ -129,11 +129,11 @@ async function updateExistingServiceConnectors() {
 		let appsList = [];
 
 		let promises = await apps.map(async e => {
-			let app = await appModel.findById(e, {'connectors': 1}).lean();
+			let app = await appModel.findById(e, { 'connectors': 1 }).lean();
 			appsList.push(app);
 		});
 		await Promise.all(promises);
-		
+
 		promises = services.map(async (doc) => {
 			try {
 				logger.debug(`Processing Service :: ${doc._id} :: app :: ${doc.app}`);
@@ -146,13 +146,13 @@ async function updateExistingServiceConnectors() {
 				doc.connectors = app.connectors;
 
 				await db.collection('services').updateOne({ '_id': doc._id }, { '$set': doc });
-			} catch(err) {
+			} catch (err) {
 				logger.error(err);
 			}
 		});
 		await Promise.all(promises);
 		logger.info('=== Updated existing services with default connectors ===');
-	} catch(err) {
+	} catch (err) {
 		logger.error(err);
 	}
 }
@@ -173,6 +173,36 @@ async function createNSifNotExist(ns) {
 			return Error(response.message);
 		}
 		return response;
+	} catch (err) {
+		logger.error('Error creating namespace ' + ns);
+		logger.error(err.message);
+	}
+}
+
+async function createSecretIfNotExist(appName) {
+	try {
+		const secretName = _.toLower(appName);
+		const namespace = _.toLower(config.dataStackNS + '-' + appName);
+		const URL = '/api/v1/namespaces/' + namespace + '/secrets';
+		let resp = await k8sUtils.get(URL + '/' + secretName);
+		if (resp.statusCode == 200) {
+			return { message: 'App Secret Exists' };
+		}
+		const payload = {
+			apiVersion: 'v1',
+			kind: 'Secret',
+			metadata: {
+				name: secretName
+			},
+			type: 'Opaque',
+			data: {}
+		};
+		resp = await k8sUtils.post(URL, payload);
+		if (resp.statusCode == 200) {
+			return { message: 'App Secret Created' };
+		} else {
+			return new Error(resp.body.message);
+		}
 	} catch (err) {
 		logger.error('Error creating namespace ' + ns);
 		logger.error(err.message);
@@ -228,9 +258,11 @@ async function createNS() {
 		if (!(dataStackNS && config.isK8sEnv())) return Promise.resolve();
 		logger.info('Creating namespace if not exist');
 		const apps = await mongoose.model('app').find({}).lean();
-		let promises = apps.map(doc => {
+		let promises = apps.map(async (doc) => {
 			const ns = dataStackNS + '-' + doc._id.toLowerCase().replace(/ /g, '');
-			return createNSifNotExist(ns);
+			await createNSifNotExist(ns);
+			await createSecretIfNotExist(doc._id);
+			return;
 		});
 		await Promise.all(promises);
 		logger.debug('Created Namespaces');

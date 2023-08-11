@@ -70,7 +70,7 @@ router.put('/', async function show(req, res) {
 			type: 'Opaque',
 			data: {}
 		};
-		if (!req.body) {
+		if (!req.body || _.isEmpty(req.body)) {
 			req.body = [];
 		}
 		req.body.forEach((item) => {
@@ -114,7 +114,7 @@ router.post('/', async function update(req, res) {
 			type: 'Opaque',
 			data: {}
 		};
-		if (!req.body) {
+		if (!req.body || _.isEmpty(req.body)) {
 			req.body = [];
 		}
 		req.body.forEach((item) => {

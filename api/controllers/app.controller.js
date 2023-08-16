@@ -336,13 +336,13 @@ schema.post('remove', (_doc) => {
 		.catch(err => {
 			logger.error(err.message);
 		});
-	mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
-		logger.info('Sec Keys Deleted');
-		logger.debug(_d);
-	})
-		.catch(err => {
-			logger.error(err.message);
-		});
+	// mongoose.model('keys').remove({ app: _doc._id }).then(_d => {
+	// 	logger.info('Sec Keys Deleted');
+	// 	logger.debug(_d);
+	// })
+	// 	.catch(err => {
+	// 		logger.error(err.message);
+	// 	});
 	mongoose.model('user').find({ 'accessControl.accessLevel': 'Selected', 'accessControl.apps._id': _doc._id })
 		.then(_users => {
 			let promises = _users.map(_usr => {

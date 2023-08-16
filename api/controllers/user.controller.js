@@ -2472,7 +2472,7 @@ async function removeUserFromGroups(req, res) {
 	let hashGroup = await mongoose.model('group').findOne({ name: '#', app: app }).lean();
 	let user = await crudder.model.findOne({ _id: usrId }).lean();
 
-	if (user && hashGroup && (_.find(hashGroup.users, e => e == usrId))) {
+	if (user && hashGroup && (user.isSuperAdmin || (_.find(hashGroup.users, e => e == usrId)))) {
 		return mongoose.model('group').find({
 			_id: {
 				'$in': groups

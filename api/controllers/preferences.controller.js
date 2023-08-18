@@ -96,7 +96,7 @@ async function customUpdate(req, res) {
 		return res.status(400).json({ "message": "You can't manipulate preferences for another user." })
 	}
 
-	data =  await crudder.model.findOne({ "_id": req.params.id }, req.body).lean();
+	data =  await crudder.model.findOneAndUpdate({ "_id": req.params.id }, req.body).lean();
 	if (data) {
 		return res.status(200).json(data);
 	} else {

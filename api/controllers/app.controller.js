@@ -274,6 +274,32 @@ schema.post('save', function (doc) {
 	}
 });
 
+schema.post('save', async function (doc) {
+	try {
+		const secretName = _.toLower(doc._id);
+		const namespace = _.toLower(config.dataStackNS + '-' + doc._id);
+		const URL = '/api/v1/namespaces/' + namespace + '/secrets';
+		const payload = {
+			apiVersion: 'v1',
+			kind: 'Secret',
+			metadata: {
+				name: secretName
+			},
+			type: 'Opaque',
+			data: {}
+		};
+		resp = await k8sUtils.post(URL, payload);
+		if (resp.statusCode == 200) {
+			return { message: 'App Secret Created' };
+		} else {
+			return new Error(resp.body.message);
+		}
+	} catch (err) {
+		logger.error('Error creating namespace ' + ns);
+		logger.error(err.message);
+	}
+});
+
 function isEqualObjectValue(a, b) {
 	return _.isEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)));
 }

@@ -7,6 +7,7 @@ const schema = MakeSchema(definition);
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
+const k8sUtils = require('../utils/k8s.api.utils');
 let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const appInit = require('../../config/apps');
@@ -276,6 +277,7 @@ schema.post('save', function (doc) {
 
 schema.post('save', async function (doc) {
 	try {
+		logger.info('Creating K8s secrets for app :: ' + doc._id);
 		const secretName = _.toLower(doc._id);
 		const namespace = _.toLower(config.dataStackNS + '-' + doc._id);
 		const URL = '/api/v1/namespaces/' + namespace + '/secrets';
@@ -295,7 +297,7 @@ schema.post('save', async function (doc) {
 			return new Error(resp.body.message);
 		}
 	} catch (err) {
-		logger.error('Error creating namespace ' + ns);
+		logger.error('Error creating app secret ' + doc._id);
 		logger.error(err.message);
 	}
 });

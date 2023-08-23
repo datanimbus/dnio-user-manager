@@ -557,7 +557,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 		.then(_usr => {
 			if (_usr.length != usrIds.length) {
 				let usrNotFound = _.difference(usrIds, _usr.map(_u => _u._id));
-				return res.status(400).json({ message: 'Could not find these ' + isBot ? 'bots ' : 'users ' + usrNotFound });
+				return res.status(400).json({ message: `Could not find these ${isBot ? 'bots' : 'users'} ${usrNotFound}` });
 			}
 			return GroupModel.find({ users: { '$in': usrIds }, app: app })
 				.then(_grps => {
@@ -595,7 +595,7 @@ e.removeUserBotFromApp = (req, res, isBot, usrIdArray) => {
 						let userType = isBot ? 'bot' : 'user';
 						_usr.forEach(user => dataStackUtils.eventsUtil.publishEvent(eventId, userType, req, user));
 						_usr.forEach(user => userLog.removeUser(req, res, JSON.parse(JSON.stringify(user))));
-						res.status(200).json({ message: `Removed ${userType}/s from app` });
+						res.status(200).json({ message: `Removed ${userType}(s) from app` });
 					}
 				});
 		})

@@ -290,7 +290,7 @@ schema.post('save', async function (doc) {
 			type: 'Opaque',
 			data: {}
 		};
-		resp = await k8sUtils.post(URL, payload);
+		let resp = await k8sUtils.post(URL, payload);
 		if (resp.statusCode == 200) {
 			return { message: 'App Secret Created' };
 		} else {
@@ -510,16 +510,15 @@ e.init = () => {
 							})
 							.then((_grp) => {
 								logger.debug(_grp);
-								var body = { app: _c._id };
+								logger.info('Default group created');
+								// var body = { app: _c._id };
 								// return appHook.sendRequest(config.baseUrlSEC + `/app/${_c._id}`, 'post', null, body);
-								const keysModel = mongoose.model('keys');
-								const keyDoc = new keysModel(body);
-								return keyDoc.save();
+								// const keysModel = mongoose.model('keys');
+								// const keyDoc = new keysModel(body);
+								// return keyDoc.save();
 							})
-							.then(() => {
-								logger.info('Security key created');
-							}).catch(err => {
-								logger.error('Security key creation failed', err);
+							.catch(err => {
+								logger.error('Error while creating Namespace or default group ', err);
 							});
 					}, new Promise(_resolve2 => _resolve2()))
 						.then(() => _resolve());

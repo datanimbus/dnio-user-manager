@@ -91,6 +91,9 @@ var definition = {
 	},
 	'connectors': {
 		'type': 'Object'
+	},
+	'npmLibraries': {
+		'type': 'String'
 	}
 };
 module.exports.definition = definition;

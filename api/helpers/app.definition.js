@@ -94,6 +94,12 @@ var definition = {
 	},
 	'npmLibraries': {
 		'type': 'String'
+	},
+	'faasBaseImage': {
+		'type': 'String'
+	},
+	'b2bBaseImage': {
+		'type': 'String'
 	}
 };
 module.exports.definition = definition;

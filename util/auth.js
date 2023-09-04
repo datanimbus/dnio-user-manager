@@ -112,6 +112,9 @@ const commonUrls = [
 	'/rbac/{app}/metadata/mapper/formula/{id}',
 	'/rbac/{app}/metadata/mapper/formula/',
 	'/rbac/{app}/metadata/mapper/formula/count',
+	'/rbac/{app}/formula/{id}',
+	'/rbac/{app}/formula/',
+	'/rbac/{app}/formula/count',
 ];
 
 router.use(AuthCacheMW({ permittedUrls: _.concat(permittedUrls, internalUrls), secret: config.RBAC_JWT_KEY, decodeOnly: true }));
@@ -436,7 +439,7 @@ function canAccessPath(req) {
 		return true;
 	}
 
-	// Mapper Formulas
+	// Mapper Formulas (OLD)
 	if (compareURL('/rbac/{app}/metadata/mapper/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		if ((req.method === 'GET')) {
 			return true;
@@ -453,6 +456,34 @@ function canAccessPath(req) {
 	}
 
 	if (compareURL('/rbac/{app}/metadata/mapper/formula/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+		if ((req.method === 'GET')) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// Mapper Formulas (NEW)
+	if (compareURL('/rbac/{app}/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMFO', 'PVFO'], comparator).length > 0) {
+		if (req.method === 'POST') {
+			if (_.intersectionWith(req.user.appPermissions, ['PMFO'], comparator).length > 0) {
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	if (compareURL('/rbac/{app}/formula/:id', req.path) && _.intersectionWith(req.user.appPermissions, ['PMFO', 'PVFO'], comparator).length > 0) {
+		if (req.method === 'PUT' || req.method === 'DELETE') {
+			if (_.intersectionWith(req.user.appPermissions, ['PMFO'], comparator).length > 0) {
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+
+	if (compareURL('/rbac/{app}/formula/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMFO', 'PVFO'], comparator).length > 0) {
 		if ((req.method === 'GET')) {
 			return true;
 		} else {

@@ -39,51 +39,63 @@ var crudder = new SMCrud(schema, 'metadata.mapper.formulas', options);
 
 function modifyFilterForApp(req) {
 	let filter = req.query.filter;
-	let userId = req.user._id;
+	let app = req.params.app;
 	if (filter && typeof filter === 'string') {
 		filter = JSON.parse(filter);
 	}
 	if (filter && typeof filter === 'object') {
-		filter.userId = userId;
+		filter.app = app;
 	} else {
-		filter = { userId };
+		filter = { app };
 	}
 	req.query.filter = JSON.stringify(filter);
 }
 
-// function modifyBodyForApp(req) {
-// 	let app = req.params.app;
-// 	req.body.app = app;
-// }
+function modifyBodyForApp(req) {
+	let app = req.params.app;
+	req.body.app = app;
+}
 
+function customCount(req, res) {
+	modifyBodyForApp(req);
+	crudder.count(req, res);
+}
 
 function customCreate(req, res) {
-	// modifyBodyForApp(req);
+	modifyBodyForApp(req);
 	crudder.create(req, res);
 }
 function customIndex(req, res) {
-	// modifyFilterForApp(req);
+	modifyFilterForApp(req);
 	crudder.index(req, res);
 }
 function customShow(req, res) {
-	// modifyFilterForApp(req);
+	modifyFilterForApp(req);
 	crudder.show(req, res);
 }
 function customDestroy(req, res) {
-	// modifyBodyForApp(req);
+	modifyBodyForApp(req);
 	crudder.destroy(req, res);
 }
 function customUpdate(req, res) {
-	// modifyBodyForApp(req);
+	modifyBodyForApp(req);
 	crudder.update(req, res);
 }
 
 
 module.exports = {
 	count: crudder.count,
-	create: customCreate,
-	index: customIndex,
-	show: customShow,
-	destroy: customDestroy,
-	update: customUpdate
+	create: crudder.create,
+	index: crudder.index,
+	show: crudder.show,
+	destroy: crudder.destroy,
+	update: crudder.update,
+	app: {
+		count: customCount,
+		create: customCreate,
+		index: customIndex,
+		show: customShow,
+		destroy: customDestroy,
+		update: customUpdate
+	}
 };

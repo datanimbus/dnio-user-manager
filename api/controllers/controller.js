@@ -53,6 +53,13 @@ router.get('/:app/metadata/mapper/formula/:id', MetadataController.show);
 router.put('/:app/metadata/mapper/formula/:id', MetadataController.update);
 router.delete('/:app/metadata/mapper/formula/:id', MetadataController.destroy);
 
+router.get('/:app/formula/count', MetadataController.app.count);
+router.get('/:app/formula', MetadataController.app.index);
+router.post('/:app/formula', MetadataController.app.create);
+router.get('/:app/formula/:id', MetadataController.app.show);
+router.put('/:app/formula/:id', MetadataController.app.update);
+router.delete('/:app/formula/:id', MetadataController.app.destroy);
+
 
 router.get('/:app/user', UserController.userInApp);
 router.post('/:app/user', UserController.createUserinGroups);

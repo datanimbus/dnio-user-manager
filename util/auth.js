@@ -137,7 +137,7 @@ router.use((req, res, next) => {
 		req.locals.app = req.body.app;
 	}
 
-	const matchingPath = commonUrls.find(e => compareURL(e, req.path));
+	let matchingPath = _.concat(commonUrls, adminOnlyUrls).find(e => compareURL(e, req.path));
 	if (matchingPath) {
 		const params = getUrlParams(matchingPath, req.path);
 

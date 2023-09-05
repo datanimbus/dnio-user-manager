@@ -14,9 +14,10 @@ var options = {
 	collectionName: 'metadata.mapper.formulas'
 };
 
-schema.index({ name: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
+schema.index({ name: 1, app: 1 }, { unique: true, name: 'UNIQUE_INDEX', collation: { locale: 'en', strength: 2 } });
+schema.index({ returnType: 1 });
 
-schema.pre('save', utils.counter.getIdGenerator('PREF', 'metadata.mapper.formulas', null, null, 1000));
+schema.pre('save', utils.counter.getIdGenerator('FX', 'metadata.mapper.formulas', null, null, 1000));
 
 schema.pre('save', function (next) {
 	let self = this;

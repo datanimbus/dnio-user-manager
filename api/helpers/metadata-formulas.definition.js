@@ -2,6 +2,9 @@ var definition = {
 	'_id': {
 		'type': 'String',
 	},
+	'app': {
+		'type': 'String'
+	},
 	'forDataType': {
 		'type': 'String'
 	},

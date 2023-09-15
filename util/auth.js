@@ -415,12 +415,12 @@ function canAccessPath(req) {
 		return true;
 	}
 
-	if (compareURL('/rbac/{app}/apiKeys/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/apiKeys/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAK', 'PVAK'], comparator).length > 0) {
 		return true;
 	}
-	if (compareURL('/rbac/{app}/apiKeys', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/apiKeys', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAK', 'PVAK'], comparator).length > 0) {
 		if ((req.method === 'POST')) {
-			if (_.intersectionWith(req.user.appPermissions, ['PMAPI'], comparator).length > 0) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMAK'], comparator).length > 0) {
 				return true;
 			} else {
 				return false;
@@ -428,9 +428,9 @@ function canAccessPath(req) {
 		}
 		return true;
 	}
-	if (compareURL('/rbac/{app}/apiKeys/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/apiKeys/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAK', 'PVAK'], comparator).length > 0) {
 		if ((req.method === 'PUT' || req.method === 'DELETE')) {
-			if (_.intersectionWith(req.user.appPermissions, ['PMAPI'], comparator).length > 0) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMAK'], comparator).length > 0) {
 				return true;
 			} else {
 				return false;
@@ -439,29 +439,29 @@ function canAccessPath(req) {
 		return true;
 	}
 
-	// Mapper Formulas (OLD)
-	if (compareURL('/rbac/{app}/metadata/mapper/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
-		if ((req.method === 'GET')) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	if (compareURL('/rbac/{app}/metadata/mapper/formula/:id', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
-		if ((req.method === 'GET')) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+	// // Mapper Formulas (OLD)
+	// if (compareURL('/rbac/{app}/metadata/mapper/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+	// 	if ((req.method === 'GET')) {
+	// 		return true;
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
+	// if (compareURL('/rbac/{app}/metadata/mapper/formula/:id', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+	// 	if ((req.method === 'GET')) {
+	// 		return true;
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
 
-	if (compareURL('/rbac/{app}/metadata/mapper/formula/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
-		if ((req.method === 'GET')) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+	// if (compareURL('/rbac/{app}/metadata/mapper/formula/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMAPI', 'PVAPI'], comparator).length > 0) {
+	// 	if ((req.method === 'GET')) {
+	// 		return true;
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
 
 	// Mapper Formulas (NEW)
 	if (compareURL('/rbac/{app}/formula', req.path) && _.intersectionWith(req.user.appPermissions, ['PMFO', 'PVFO'], comparator).length > 0) {

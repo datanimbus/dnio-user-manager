@@ -209,5 +209,4 @@ module.exports = {
 	RBAC_USER_LOGIN_FAILURE_THRESHOLD: parseInt(process.env.RBAC_USER_LOGIN_FAILURE_THRESHOLD || 5),
 	RBAC_USER_LOGIN_FAILURE_DURATION: parseInt(process.env.RBAC_USER_LOGIN_FAILURE_DURATION || 600),
 	RBAC_USER_LOGIN_FAILURE_COOLDOWN: parseInt(process.env.RBAC_USER_LOGIN_FAILURE_COOLDOWN || 300),
-	TOKEN_SECRET: process.env.TOKEN_SECRET || 'u?5k167v13w5fhjhuiweuyqi67621gqwdjavnbcvadjhgqyuqagsduyqtw87e187etqiasjdbabnvczmxcnkzn'
 };

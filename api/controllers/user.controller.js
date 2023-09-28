@@ -113,7 +113,6 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 			resObj[_.camelCase('EXPERIMENTAL_FEATURES')] = envConfig.EXPERIMENTAL_FEATURES;
 			resObj[_.camelCase('FQDN')] = process.env.FQDN;
 			resObj['enableSearchIndex'] = envConfig.DS_FUZZY_SEARCH;
-			resObj['verifyDeploymentUser'] = envConfig.VERIFY_DEPLOYMENT_USER;
 			resObj['defaultTimezone'] = envConfig.dataStackDefaultTimezone;
 			resObj['allowedFileExt'] = envConfig.allowedFileExt;
 			resObj['transactionsEnabled'] = global.isTransactionAllowed;

@@ -200,7 +200,6 @@ module.exports = {
 	B2B_FLOW_MAX_CONCURRENT_FILES: parseInt(process.env.B2B_FLOW_MAX_CONCURRENT_FILES || '0'),
 	B2B_ENABLE_TIMEBOUND: parseBoolean(process.env.B2B_ENABLE_TIMEBOUND),
 	B2B_ENABLE_TRUSTED_IP: parseBoolean(process.env.B2B_ENABLE_TRUSTED_IP),
-	VERIFY_DEPLOYMENT_USER: parseBoolean(process.env.VERIFY_DEPLOYMENT_USER),
 	B2B_ENABLE: parseBoolean(process.env.B2B_ENABLE),
 	EXPERIMENTAL_FEATURES: parseBoolean(process.env.EXPERIMENTAL_FEATURES),
 	allowedFileExt,

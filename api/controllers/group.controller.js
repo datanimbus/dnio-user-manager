@@ -282,7 +282,7 @@ async function groupInApp(req, res) {
 	try {
 		modifyFilterForApp(req);
 		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
-		let data =  await crudder.model.find(JSON.parse(req.query.filter), select, { "count": req.query.count, "page": req.query.page }).lean();
+		let data =  await crudder.model.find(JSON.parse(req.query.filter), select, { "count": req.query.count, "page": req.query.page, "sort": req.query.sort }).lean();
 
 		if (!data) {
 			return res.status(404).json({ message: 'Group not found.' });

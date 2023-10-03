@@ -858,7 +858,7 @@ e.showApp = async (req, res) => {
 	logger.debug(`${req.user._id} :: app permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
 
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
-		let data = await crudder.model.find({ "_id": app }).lean();
+		let data = await crudder.model.findOne({ "_id": app }).lean();
 		
 		if (data && data[0]) delete data[0].encryptionKey;
 		return res.status(200).json(data);

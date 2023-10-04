@@ -860,7 +860,7 @@ e.showApp = async (req, res) => {
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
 		let data = await crudder.model.findOne({ "_id": app }).lean();
 		
-		if (data && data[0]) delete data[0].encryptionKey;
+		if (data ) delete data.encryptionKey;
 		return res.status(200).json(data);
 	} else {
 		res.status(400).json({ message: 'You don\'t have permission to view this app' });

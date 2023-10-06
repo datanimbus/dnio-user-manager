@@ -63,6 +63,9 @@ var definition = {
 	'headers': {
 		'type': 'Object'
 	},
+	'maskingPaths': {
+		'type': 'Object'
+	},
 	'serviceVersionValidity': {
 		'type': {
 			'validityValue': Schema.Types.Mixed,

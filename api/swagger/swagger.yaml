@@ -647,6 +647,49 @@ paths:
           description: No results to list with the given parameter set.
         '500':
           description: Internal server error
+  /admin/environmentVariable:
+    x-swagger-router-controller: controller
+    get:
+      description: Retrieve all environment variables
+      operationId: EnvironmentVariableList
+      parameters:
+      - name: authorization
+        in: header
+        type: string
+        description: The JWT token for request validation
+      - name: select
+        in: query
+        type: string
+        description: Comma-separated fields to be displayed
+      responses:
+        '200':
+          description: List of environment variables retrieved successfully
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
+    put:
+      description: Create or Update environment variables
+      operationId: EnvironmentVariableCreateOrUpdate
+      parameters:
+        - name: authorization
+          in: header
+          type: string
+          description: The JWT token for request validation
+        - name: data
+          in: body
+          description: Payload to create or update environment variables
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EnvironmentVariableCreateOrUpdatePayload'
+      responses:
+        '200':
+          description: Environment variables created or updated successfully
+        '400':
+          description: Bad parameters
+        '500':
+          description: Internal server error
   /{app}/user:
     x-swagger-router-controller: controller
     get:
@@ -3223,3 +3266,38 @@ definitions:
         type: string
       desc:
         type: string
+  EnvironmentVariableUpdate:
+    type: object
+    properties:
+      _id:
+        type: string
+        description: The unique identifier of the environment variable
+      label:
+        type: string
+        description: The label of the environment variable
+      category:
+        type: string
+        description: The category of the environment variable
+      value:
+        type: string
+        description: The value of the environment variable
+      type:
+        type: string
+        description: The data type of the environment variable
+      description:
+        type: string
+        description: Description of the environment variable
+      updatedBy:
+        type: string
+        description: The user who last updated the environment variable
+      isActive:
+        type: boolean
+        description: Whether the environment variable is active
+      isEncrypted:
+        type: boolean
+        description: Whether the environment variable is encrypted
+      usedIn:
+        type: string
+          description: The list of modules where environment variable is used
+  3 changes: 2 additions & 1 deletion3  
+app.js

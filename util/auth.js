@@ -58,7 +58,8 @@ const superAdminOnlyUrls = [
 	'/rbac/admin/user/{id}/superAdmin/{action}',
 	'/rbac/admin/group/count',
 	'/rbac/admin/group',
-	'/rbac/admin/group/{id}'
+	'/rbac/admin/group/{id}',
+	'/rbac/admin/environmentVariable'
 ];
 
 const commonUrls = [

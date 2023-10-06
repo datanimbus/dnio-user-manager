@@ -28,6 +28,7 @@ global.logger = logger;
 const conf = require('./config/config.js');
 var mongoUtil = require('./util/mongo.util');
 const globalCache = require('./util/cache');
+const { seedConfigData } = require('./api/helpers/util/env.config/seed.env.config');
 
 logger.info(`RBAC_USER_TO_SINGLE_SESSION :: ${conf.RBAC_USER_TO_SINGLE_SESSION}`);
 logger.info(`RBAC_USER_TOKEN_DURATION :: ${conf.RBAC_USER_TOKEN_DURATION}`);
@@ -114,7 +115,7 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
-
+seedConfigData();
 
 require('./config/passport')(passport);
 app.use(passport.initialize());

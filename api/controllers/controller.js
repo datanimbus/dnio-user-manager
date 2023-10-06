@@ -15,7 +15,7 @@ const BookmarkController = require('./bookmark.controller.js');
 const ConnectorController = require('./connectors.controller');
 const APIKeyController = require('./api-keys.controller');
 const MetadataController = require('./metadata.controller');
-
+const EnvVariableController = require('./env.variable.controller');
 
 AppController.init()
 	.then(() => UserController.init());
@@ -44,6 +44,9 @@ router.post('/admin/group', GroupController.create);
 router.get('/admin/group/:id', GroupController.show);
 router.put('/admin/group/:id', GroupController.update);
 router.delete('/admin/group/:id', GroupController.destroy);
+
+router.get('/admin/environmentVariable', EnvVariableController.index);
+router.put('/admin/environmentVariable', EnvVariableController.environmentVariableCreateOrUpdate);
 
 router.get('/admin/metadata/mapper/formula/count', MetadataController.count);
 router.get('/admin/metadata/mapper/formula', MetadataController.index);

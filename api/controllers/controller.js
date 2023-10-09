@@ -16,7 +16,7 @@ const ConnectorController = require('./connectors.controller');
 const APIKeyController = require('./api-keys.controller');
 const MetadataController = require('./metadata.controller');
 const SecretsController = require('./app-secrets.controller.js');
-
+const EnvVariableController = require('./env.variable.controller');
 
 AppController.init()
 	.then(() => UserController.init());
@@ -45,6 +45,9 @@ router.post('/admin/group', GroupController.create);
 router.get('/admin/group/:id', GroupController.show);
 router.put('/admin/group/:id', GroupController.update);
 router.delete('/admin/group/:id', GroupController.destroy);
+
+router.get('/admin/environmentVariable', EnvVariableController.getEnvironmentVariables);
+router.put('/admin/environmentVariable', EnvVariableController.environmentVariableCreateOrUpdate);
 
 router.get('/:app/metadata/mapper/formula/count', MetadataController.count);
 router.get('/:app/metadata/mapper/formula', MetadataController.index);

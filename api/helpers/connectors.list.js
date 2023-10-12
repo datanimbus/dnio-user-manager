@@ -161,8 +161,8 @@ const data = [
 						value: 'password'
 					},
 					{
-						label: 'Public Key',
-						value: 'publickey'
+						label: 'Private Key',
+						value: 'privateKey'
 					}
 				],
 				required: true
@@ -179,21 +179,21 @@ const data = [
 			},
 			{
 				type: 'String',
-				key: 'publicKey',
-				label: 'SFTP Public Key',
+				key: 'privateKey',
+				label: 'SFTP Private Key',
 				htmlInputType: 'textarea',
 				condition: { 
-					authType: 'publickey'
+					authType: 'privateKey'
 				},
 				encrypted: true
 			},
 			{
 				type: 'String',
 				key: 'password',
-				label: 'SFTP Public Key Passphrase',
+				label: 'SFTP Private Key Passphrase',
 				htmlInputType: 'password',
 				condition: { 
-					authType: 'publickey'
+					authType: 'privateKey'
 				},
 				encrypted: true
 			}

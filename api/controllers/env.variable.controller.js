@@ -39,11 +39,15 @@ async function getEnvironmentVariables(req, res) {
 async function environmentVariableCreateOrUpdate(req, res) {
     try {
         const updates = req.body;
+        const runTimeUpdates = updates.filter(update => update.classification === 'Runtime' );
+        const installationUpdates = updates.filter(update => update.classification === 'Installation');
 
-        for (const update of updates) {
-            const { _id, label, category, value, type, description, updatedBy, isActive, isEncrypted, usedIn } = update;
+        let environmentVariableUpdated = false;
 
-            await crudder.model.updateOne({ _id }, {
+        for (const update of runTimeUpdates) {
+            const { _id, label, category, value, type, description, updatedBy, isActive, isEncrypted, usedIn, classification } = update;
+
+            const result = await crudder.model.updateOne({ _id }, {
                 $set: {
                     label,
                     category,
@@ -53,12 +57,32 @@ async function environmentVariableCreateOrUpdate(req, res) {
                     updatedBy,
                     isActive,
                     isEncrypted,
-                    usedIn
+                    usedIn,
+                    classification
                 }
             }, { upsert: true });
+
+            if (result.modifiedCount > 0 && !environmentVariableUpdated) {
+              environmentVariableUpdated = true;
+            }
         }
 
-        res.status(200).json({ message: 'Environment variables updated successfully' });
+        const response = {};
+
+        // Set the appropriate message based on whether environment variables were updated
+        if (environmentVariableUpdated) {
+          response.message = 'Environment variables updated successfully';
+        } else {
+          response.message = 'Nothing to update'
+        }
+
+        // If there are 'Installation' updates, include a message and the list of IDs that were not updated
+        if (installationUpdates.length > 0) {
+          response.additionalMessage = 'Installation variables cannot be updated via API';
+          response.notUpdatedIds = installationUpdates.map(update => update._id);
+        }
+
+        res.status(200).json(response);
     } catch (err) {
         logger.error('Error while updating the environment variables');
         logger.error(err);

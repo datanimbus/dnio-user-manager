@@ -30,6 +30,9 @@ const definition = {
     },
     'usedIn': {
       'type': 'String'
+    },
+    'classification': {
+      'type': 'String'
     }
   };
 

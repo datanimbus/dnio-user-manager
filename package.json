@@ -21,7 +21,7 @@
     "@appveen/ds-auth-cache": "^1.0.8",
     "@appveen/rest-crud": "^0.0.4",
     "@appveen/swagger-mongoose-crud": "^2.0.1",
-    "@appveen/utils": "^2.1.13",
+    "@appveen/utils": "^2.2.1",
     "@azure/msal-node": "^1.18.0",
     "@fidm/x509": "^1.2.1",
     "@microsoft/microsoft-graph-client": "^3.0.5",

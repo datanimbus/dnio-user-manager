@@ -9,6 +9,7 @@ let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
+const config = require('../../config/config.js');
 
 var options = {
 	logger: logger,
@@ -34,7 +35,7 @@ schema.pre('save', function (next) {
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	next();
 });

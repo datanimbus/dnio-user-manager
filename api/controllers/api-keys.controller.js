@@ -75,7 +75,7 @@ schema.pre('save', function (next, req) {
 	let self = this;
 	this._req = req;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	const headers = {};
 	if (req && req.rawHeaders) {

@@ -20,7 +20,7 @@ const passport = require('passport');
 var cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
-let timeOut = process.env.API_REQUEST_TIMEOUT || 120;
+let timeOut;
 
 global.Promise = bluebird;
 global.logger = logger;
@@ -28,7 +28,7 @@ global.logger = logger;
 const conf = require('./config/config.js');
 var mongoUtil = require('./util/mongo.util');
 const globalCache = require('./util/cache');
-const { seedConfigData } = require('./api/helpers/util/env.var.config/seed.env.config');
+const { fetchEnvironmentVariablesFromDB } = require('./config/config')
 
 logger.info(`RBAC_USER_TO_SINGLE_SESSION :: ${conf.RBAC_USER_TO_SINGLE_SESSION}`);
 logger.info(`RBAC_USER_TOKEN_DURATION :: ${conf.RBAC_USER_TOKEN_DURATION}`);
@@ -38,24 +38,12 @@ logger.info(`RBAC_USER_CLOSE_WINDOW_TO_LOGOUT :: ${conf.RBAC_USER_CLOSE_WINDOW_T
 logger.info(`RBAC_HB_INTERVAL :: ${conf.RBAC_HB_INTERVAL}`);
 logger.info(`RBAC_USER_RELOGIN_ACTION :: ${conf.RBAC_USER_RELOGIN_ACTION}`);
 logger.info(`PRIVATE_FILTER :: ${conf.PRIVATE_FILTER}`);
-logger.info(`DS_FUZZY_SEARCH :: ${conf.DS_FUZZY_SEARCH}`);
 logger.info(`data.stack Default Timezone :: ${conf.dataStackDefaultTimezone}`);
 const cacheUtil = utils.cache;
 
 mongoose.Promise = global.Promise;
 
-let maxJSONSize = process.env.MAX_JSON_SIZE || '100kb';
-logger.info(`Max request JSON size :: ${maxJSONSize}`);
-
-let maxFileSize = process.env.MAX_FILE_SIZE || '5MB';
-logger.info(`Max request file upload size :: ${maxFileSize}`);
-
-app.use(express.json({
-	inflate: true,
-	limit: maxJSONSize,
-	strict: true
-}));
-app.use(cookieParser());
+let maxJSONSize;
 
 // if (conf.debugDB) mongoose.set('debug', conf.mongooseCustomLogger);
 // if (conf.debugDB) Logger.setLevel('debug');
@@ -88,13 +76,25 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		global.mongoConnection = mongoose.connections[1];
 		logger.info('Connected to Appcenter DB');
 		await mongoUtil.setIsTransactionAllowed();
+
+		// After MongoDB is connected, fetch environment variables
+        const envVariables = await fetchEnvironmentVariablesFromDB();
+        timeOut = envVariables.API_REQUEST_TIMEOUT || 120;
+		maxJSONSize = envVariables.MAX_JSON_SIZE || '100kb';
+		logger.info(`Max request JSON size :: ${maxJSONSize}`);
+        logger.info(`DS_FUZZY_SEARCH :: ${envVariables.DS_FUZZY_SEARCH}`);
+        logger.info(`Max request file upload size :: ${envVariables.MAX_FILE_SIZE || '5MB'}`);
 	} catch (err) {
 		logger.error(err);
 	}
 })();
 
-
-
+app.use(express.json({
+	inflate: true,
+	limit: maxJSONSize,
+	strict: true
+}));
+app.use(cookieParser());
 
 // MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
 // 	if (error) logger.error(error.message);
@@ -115,7 +115,6 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
-seedConfigData();
 
 require('./config/passport')(passport);
 app.use(passport.initialize());
@@ -124,6 +123,7 @@ app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));
 
 let dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('./util/queueMgmt');
+
 dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
 app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, 'user.logs'));
 

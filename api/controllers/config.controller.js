@@ -5,6 +5,8 @@ const definition = require('../helpers/config.definition').definition;
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const schema = MakeSchema(definition);
 const logger = global.logger;
+const config = require('../../config/config');
+
 var options = {
 	logger: logger,
 	collectionName: 'odp.config'
@@ -17,7 +19,7 @@ let queryOptions = {
 schema.pre('save', function(next){
 	let self = this;
 	if(self._metadata.version){
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	next();
 });

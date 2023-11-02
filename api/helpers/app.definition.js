@@ -66,6 +66,18 @@ var definition = {
 	'maskingPaths': {
 		'type': 'Object'
 	},
+	'interactionStore': {
+		'type': {
+			'storeType': {
+				'type': 'String',
+				'enum': ['db', 'azureblob', 'awss3'],
+				'default': 'db'
+			},
+			'configuration': {
+				'type': 'Object'
+			}
+		}
+	},
 	'serviceVersionValidity': {
 		'type': {
 			'validityValue': Schema.Types.Mixed,

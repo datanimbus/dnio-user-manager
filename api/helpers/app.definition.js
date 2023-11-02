@@ -66,6 +66,30 @@ var definition = {
 	'maskingPaths': {
 		'type': 'Object'
 	},
+	'interactionStore': {
+		'type': {
+			'retainPolicy': {
+				'retainType': {
+					'type': 'String',
+					'enum': ['count', 'days'],
+					'default': 'days'
+				},
+				'retainValue': {
+					'type': 'Number',
+					'default': -1,
+					'min': -1
+				}
+			},
+			'storeType': {
+				'type': 'String',
+				'enum': ['db', 'azureblob', 'awss3'],
+				'default': 'db'
+			},
+			'configuration': {
+				'type': 'Object'
+			}
+		}
+	},
 	'serviceVersionValidity': {
 		'type': {
 			'validityValue': Schema.Types.Mixed,

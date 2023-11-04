@@ -76,7 +76,7 @@ var definition = {
 				},
 				'retainValue': {
 					'type': 'Number',
-					'default': -1,
+					'default': 10,
 					'min': -1
 				}
 			},

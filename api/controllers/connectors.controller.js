@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const Client = require('ssh2-sftp-client');
 const { default: mongoose } = require('mongoose');
 
 const utils = require('@appveen/utils');
@@ -191,6 +192,19 @@ async function testConnector(req, res) {
 			await crud.connect();
 			await crud.disconnect();
 
+		} else if (payload.type === 'SFTP') {
+			const options = {};
+			options.host = payload.values.host;
+			options.port = payload.values.port;
+			options.username = payload.values.user;
+			if (payload.values.authType == 'password') {
+				options.password = payload.values.password;
+			} else if (payload.values.authType == 'privateKey') {
+				options.privateKey = payload.values.privateKey;
+				options.passphrase = payload.values.passphrase;
+			}
+			let sftp = new Client();
+			await sftp.connect(options);
 		} else {
 			return res.status(400).json({ message: 'Testing not supported for connector type' });
 		}

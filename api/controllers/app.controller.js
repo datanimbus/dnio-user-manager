@@ -22,7 +22,6 @@ const logger = global.logger;
 const client = queueMgmt.client;
 const dataStackNS = config.dataStackNS;
 const blockedAppNames = config.blockedAppNames;
-let _ = require('lodash');
 let release = config.RELEASE;
 const request = require('request');
 let appHook = require('../helpers/util/appHooks');

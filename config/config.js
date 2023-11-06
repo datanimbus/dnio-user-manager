@@ -71,33 +71,33 @@ let envVariables = {};
 let azureConfig = {};
 
 async function fetchEnvironmentVariablesFromDB() {
-    try {
-        envVariables = await dataStackUtils.database.fetchEnvVariables();
-        configureAzure(azureConfig, envVariables);
+	try {
+		envVariables = await dataStackUtils.database.fetchEnvVariables();
+		configureAzure(azureConfig, envVariables);
 
-        return envVariables;
-    } catch (error) {
-        logger.error(error);
-        try {
-            logger.info('No environment variables found in the database, try seeding environment variables');
-            await seedConfigData();
-            logger.warn('Retry fetching environment variables from DB...');
-            envVariables = await dataStackUtils.database.fetchEnvVariables();
-            configureAzure(azureConfig, envVariables);
+		return envVariables;
+	} catch (error) {
+		logger.error(error);
+		try {
+			logger.info('No environment variables found in the database, try seeding environment variables');
+			await seedConfigData();
+			logger.warn('Retry fetching environment variables from DB...');
+			envVariables = await dataStackUtils.database.fetchEnvVariables();
+			configureAzure(azureConfig, envVariables);
 
-            return envVariables;
-        } catch (retryError) {
-            logger.error('Retry for environment variables failed. Crashing the component.');
-            process.exit(1);
-        }
-    }
+			return envVariables;
+		} catch (retryError) {
+			logger.error('Retry for environment variables failed. Crashing the component.');
+			process.exit(1);
+		}
+	}
 }
 
 function configureAzure(config, envVariables) {
-    config.clientId = envVariables.AZURE_AD_CLIENT_ID;
-    config.clientSecret = envVariables.AZURE_AD_CLIENT_SECRET;
-    config.b2cTenant = envVariables.AZURE_AD_TENANT;
-    config.adUserAttribute = envVariables.AZURE_AD_USER_ATTRIBUTE || 'userPrincipalName';
+	config.clientId = envVariables.AZURE_AD_CLIENT_ID;
+	config.clientSecret = envVariables.AZURE_AD_CLIENT_SECRET;
+	config.b2cTenant = envVariables.AZURE_AD_TENANT;
+	config.adUserAttribute = envVariables.AZURE_AD_USER_ATTRIBUTE || 'userPrincipalName';
 }
 
 function azurePassportConfig(type) {

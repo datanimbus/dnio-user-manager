@@ -78,12 +78,12 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		await mongoUtil.setIsTransactionAllowed();
 
 		// After MongoDB is connected, fetch environment variables
-        const envVariables = await fetchEnvironmentVariablesFromDB();
-        timeOut = envVariables.API_REQUEST_TIMEOUT || 120;
+		const envVariables = await fetchEnvironmentVariablesFromDB();
+		timeOut = envVariables.API_REQUEST_TIMEOUT || 120;
 		maxJSONSize = envVariables.MAX_JSON_SIZE || '100kb';
 		logger.info(`Max request JSON size :: ${maxJSONSize}`);
-        logger.info(`DS_FUZZY_SEARCH :: ${envVariables.DS_FUZZY_SEARCH}`);
-        logger.info(`Max request file upload size :: ${envVariables.MAX_FILE_SIZE || '5MB'}`);
+		logger.info(`DS_FUZZY_SEARCH :: ${envVariables.DS_FUZZY_SEARCH}`);
+		logger.info(`Max request file upload size :: ${envVariables.MAX_FILE_SIZE || '5MB'}`);
 	} catch (err) {
 		logger.error(err);
 	}
@@ -136,7 +136,7 @@ app.use(function (error, req, res, next) {
 			let statusCode = error.statusCode || 500;
 			if (error.message.includes('APP_NAME_ERROR')) {
 				statusCode = 400;
-			} 
+			}
 			res.status(statusCode).json({
 				message: error.message
 			});

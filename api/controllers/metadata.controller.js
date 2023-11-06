@@ -36,7 +36,9 @@ schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
 schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('metadata.mapper.formulas.audit', client, 'auditQueue'));
 
 schema.post('save', function (error, doc, next) {
-	if ((error.errors && error.errors.name) || error.name === 'ValidationError' && error.message.indexOf('UNIQUE_INDEX') > -1) {
+	if (error.code == 11000) {
+		next(new Error('Formula name is already in use'));
+	} else if ((error.errors && error.errors.name) || error.name === 'ValidationError' && error.message.indexOf('UNIQUE_INDEX') > -1) {
 		next(new Error('Formula name is already in use'));
 	} else {
 		next(error);

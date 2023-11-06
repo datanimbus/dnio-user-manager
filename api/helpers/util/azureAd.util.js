@@ -1,5 +1,3 @@
-// let request = require('request');
-// let mongoose = require('mongoose');
 const crypto = require('crypto');
 let AuthenticationContext = require('adal-node').AuthenticationContext;
 const MicrosoftGraph = require('@microsoft/microsoft-graph-client');

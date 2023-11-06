@@ -1,5 +1,5 @@
 
-const request = require('request');
+const got = require('got');
 const config = require('../../../config/config');
 const mongoose = require('mongoose');
 let logger = global.logger;
@@ -23,26 +23,18 @@ e.sendRequest = (url, method, qs, body, _req) => {
 			'User': _req && _req.headers ? _req.headers['user'] : null,
 			'Authorization': `JWT ${global.USER_TOKEN}`
 		},
-		json: true
+		responseType: 'json'
 	};
 	if (body) {
-		options.json = true;
-		options.body = body;
+		options.json = body;
 	}
 	if (qs) {
-		options.qs = qs;
+		options.searchParams = qs;
 	}
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 	return new Promise((resolve, reject) => {
-		request[method.toLowerCase()](options, function (err, res, body) {
-			if (err) {
-				logger.error(err.message);
-				reject(err);
-			} else if (!res) {
-				logger.error('Server is DOWN');
-				reject(new Error('Server is down'));
-			}
-			else {
+		got(options).then(res => {
+			if (res) {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
 					resolve(body);
 				} else {
@@ -50,7 +42,13 @@ e.sendRequest = (url, method, qs, body, _req) => {
 					logger.debug(body);
 					reject(new Error('Request returned ' + res.statusCode));
 				}
+			} else {
+				logger.error('Server is DOWN');
+				reject(new Error('Server is down'));
 			}
+		}).catch(err => {
+			logger.error(err);
+			reject(err);
 		});
 	});
 };
@@ -112,13 +110,13 @@ e.preRemovePMFaas = function () {
 		let self = this;
 		let url = config.baseUrlPM + '/' + self._id + '/faas';
 		let qs = { filter: JSON.stringify({ status: { $eq: 'Active' }, 'app': self._id }), select: 'name' };
-		
+
 		return e.sendRequest(url, 'GET', qs, null, req)
 			.then(_body => {
 				if (_body.length === 0) next();
 				else {
 					logger.debug(JSON.stringify(_body));
-					next(new Error( _body.map(_b => _b.name) + ' functions are running. Please stop them before deleting app.' ));
+					next(new Error(_body.map(_b => _b.name) + ' functions are running. Please stop them before deleting app.'));
 				}
 			})
 			.catch(err => next(err));

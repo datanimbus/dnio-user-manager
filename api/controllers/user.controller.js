@@ -19,11 +19,6 @@ const refreshSecret = envConfig.refreshSecret;
 var userLog = require('./insight.log.controller');
 const azureAdUtil = require('../utils/azure.ad.utils');
 const cacheUtil = utils.cache;
-const XLSX = require('xlsx');
-const fs = require('fs');
-const getSheetDataFromGridFS = require('../helpers/util/bulkAddUser').getSheetDataFromGridFS;
-const getSheetData = require('../helpers/util/bulkAddUser').getSheetData;
-const substituteMappingSheetToSchema = require('../helpers/util/bulkAddUser').substituteMappingSheetToSchema;
 const appController = require('./app.controller');
 const passport = require('passport');
 
@@ -2178,7 +2173,7 @@ function getAllRolesofUser(req, res) {
 	let filter = req.query.filter;
 
 	if (req.user._id !== id) {
-		return res.status(400).json({ message: "You can't access roles of another user." })
+		return res.status(400).json({ message: 'You can\'t access roles of another user.' });
 	}
 	try {
 		if (filter && typeof filter == 'string') filter = JSON.parse(filter);
@@ -2297,7 +2292,7 @@ function getUserAppList(req, res) {
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
 	if (!req.user.isSuperAdmin) {
-		return res.status(403).json({ "message": "You don't have permission for this API." });
+		return res.status(403).json({ 'message': 'You don\'t have permission for this API.' });
 	}
 	if (req.user.isSuperAdmin) {
 		return getAppList(usrId)
@@ -2421,7 +2416,6 @@ function createUserinGroups(req, res) {
 async function addUserToGroups(req, res) {
 	let usrId = req.params.id;
 	let groups = req.body.groups;
-	let groupDocs = null;
 	let data = null;
 	let app = req.params.app;
 
@@ -2450,10 +2444,10 @@ async function addUserToGroups(req, res) {
 					groups: data.map(_o => _o._id)
 				});
 			} else {
-				return res.status(404).json({ "message": "Group not found in App." })
+				return res.status(404).json({ 'message': 'Group not found in App.' });
 			}
 		} else {
-			return res.status(404).json({ "message": "User not found in App." })
+			return res.status(404).json({ 'message': 'User not found in App.' });
 		}
 	} catch (err) {
 		logger.error(err.message);
@@ -2501,7 +2495,7 @@ async function removeUserFromGroups(req, res) {
 				});
 			});
 	} else {
-		return res.status(404).json({ "message": "User not found in app." });
+		return res.status(404).json({ 'message': 'User not found in app.' });
 	}
 }
 
@@ -2810,7 +2804,7 @@ async function closeAllSessionForUser(req, res) {
 			}
 		} else {
 			if (!res.headersSent) {
-				return res.status(404).json({ message: 'User is not present in your app or is a Super Admin user.' })
+				return res.status(404).json({ message: 'User is not present in your app or is a Super Admin user.' });
 			}
 		}
 	} catch (err) {
@@ -2866,354 +2860,6 @@ function addUserToApps(req, res) {
 			res.status(500).json({
 				message: err.message
 			});
-		});
-}
-
-function bulkAddUserValidate(_req, _res) {
-	let data = _req.body;
-	let isHeaderProvided = data.fileHeaders;
-	let headerMapping = data.headerMapping;
-	let fileName = data.fileName;
-	let fileId = _req.params.fileId;
-	let collectionName = 'userMgmt.users';
-	getSheetDataFromGridFS(fileId, mongoose.connection.db, collectionName)
-		.then((bufferData) => {
-			let wb = XLSX.read(bufferData, {
-				type: 'buffer',
-				cellDates: true,
-				cellNF: false,
-				cellText: true,
-				dateNF: 'YYYY-MM-DD HH:MM:SS'
-			});
-			let ws = wb.Sheets[wb.SheetNames[0]];
-			let sheetData = getSheetData(ws, isHeaderProvided);
-			let mappedSchemaData = substituteMappingSheetToSchema(sheetData, headerMapping);
-			let sNo = 0;
-			mappedSchemaData.forEach(parsedData => {
-				var date = new Date();
-				let obj = {
-					'fileName': fileName,
-					'_metadata': {
-						'version': {
-							'document': 1
-						},
-						'deleted': false,
-						'lastUpdated': date,
-						'createdAt': date
-					},
-					'fileId': fileId,
-					'data': parsedData,
-					'sNo': sNo,
-					'conflict': 'false',
-					'status': 'Pending',
-					'errorMessage': null,
-					'downloadFile': false,
-				};
-				let BulkCreateModel = mongoose.model('bulkCreate');
-				let bulkUserDoc = new BulkCreateModel(obj);
-				bulkUserDoc.save({ checkKeys: false });
-				sNo++;
-			});
-			var userData = mappedSchemaData;
-			var promises = userData.map((user, sNo) => {
-				var basicDetails = {
-					'name': user['basicDetails.name'],
-					'phone': user['basicDetails.phone']
-				};
-				let dataObj = {
-					'data': {
-						'username': user['username'],
-						basicDetails,
-						'password': user['password']
-					}
-				};
-				let UserModel = crudder.model;
-				let userDoc = new UserModel(dataObj.data);
-				return userDoc.validate({ checkKeys: false })
-					.then(() => {
-						dataObj.status = 'Validated';
-						return mongoose.model('bulkCreate').updateOne({
-							'fileId': fileId,
-							'fileName': fileName,
-							'sNo': sNo
-						}, dataObj);
-					})
-					.catch(err => {
-						dataObj.errorMessage = err.message;
-						dataObj.status = 'Error';
-						return mongoose.model('bulkCreate').updateOne({
-							'fileId': fileId,
-							'fileName': fileName,
-							'sNo': sNo
-						}, dataObj);
-					});
-			});
-			return Promise.all(promises)
-				.then(() => {
-					return mongoose.model('bulkCreate').aggregate([{
-						'$match': {
-							'fileId': fileId,
-							'status': 'Validated'
-						}
-					},
-					{
-						'$group': {
-							'_id': '$data.username',
-							'count': {
-								'$sum': 1
-							}
-						}
-					},
-					{
-						'$match': {
-							'_id': {
-								'$ne': null
-							},
-							'count': {
-								'$gt': 1
-							}
-						}
-					},
-					{
-						'$project': {
-							'data.username': '$_id',
-							'_id': 0
-						}
-					}
-					])
-						.then(data => {
-							var promise = data.map(userData => {
-								return mongoose.model('bulkCreate').updateMany({
-									'data.username': userData.data.username,
-									'fileId': fileId,
-									'fileName': fileName,
-									'status': 'Validated'
-								}, {
-									$set: {
-										'conflict': true
-									}
-								});
-							});
-							return Promise.all(promise);
-						})
-						.then(() => {
-							return mongoose.model('bulkCreate').aggregate([{
-								'$facet': {
-									'totalCount': [{
-										'$match': {
-											'fileId': fileId
-										}
-									}, {
-										'$count': 'totalCount'
-									}],
-									'conflictsCount': [{
-										'$match': {
-											'conflict': true,
-											'fileId': fileId
-										}
-									}, {
-										'$count': 'conflictsCount'
-									}],
-									'errorCount': [{
-										'$match': {
-											'fileId': fileId,
-											'status': 'Error'
-										}
-									}, {
-										'$count': 'errorCount'
-									}]
-								}
-							}]);
-						})
-						.then((res) => {
-							if (res[0].errorCount[0] == undefined) {
-								res[0].errorCount[0] = {
-									'errorCount': 0
-								};
-							}
-							if (res[0].conflictsCount[0] == undefined) {
-								res[0].conflictsCount[0] = {
-									'conflictsCount': 0
-								};
-							}
-							if (res[0].totalCount[0] == undefined) {
-								res[0].totalCount[0] = {
-									'totalCount': 0
-								};
-							}
-							logger.info('Users details validated');
-							return _res.json({
-								'conflicts': res[0].conflictsCount[0].conflictsCount,
-								'errors': res[0].errorCount[0].errorCount,
-								'total': res[0].totalCount[0].totalCount
-							});
-						}).then(() => {
-							return mongoose.connection.db.collection('userMgmt.users.fileTransfers').update({
-								fileId: fileId
-							}, {
-								$set: {
-									isHeaderProvided,
-									headerMapping,
-									status: 'Validated'
-								}
-							});
-						});
-				});
-		});
-}
-
-function bulkAddUserCreate(_req, _res) {
-	let data = _req.body;
-	let sNo = data.conflictSerialNo;
-	let fileId = data.fileId;
-	let fileName = data.fileName;
-	let obj = {};
-	obj.conflict = false;
-	return mongoose.model('bulkCreate').updateMany({
-		'fileId': fileId,
-		'fileName': fileName,
-		'sNo': sNo,
-		'conflict': true,
-	}, obj)
-		.then(() => {
-			let obj = {};
-			obj.status = 'Ignored';
-			return mongoose.model('bulkCreate').updateMany({
-				'fileId': fileId,
-				'fileName': fileName,
-				'conflict': true
-			}, obj);
-		})
-		.then(() => {
-			return mongoose.model('bulkCreate').find({
-				'fileId': fileId,
-				'fileName': fileName,
-				'status': 'Validated',
-				'conflict': false,
-				'errorMessage': null
-			}).then(data => {
-				var promises = data.map(userData => {
-					var accessControl = {
-						accessLevel: 'None',
-						apps: null
-					};
-					var isActive = true;
-					var auth = {
-						authType: 'local'
-					};
-					let userDetails = {
-						username: userData.data.username,
-						basicDetails: userData.data.basicDetails,
-						password: userData.data.password,
-						accessControl,
-						isActive,
-						auth
-					};
-
-					let userModel = crudder.model;
-					let doc = new userModel(userDetails);
-					return doc.save(_req);
-				});
-				return Promise.all(promises)
-					.then(() => {
-						return mongoose.model('bulkCreate').aggregate([{
-							'$facet': {
-								'createdCount': [{
-									'$match': {
-										'fileId': fileId,
-										'status': 'Validated',
-										'conflict': false
-									}
-								}, {
-									'$count': 'createdCount'
-								}],
-								'conflictsCount': [{
-									'$match': {
-										'conflict': true,
-										'fileId': fileId
-									}
-								}, {
-									'$count': 'conflictsCount'
-								}],
-								'errorCount': [{
-									'$match': {
-										'fileId': fileId,
-										'status': 'Error'
-									}
-								}, {
-									'$count': 'errorCount'
-								}],
-								'ignoredCount': [{
-									'$match': {
-										'fileId': fileId,
-										'status': 'Ignored'
-									}
-								}, {
-									'$count': 'ignoredCount'
-								}]
-
-							}
-						}]);
-					})
-					.then((res) => {
-						if (res[0].errorCount[0] == undefined) {
-							res[0].errorCount[0] = {
-								'errorCount': 0
-							};
-						}
-						if (res[0].conflictsCount[0] == undefined) {
-							res[0].conflictsCount[0] = {
-								'conflictsCount': 0
-							};
-						}
-						if (res[0].createdCount[0] == undefined) {
-							res[0].createdCount[0] = {
-								'createdCount': 0
-							};
-						}
-
-						if (res[0].ignoredCount[0] == undefined) {
-							res[0].ignoredCount[0] = {
-								'ignoredCount': 0
-							};
-						}
-						logger.info('User imported to ODP');
-						return _res.json({
-							'created': res[0].createdCount[0].createdCount,
-							'conflict': res[0].conflictsCount[0].conflictsCount,
-							'error': res[0].errorCount[0].errorCount,
-							'ignored': res[0].ignoredCount[0].ignoredCount,
-						});
-					});
-			});
-		});
-}
-
-function bulkAddUserDownload(_req, _res) {
-	let fileId = _req.params.fileId;
-	let newDir = './downloads/' + fileId + '.csv';
-	let header = 'Sno, Username, Name, Phone, Status, Conflict, Error message\n';
-	fs.writeFileSync(newDir, header, function (err) {
-		if (err) {
-			return logger.info(err);
-		}
-	});
-	return mongoose.model('bulkCreate').find({
-		'fileId': fileId
-	})
-		.then((d) => {
-			var promises = d.map(i => {
-				let content = i.sNo + ',' + i.data._id + ',' + i.data.basicDetails.name + ',' + i.data.basicDetails.phone + ',' + i.status + ',' + i.conflict + ',' + i.errorMessage;
-				fs.writeFileSync(newDir, content + '\n', {
-					'flag': 'a'
-				}, function (err) {
-					if (err) throw err;
-				});
-			});
-			return Promise.all(promises)
-				.then(() => {
-					_res.download(newDir);
-				});
 		});
 }
 
@@ -3830,9 +3476,6 @@ module.exports = {
 	botInAppCount: botInAppCount,
 	heartBeatAPI: heartBeatAPI,
 	extendSession: extendSession,
-	bulkAddUserValidate: bulkAddUserValidate,
-	bulkAddUserCreate: bulkAddUserCreate,
-	bulkAddUserDownload: bulkAddUserDownload,
 	// fixAllADUsers: fixAllADUsers,
 	// fixSingleADUsers: fixSingleADUsers,
 	// refreshADEmail: refreshADEmail,

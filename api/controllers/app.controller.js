@@ -1,27 +1,32 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const definition = require('../helpers/app.definition.js').definition;
 const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
-const schema = MakeSchema(definition);
-const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
 const kubeutil = require('@appveen/data.stack-utils').kubeutil;
+const got = require('got');
+const _ = require('lodash');
+
+const definition = require('../helpers/app.definition.js').definition;
 const k8sUtils = require('../utils/k8s.api.utils');
-let queueMgmt = require('../../util/queueMgmt');
-var client = queueMgmt.client;
+const queueMgmt = require('../../util/queueMgmt');
 const appInit = require('../../config/apps');
 const isK8sEnv = require('../../config/config').isK8sEnv();
 const config = require('../../config/config');
-var userLog = require('./insight.log.controller');
+const userLog = require('./insight.log.controller');
 const cryptUtils = require('../helpers/util/crypto.utils');
+const appHook = require('../helpers/util/appHooks');
+
+const schema = MakeSchema(definition);
+const logger = global.logger;
+const client = queueMgmt.client;
 const dataStackNS = config.dataStackNS;
 const blockedAppNames = config.blockedAppNames;
 let _ = require('lodash');
 let release = config.RELEASE;
 const request = require('request');
 let appHook = require('../helpers/util/appHooks');
-var options = {
+const options = {
 	logger: logger,
 	collectionName: 'userMgmt.apps'
 };
@@ -424,19 +429,20 @@ schema.post('save', function (doc) {
 				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
 				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
-			json: true,
-			body: {
+			json: {
 				agentIPWhitelisting: doc.agentIPWhitelisting
-			}
+			},
+			responseType: 'json'
 		};
-		request(options, function (err, res) {
-			if (err) {
-				logger.error(err.message);
-			} else if (!res) {
-				logger.error('PM is DOWN');
-			} else {
+		got(options).then((res) => {
+			if (res && res.statusCode == 200) {
 				logger.debug('Request to update IP whitelist completed');
+			} else {
+				logger.error('PM is DOWN');
 			}
+		}).catch((err) => {
+			logger.error('Error Requesting PM to update IP whitelist');
+			logger.error(err);
 		});
 	}
 });
@@ -452,19 +458,20 @@ schema.post('save', function (doc) {
 				'TxnId': doc._req && doc._req.headers ? doc._req.headers['txnId'] : null,
 				'User': doc._req && doc._req.headers ? doc._req.headers['user'] : null
 			},
-			json: true,
-			body: {
+			json: {
 				_id: doc._id
-			}
+			},
+			responseType: 'json'
 		};
-		request(options, function (err, res) {
-			if (err) {
-				logger.error(err.message);
-			} else if (!res) {
-				logger.error('PM is DOWN');
-			} else {
+		got(options).then((res) => {
+			if (res && res.statusCode == 200) {
 				logger.debug('Request to Inform PM completed');
+			} else {
+				logger.error('PM is DOWN');
 			}
+		}).catch((err) => {
+			logger.error('Error Requesting PM');
+			logger.error(err);
 		});
 	}
 });
@@ -634,19 +641,14 @@ e.customDestroy = (req, res) => {
 			'User': req && req.headers ? req.headers['user'] : null,
 			'Authorization': req && req.headers ? req.headers['authorization'] || req.headers['Authorization'] : null
 		},
-		json: true,
-		qs: { filter: JSON.stringify({ 'status': { '$eq': 'Active' }, 'app': req.params.id }), select: 'name,status,app' }
+		responseType: 'json',
+		searchParams: { filter: JSON.stringify({ 'status': { '$eq': 'Active' }, 'app': req.params.id }), select: 'name,status,app' }
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 
-	request(options, function (err, newres, body) {
-		if (err) {
-			logger.error(err.message);
-			res.status(500).json({ message: err.message });
-		} else if (!res) {
-			logger.error('Server is DOWN');
-			res.status(500).json({ message: 'SM server down' });
-		} else {
+	got(options).then(res => {
+		if (res && res.statusCode == 200) {
+			const body = res.body;
 			if (body.length > 0) {
 				res.status(400).json({ message: body.map(_b => _b.name) + ' services are running. Please stop them before deleting app' });
 			} else {
@@ -666,7 +668,13 @@ e.customDestroy = (req, res) => {
 						logger.error(err);
 					});
 			}
+		} else {
+			logger.error('Server is DOWN');
+			res.status(500).json({ message: 'SM server down' });
 		}
+	}).catch(err => {
+		logger.error(err);
+		res.status(500).json({ message: err.message });
 	});
 };
 
@@ -772,21 +780,23 @@ e.sendRequest = (url) => {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json'
-		},
+		}
 	};
+
 	return new Promise((resolve, reject) => {
-		request.put(options, function (err, res, body) {
-			if (err) {
-				logger.error(err.message);
-				reject(err);
-			} else if (!res) {
-				logger.error('Service Manager is DOWN');
-				reject(new Error('Service Manager is DOWN'));
-			} else {
+		got(options).then(res => {
+			if (res && res.statusCode == 200) {
+				let body = res.body;
 				body = body ? JSON.parse(body) : {};
 				body.status = res.statusCode;
 				resolve(body);
+			} else {
+				logger.error('Service Manager is DOWN');
+				reject(new Error('Service Manager is DOWN'));
 			}
+		}).catch(err => {
+			logger.error(err);
+			reject(err);
 		});
 	});
 };
@@ -858,8 +868,8 @@ e.showApp = async (req, res) => {
 	logger.debug(`${req.user._id} :: app permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
 
 	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
-		let data = await crudder.model.find({ "_id": app }).lean();
-		
+		let data = await crudder.model.find({ '_id': app }).lean();
+
 		if (data && data[0]) delete data[0].encryptionKey;
 		return res.status(200).json(data);
 	} else {

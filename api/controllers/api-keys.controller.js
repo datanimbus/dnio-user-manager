@@ -118,6 +118,16 @@ schema.post('save', async function (doc) {
 	}
 });
 
+schema.post('save', function (error, doc, next) {
+	if (error.code == 11000) {
+		next(new Error('API Key Name is already in use'));
+	} else if ((error.errors && error.errors.name) || error.name === 'ValidationError' && error.message.indexOf('UNIQUE_INDEX') > -1) {
+		next(new Error('API Key Name is already in use'));
+	} else {
+		next(error);
+	}
+});
+
 schema.post('remove', async function (doc) {
 	await catchUtils.unsetUserPermissions(doc._id + '_' + doc.app);
 	await catchUtils.clearData(doc._id);

@@ -291,7 +291,7 @@ schema.pre('save', function (next, req) {
 	this.wasNew = this.isNew;
 	this._req = req;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	next();
 });
@@ -330,7 +330,7 @@ schema.pre('save', function (next, req) {
 	let self = this;
 	this._req = req;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	const headers = {};
 	const headersLen = req && req.rawHeaders ? req.rawHeaders.length : 0;
@@ -414,7 +414,7 @@ schema.pre('remove', function (next, req) {
 	let self = this;
 	this._req = req;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = envConfig.RELEASE;
 	}
 	const headers = {};
 	const headersLen = req && req.rawHeaders ? req.rawHeaders.length : 0;

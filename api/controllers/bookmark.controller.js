@@ -6,6 +6,7 @@ const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const schema = MakeSchema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
+const config = require('../../config/config')
 
 var options = {
 	logger: logger,
@@ -19,7 +20,7 @@ schema.pre('save', utils.counter.getIdGenerator('BM', 'bookmark', null, null, 10
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	next();
 });

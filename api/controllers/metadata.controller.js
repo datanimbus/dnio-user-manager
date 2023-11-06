@@ -8,6 +8,7 @@ let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
+const config = require('../../config/config');
 
 var options = {
 	logger: logger,
@@ -22,7 +23,7 @@ schema.pre('save', utils.counter.getIdGenerator('FX', 'metadata.mapper.formulas'
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	next();
 });

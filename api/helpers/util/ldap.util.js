@@ -3,6 +3,7 @@
 var ldap = require('ldapjs');
 const logger = global.logger;
 let ldapConfig = require('../../../config/config').ldapConfig;
+const config = require('../../../config/config');
 let e = {};
 
 e.connectLDAP = function (url, dn, pwd) {
@@ -11,7 +12,7 @@ e.connectLDAP = function (url, dn, pwd) {
 			url: url,
 			reconnect: true
 		};
-		if (typeof process.env.TLS_REJECT_UNAUTHORIZED == 'string' && process.env.TLS_REJECT_UNAUTHORIZED.toLowerCase() == 'false') {
+		if (typeof config.TLS_REJECT_UNAUTHORIZED == 'string' && config.TLS_REJECT_UNAUTHORIZED.toLowerCase() == 'false') {
 			options.tlsOptions = {
 				rejectUnauthorized: false,
 				ecdhCurve: 'secp384r1'

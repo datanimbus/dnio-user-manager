@@ -9,7 +9,7 @@ const config = require('../../config/config');
 
 const logger = global.logger;
 const azureConfig = config.azureConfig;
-let release = process.env.RELEASE;
+let release = config.RELEASE;
 
 
 async function updateExistingAppConnectors() {

@@ -9,6 +9,7 @@ let queueMgmt = require('../../util/queueMgmt');
 var client = queueMgmt.client;
 const logger = global.logger;
 const dataStackUtils = require('@appveen/data.stack-utils');
+const config = require('../../config/config');
 
 var options = {
 	logger: logger,
@@ -21,7 +22,7 @@ schema.pre('save', utils.counter.getIdGenerator('FIL', 'filter', null, null, 100
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	next();
 });
@@ -63,10 +64,10 @@ schema.post('remove', dataStackUtils.auditTrail.getAuditPostRemoveHook('userMgmt
 var crudder = new SMCrud(schema, 'userMgmt.filter', options);
 function customCreate(req, res) {
 	if (req.body.private == null) {
-		if (process.env.SAVE_FILTER_DEFAULT_MODE_PRIVATE == null) {
+		if (config.SAVE_FILTER_DEFAULT_MODE_PRIVATE == null) {
 			req.body.private = true;
 		}
-		else req.body.private = process.env.SAVE_FILTER_DEFAULT_MODE_PRIVATE;
+		else req.body.private = config.SAVE_FILTER_DEFAULT_MODE_PRIVATE;
 	}
 	let body = {};
 	body = req.body;

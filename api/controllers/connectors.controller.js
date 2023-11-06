@@ -34,7 +34,7 @@ schema.pre('save', utils.counter.getIdGenerator('CON', 'connectors', null, null,
 schema.pre('save', function (next) {
 	let self = this;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	logger.trace(`Connector Details :: ${JSON.stringify(self._doc)}`);
 	next();

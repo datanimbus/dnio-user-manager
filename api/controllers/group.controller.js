@@ -10,6 +10,8 @@ const cacheUtils = require('../../util/cache.utils').cache;
 const dataStackUtils = require('@appveen/data.stack-utils');
 let queueMgmt = require('../../util/queueMgmt');
 let groupLog = require('./insight.group.controller');
+const config = require('../../config/config.js');
+
 var client = queueMgmt.client;
 const _ = require('lodash');
 var options = {
@@ -110,7 +112,7 @@ schema.pre('save', function (next, req) {
 	let self = this;
 	this._req = req;
 	if (self._metadata.version) {
-		self._metadata.version.release = process.env.RELEASE;
+		self._metadata.version.release = config.RELEASE;
 	}
 	const headers = {};
 	if (req && req.rawHeaders) {

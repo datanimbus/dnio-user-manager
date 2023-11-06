@@ -2173,7 +2173,7 @@ function getAllRolesofUser(req, res) {
 	let filter = req.query.filter;
 
 	if (req.user._id !== id) {
-		return res.status(400).json({ message: "You can't access roles of another user." })
+		return res.status(400).json({ message: 'You can\'t access roles of another user.' });
 	}
 	try {
 		if (filter && typeof filter == 'string') filter = JSON.parse(filter);
@@ -2292,7 +2292,7 @@ function getUserAppList(req, res) {
 	let requestingUsrId = req.user ? req.user._id : null;
 	let requestingUsrIdApps = null;
 	if (!req.user.isSuperAdmin) {
-		return res.status(403).json({ "message": "You don't have permission for this API." });
+		return res.status(403).json({ 'message': 'You don\'t have permission for this API.' });
 	}
 	if (req.user.isSuperAdmin) {
 		return getAppList(usrId)
@@ -2416,7 +2416,6 @@ function createUserinGroups(req, res) {
 async function addUserToGroups(req, res) {
 	let usrId = req.params.id;
 	let groups = req.body.groups;
-	let groupDocs = null;
 	let data = null;
 	let app = req.params.app;
 
@@ -2445,10 +2444,10 @@ async function addUserToGroups(req, res) {
 					groups: data.map(_o => _o._id)
 				});
 			} else {
-				return res.status(404).json({ "message": "Group not found in App." })
+				return res.status(404).json({ 'message': 'Group not found in App.' });
 			}
 		} else {
-			return res.status(404).json({ "message": "User not found in App." })
+			return res.status(404).json({ 'message': 'User not found in App.' });
 		}
 	} catch (err) {
 		logger.error(err.message);
@@ -2496,7 +2495,7 @@ async function removeUserFromGroups(req, res) {
 				});
 			});
 	} else {
-		return res.status(404).json({ "message": "User not found in app." });
+		return res.status(404).json({ 'message': 'User not found in app.' });
 	}
 }
 
@@ -2805,7 +2804,7 @@ async function closeAllSessionForUser(req, res) {
 			}
 		} else {
 			if (!res.headersSent) {
-				return res.status(404).json({ message: 'User is not present in your app or is a Super Admin user.' })
+				return res.status(404).json({ message: 'User is not present in your app or is a Super Admin user.' });
 			}
 		}
 	} catch (err) {

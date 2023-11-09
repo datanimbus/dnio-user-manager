@@ -644,9 +644,9 @@ e.customDestroy = (req, res) => {
 	};
 	logger.debug(`Options for request : ${JSON.stringify(options)}`);
 
-	got(options).then(res => {
-		if (res && res.statusCode == 200) {
-			const body = res.body;
+	got(options).then(_res => {
+		if (_res && _res.statusCode == 200) {
+			const body = _res.body;
 			if (body.length > 0) {
 				res.status(400).json({ message: body.map(_b => _b.name) + ' services are running. Please stop them before deleting app' });
 			} else {

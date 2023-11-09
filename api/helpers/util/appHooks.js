@@ -36,10 +36,10 @@ e.sendRequest = (url, method, qs, body, _req) => {
 		got(options).then(res => {
 			if (res) {
 				if (res.statusCode >= 200 && res.statusCode < 400) {
-					resolve(body);
+					resolve(res.body);
 				} else {
 					logger.debug(res.statusCode);
-					logger.debug(body);
+					logger.debug(res.body);
 					reject(new Error('Request returned ' + res.statusCode));
 				}
 			} else {

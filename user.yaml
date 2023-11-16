@@ -7,7 +7,6 @@ spec:
   type: ClusterIP
   selector:
     app: user
-    release: __release_tag__
   ports:
     - protocol: TCP
       port: 80
@@ -23,17 +22,15 @@ spec:
   selector:
     matchLabels:
       app: user
-      release: __release_tag__
   template:
     metadata:
       labels:
         app: user
-        release: __release_tag__
     spec:
       serviceAccountName: odp-admin
       containers:
         - name: user
-          image: '__docker_registry_server__/data.stack:user.__release__'
+          image: '__docker_registry_server__/datanimbus.io.user:__release__'
           ports:
             - containerPort: 10004
           livenessProbe:

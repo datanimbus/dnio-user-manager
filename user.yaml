@@ -35,13 +35,13 @@ spec:
             - containerPort: 10004
           livenessProbe:
             httpGet:
-              path: /rbac/health/live
+              path: /rbac/internal/health/live
               port: 10004
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /rbac/health/ready
+              path: /rbac/internal/health/ready
               port: 10004
             initialDelaySeconds: 10
             periodSeconds: 10

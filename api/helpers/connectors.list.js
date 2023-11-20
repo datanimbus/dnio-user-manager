@@ -228,7 +228,25 @@ const data = [
 				type: 'String',
 				key: 'protocol',
 				label: 'Security Protocol',
-				htmlInputType: 'text'
+				htmlInputType: 'select',
+				options: [
+					{
+						label: 'PLAINTEXT',
+						value: 'plaintext'
+					},
+					{
+						label: 'SASL_PLAINTEXT',
+						value: 'sasl_plaintext'
+					},
+					{
+						label: 'SASL_SSL',
+						value: 'sasl_ssl'
+					},
+					{
+						label: 'SSL',
+						value: 'ssl'
+					}
+				],
 			},
 			{
 				type: 'String',

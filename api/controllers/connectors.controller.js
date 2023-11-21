@@ -182,6 +182,12 @@ async function testConnector(req, res) {
 				logger.debug(`Default Connector :: using mongo url from env variables :: ${config.mongoUrlAppcenter}`);
 				connectionString = config.mongoUrlAppcenter;
 			}
+			if (!connectionString.startsWith('mongodb://')) {
+				throw new Error("Invalid Scheme, connection string should start with 'mongodb://' or 'mongodb+srv://'");
+			}
+			if (connectionString.split('//')[1].length < 2) {
+				throw new Error("Invalid Scheme, connection string should be atleast of length 2");
+			}
 			const { MongoClient } = require('mongodb');
 			let connection = await MongoClient.connect(connectionString);
 			connection.db(payload.values.database);
@@ -212,6 +218,12 @@ async function testConnector(req, res) {
 		return res.status(200).json({ message: 'Connection Successful' });
 	} catch (err) {
 		logger.error(err);
+		if (err.message && err.message.includes('Server selection timed out')) {
+			err.message = 'Unable to connect to server, please check your connection string';
+		}
+		if (err.message && err.message.includes('getaddrinfo')) {
+			err.message = `Unable to find server address '${err.message.split('EAI_AGAIN')[1].trim()}', please check your connection string`;
+		}
 		return res.status(500).json({
 			message: err.message
 		});

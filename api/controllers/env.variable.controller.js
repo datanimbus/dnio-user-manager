@@ -10,30 +10,64 @@ const options = {
 
 const crudder = new SMCrud(schema, 'config.envVariables', options);
 
-async function getEnvironmentVariables(req, res) {
-    const minimalInfo = req.query.minimal === 'true'; // Check if minimal parameter is set to true
-
-    try {
-      if (minimalInfo) {
-        // If minimalInfo is true, create an aggregation pipeline to select only _id and value
-        const pipeline = [
-          {
-            $project: {
-              _id: 1,
-              value: 1,
-            },
-          },
-        ];
-  
-        const result = await crudder.model.aggregate(pipeline);
-        res.json(result);
-      } else {
-        crudder.index(req, res);
+// Function to replace values with environment variables if available
+function replaceWithEnvVars(data) {
+  return data.map(envVar => {
+      const envValue = process.env[envVar._id];
+      if (envValue !== undefined) {
+          envVar.value = envValue;
       }
-    } catch (error) {
+      return envVar;
+  });
+}
+
+async function getEnvironmentVariables(req, res) {
+  try {
+      const minimalInfo = req.query.minimal === 'true';
+
+      if (minimalInfo) {
+        let minimalResult = await crudder.model.find({}, { _id: 1, value: 1 });
+        minimalResult = replaceWithEnvVars(minimalResult);
+        return res.status(200).json(minimalResult);
+    }
+
+      const reqParams = {
+          filter: req.query.filter || '{}',
+          sort: req.query.sort || '_metadata.lastUpdated',
+          select: req.query.select || '',
+          page: parseInt(req.query.page) || 1,
+          count: parseInt(req.query.count) || 10,
+          search: req.query.search || null,
+          metadata: req.query.metadata ? req.query.metadata.toLowerCase() === 'true' : false,
+      };
+
+      try {
+          const filter = reqParams.filter ? JSON.parse(reqParams.filter) : {};
+          filter['_metadata.deleted'] = false;
+
+          const query = crudder.model.find(filter);
+
+          if (reqParams.select) {
+              const selectFields = reqParams.select.split(',');
+              query.select(selectFields.join(' '));
+          }
+
+          const countPerPage = reqParams.count;
+          const startIndex = (reqParams.page - 1) * countPerPage;
+          query.skip(startIndex).limit(countPerPage);
+
+          const result = await query.exec();
+          const processedResult = replaceWithEnvVars(result);
+
+          res.status(200).json(processedResult);
+      } catch (error) {
+          logger.error(error);
+          res.status(500).json({ error: 'Internal Server Error' });
+      }
+  } catch (error) {
       logger.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
-    }
+  }
 }
 
 async function environmentVariableCreateOrUpdate(req, res) {

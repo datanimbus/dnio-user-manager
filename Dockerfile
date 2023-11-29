@@ -5,9 +5,9 @@ RUN apk upgrade
 
 RUN set -ex; apk add --no-cache --virtual .fetch-deps curl tar git openssl ;
 
-WORKDIR /app
+WORKDIR /tmp/app
 
-COPY package.json /app
+COPY package.json package.json
 
 RUN npm install -g npm
 # RUN npm install --production --no-audit
@@ -16,25 +16,16 @@ RUN npm audit fix --production
 
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/node-gyp/test
 
-COPY api /app/api
+RUN mkdir uploads
+RUN mkdir downloads
 
-COPY app.js /app
-
-COPY config /app/config
-
-COPY util /app/util
+COPY . .
 
 ENV IMAGE_TAG=__image_tag__
 ENV NODE_ENV=production
 
 EXPOSE 10004
 
-RUN mkdir uploads
-
-RUN mkdir downloads
-
-RUN chmod 777 uploads
-
-RUN chmod 777 downloads
+RUN chmod -R 777 /tmp/app
 
 CMD node app.js

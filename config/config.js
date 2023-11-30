@@ -127,6 +127,20 @@ function azurePassportConfig(type) {
 	};
 }
 
+function getLDAPServerDetails(envVariables) {
+	let options = {
+		'url': envVariables['LDAP_SERVER_URL'],
+		'adminDN': envVariables['LDAP_BIND_DN'],
+		'bindCredentials': envVariables['LDAP_BIND_PASSWORD'],
+		'searchBase': envVariables['LDAP_BASE_DN'],
+		'searchFilter': envVariables['LDAP_USER_ID_ATTRIBUTE'] ? `(${envVariables['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})'
+	};
+	if (envVariables['LDAP_CERTIFICATE']) {
+		options['tlsOptions'] = { ca: envVariables['LDAP_CERTIFICATE'] };
+	}
+	return options;
+}
+
 if (isK8sEnv() && !dataStackNS) throw new Error('DATA_STACK_NAMESPACE not found. Please check your configMap');
 
 
@@ -190,13 +204,7 @@ module.exports = {
 	},
 	fetchEnvironmentVariablesFromDB: fetchEnvironmentVariablesFromDB,
 	ldapDetails: {
-		ldapServerDetails: {
-			'url': envVariables['LDAP_SERVER_URL'],
-			'adminDN': envVariables['LDAP_BIND_DN'],
-			'bindCredentials': envVariables['LDAP_BIND_PASSWORD'],
-			'searchBase': envVariables['LDAP_BASE_DN'],
-			'searchFilter': envVariables['LDAP_USER_ID_ATTRIBUTE'] ? `(${envVariables['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})',
-		},
+		ldapServerDetails: getLDAPServerDetails(),
 		mapping: {
 			username: envVariables['LDAP_USER_ID_ATTRIBUTE'] ? envVariables['LDAP_USER_ID_ATTRIBUTE'] : 'cn',
 			name: envVariables['LDAP_USER_NAME_ATTRIBUTE'] ? envVariables['LDAP_USER_NAME_ATTRIBUTE'] : 'sn',

@@ -69,11 +69,13 @@ function get(_service) {
 const allowedFileExtArr = ['ppt', 'xls', 'csv', 'doc', 'jpg', 'png', 'apng', 'gif', 'webp', 'flif', 'cr2', 'orf', 'arw', 'dng', 'nef', 'rw2', 'raf', 'tif', 'bmp', 'jxr', 'psd', 'zip', 'tar', 'rar', 'gz', 'bz2', '7z', 'dmg', 'mp4', 'mid', 'mkv', 'webm', 'mov', 'avi', 'mpg', 'mp2', 'mp3', 'm4a', 'oga', 'ogg', 'ogv', 'opus', 'flac', 'wav', 'spx', 'amr', 'pdf', 'epub', 'exe', 'swf', 'rtf', 'wasm', 'woff', 'woff2', 'eot', 'ttf', 'otf', 'ico', 'flv', 'ps', 'xz', 'sqlite', 'nes', 'crx', 'xpi', 'cab', 'deb', 'ar', 'rpm', 'Z', 'lz', 'msi', 'mxf', 'mts', 'blend', 'bpg', 'docx', 'pptx', 'xlsx', '3gp', '3g2', 'jp2', 'jpm', 'jpx', 'mj2', 'aif', 'qcp', 'odt', 'ods', 'odp', 'xml', 'mobi', 'heic', 'cur', 'ktx', 'ape', 'wv', 'wmv', 'wma', 'dcm', 'ics', 'glb', 'pcap', 'dsf', 'lnk', 'alias', 'voc', 'ac3', 'm4v', 'm4p', 'm4b', 'f4v', 'f4p', 'f4b', 'f4a', 'mie', 'asf', 'ogm', 'ogx', 'mpc'];
 let envVariables = {};
 let azureConfig = {};
+let ldapConfig = {};
 
 async function fetchEnvironmentVariablesFromDB() {
 	try {
 		envVariables = await dataStackUtils.database.fetchEnvVariables();
 		configureAzure(azureConfig, envVariables);
+		configureLDAP(ldapConfig, envVariables);
 
 		return envVariables;
 	} catch (error) {
@@ -127,17 +129,38 @@ function azurePassportConfig(type) {
 	};
 }
 
-function getLDAPServerDetails(envVariables) {
-	let options = {
-		'url': envVariables['LDAP_SERVER_URL'],
-		'adminDN': envVariables['LDAP_BIND_DN'],
-		'bindCredentials': envVariables['LDAP_BIND_PASSWORD'],
-		'searchBase': envVariables['LDAP_BASE_DN'],
-		'searchFilter': envVariables['LDAP_USER_ID_ATTRIBUTE'] ? `(${envVariables['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})'
+function configureLDAP(config, envVariables) {
+	config.LDAP_SERVER_URL = envVariables.LDAP_SERVER_URL;
+	config.LDAP_BIND_DN = envVariables.LDAP_BIND_DN;
+	config.LDAP_BIND_PASSWORD = envVariables.LDAP_BIND_PASSWORD;
+	config.LDAP_BASE_DN = envVariables.LDAP_BASE_DN;
+	config.LDAP_USER_ID_ATTRIBUTE = envVariables.LDAP_USER_ID_ATTRIBUTE;
+	config.LDAP_CERTIFICATE = envVariables.LDAP_CERTIFICATE;
+	config.LDAP_USER_ID_ATTRIBUTE = envVariables.LDAP_USER_ID_ATTRIBUTE;
+	config.LDAP_USER_NAME_ATTRIBUTE = envVariables.LDAP_USER_NAME_ATTRIBUTE;
+	config.LDAP_USER_EMAIL_ATTRIBUTE = envVariables.LDAP_USER_EMAIL_ATTRIBUTE;
+	config.LDAP_BASE_FILTER = envVariables.LDAP_BASE_FILTER;
+}
+
+function getLDAPDetails() {
+	let options = {};
+	options.serverDetails = {
+		'url': ldapConfig['LDAP_SERVER_URL'],
+		'adminDN': ldapConfig['LDAP_BIND_DN'],
+		'bindCredentials': ldapConfig['LDAP_BIND_PASSWORD'],
+		'searchBase': ldapConfig['LDAP_BASE_DN'],
+		'searchFilter': ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? `(${ldapConfig['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})'
 	};
-	if (envVariables['LDAP_CERTIFICATE']) {
-		options['tlsOptions'] = { ca: envVariables['LDAP_CERTIFICATE'] };
+	if (ldapConfig['LDAP_CERTIFICATE']) {
+		options.serverDetails['tlsOptions'] = { ca: ldapConfig['LDAP_CERTIFICATE'] };
 	}
+	options.mapping = {
+		username: ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? ldapConfig['LDAP_USER_ID_ATTRIBUTE'] : 'cn',
+		name: ldapConfig['LDAP_USER_NAME_ATTRIBUTE'] ? ldapConfig['LDAP_USER_NAME_ATTRIBUTE'] : 'sn',
+		email: ldapConfig['LDAP_USER_EMAIL_ATTRIBUTE'] ? ldapConfig['LDAP_USER_EMAIL_ATTRIBUTE'] : 'mail'
+	};
+	options.baseFilter = ldapConfig['LDAP_BASE_FILTER'];
+
 	return options;
 }
 
@@ -203,15 +226,7 @@ module.exports = {
 		else process.stdout.write(')\n');
 	},
 	fetchEnvironmentVariablesFromDB: fetchEnvironmentVariablesFromDB,
-	ldapDetails: {
-		ldapServerDetails: getLDAPServerDetails(envVariables),
-		mapping: {
-			username: envVariables['LDAP_USER_ID_ATTRIBUTE'] ? envVariables['LDAP_USER_ID_ATTRIBUTE'] : 'cn',
-			name: envVariables['LDAP_USER_NAME_ATTRIBUTE'] ? envVariables['LDAP_USER_NAME_ATTRIBUTE'] : 'sn',
-			email: envVariables['LDAP_USER_EMAIL_ATTRIBUTE'] ? envVariables['LDAP_USER_EMAIL_ATTRIBUTE'] : 'mail'
-		},
-		baseFilter: envVariables['LDAP_BASE_FILTER']
-	},
+	ldapDetails: getLDAPDetails,
 	azurePassportConfig: azurePassportConfig,
 	azureConfig: azureConfig,
 	dataStackDefaultTimezone: envVariables.TZ_DEFAULT || 'Zulu',

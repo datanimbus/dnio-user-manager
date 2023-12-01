@@ -746,7 +746,8 @@ function validateLdapLogin(ldapUser, done) {
 			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
 			// For first time logging users
 			if (dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
-				let ldapMapping = envConfig.ldapDetails.mapping;
+				let ldapDetails = envConfig.ldapDetails();
+				let ldapMapping = ldapDetails.mapping;
 				dbUser.basicDetails = {
 					name: ldapUser[ldapMapping.name],
 					alternateEmail: ldapUser[ldapMapping.email],

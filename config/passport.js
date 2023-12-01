@@ -9,7 +9,9 @@ module.exports = function (passport) {
 	passport.use(new LocalStrategy(validateLocalLogin));
 
 	if (config.RBAC_USER_AUTH_MODES.includes('ldap')) {
-		passport.use(new LdapStrategy({ server: config.ldapDetails.ldapServerDetails }, validateLdapLogin));
+		let serverDetails = config.ldapDetails();
+		config.log(JSON.stringify(serverDetails));
+		passport.use(new LdapStrategy({ server: serverDetails.serverDetails }, validateLdapLogin));
 	}
 
 	// if (config.RBAC_USER_AUTH_MODES.includes('azure')) {

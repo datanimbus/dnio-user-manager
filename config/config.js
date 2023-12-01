@@ -204,7 +204,7 @@ module.exports = {
 	},
 	fetchEnvironmentVariablesFromDB: fetchEnvironmentVariablesFromDB,
 	ldapDetails: {
-		ldapServerDetails: getLDAPServerDetails(),
+		ldapServerDetails: getLDAPServerDetails(envVariables),
 		mapping: {
 			username: envVariables['LDAP_USER_ID_ATTRIBUTE'] ? envVariables['LDAP_USER_ID_ATTRIBUTE'] : 'cn',
 			name: envVariables['LDAP_USER_NAME_ATTRIBUTE'] ? envVariables['LDAP_USER_NAME_ATTRIBUTE'] : 'sn',

@@ -741,13 +741,13 @@ function localLogin(req, res) {
 
 function validateLdapLogin(ldapUser, done) {
 	logger.trace('Validating ldap user :: ', ldapUser);
-	findActiveUserbyAuthtype(ldapUser.uid, 'ldap')
+	let ldapDetails = envConfig.ldapDetails();
+	let ldapMapping = ldapDetails.mapping;
+	findActiveUserbyAuthtype(ldapUser[ldapMapping.username], 'ldap')
 		.then(dbUser => {
 			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
 			// For first time logging users
 			if (dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
-				let ldapDetails = envConfig.ldapDetails();
-				let ldapMapping = ldapDetails.mapping;
 				dbUser.basicDetails = {
 					name: ldapUser[ldapMapping.name],
 					alternateEmail: ldapUser[ldapMapping.email],

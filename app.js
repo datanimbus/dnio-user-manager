@@ -28,7 +28,7 @@ global.logger = logger;
 const conf = require('./config/config.js');
 var mongoUtil = require('./util/mongo.util');
 const globalCache = require('./util/cache');
-const { fetchEnvironmentVariablesFromDB } = require('./config/config')
+const { fetchEnvironmentVariablesFromDB } = require('./config/config');
 
 logger.info(`RBAC_USER_TO_SINGLE_SESSION :: ${conf.RBAC_USER_TO_SINGLE_SESSION}`);
 logger.info(`RBAC_USER_TOKEN_DURATION :: ${conf.RBAC_USER_TOKEN_DURATION}`);
@@ -84,6 +84,7 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		logger.info(`Max request JSON size :: ${maxJSONSize}`);
 		logger.info(`DS_FUZZY_SEARCH :: ${envVariables.DS_FUZZY_SEARCH}`);
 		logger.info(`Max request file upload size :: ${envVariables.MAX_FILE_SIZE || '5MB'}`);
+		require('./config/passport')(passport);
 	} catch (err) {
 		logger.error(err);
 	}
@@ -116,7 +117,6 @@ mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: 
 var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
 app.use(logMiddleware);
 
-require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(require('./util/auth'));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));

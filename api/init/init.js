@@ -316,6 +316,37 @@ async function checkAzureDependencies() {
 	}
 }
 
+async function isLDAPDependenciesOk(envVariables) {
+	try {
+		let flag = true;
+		if (!envVariables.serverDetails.url) {
+			logger.error('Missing LDAP_SERVER_URL');
+			flag = false;
+		}
+		if (!envVariables.serverDetails.adminDN) {
+			logger.error('Missing LDAP_BIND_DN');
+			flag = false;
+		}
+		if (!envVariables.serverDetails.bindCredentials) {
+			logger.error('Missing LDAP_BIND_PASSWORD');
+			flag = false;
+		}
+		if (!envVariables.serverDetails.searchBase) {
+			logger.error('Missing LDAP_BASE_DN');
+			flag = false;
+		}
+		if (!flag) {
+			logger.error('One or more LDAP Configuration Parameters Missing.');
+			logger.error('LDAP will not be Configured.');
+			return false;
+		}
+		return flag;
+	} catch (err) {
+		logger.error(err);
+		return false;
+	}
+}
+
 
 async function validateAuthModes() {
 	const authModes = config.RBAC_USER_AUTH_MODES;
@@ -335,6 +366,17 @@ async function validateAuthModes() {
 				removeAuthMode(curr, null);
 			}
 		} else if (curr == 'ldap') {
+			let ldapDetails = config.ldapDetails()
+			let flag = true;
+			flag = await isLDAPDependenciesOk(ldapDetails);
+			if (!flag && !localAvailable) {
+				logger.error('Local Auth Mode not configured and LDAP Configuration Details missing.');
+				logger.error('Cannot Start Application until atleast one Valid Auth Mode Available');
+				process.exit(0);
+			}
+			if (!flag) {
+				removeAuthMode(curr, null);
+			}
 			return Promise.resolve();
 		} else if (curr == 'local') {
 			return Promise.resolve();

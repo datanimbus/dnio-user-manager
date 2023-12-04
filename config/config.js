@@ -146,7 +146,7 @@ function getLDAPDetails() {
 	let options = {};
 	options.serverDetails = {
 		'url': ldapConfig['LDAP_SERVER_URL'],
-		'adminDN': ldapConfig['LDAP_BIND_DN'],
+		'bindDN': ldapConfig['LDAP_BIND_DN'],
 		'bindCredentials': ldapConfig['LDAP_BIND_PASSWORD'],
 		'searchBase': ldapConfig['LDAP_BASE_DN'],
 		'searchFilter': ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? `(${ldapConfig['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})',

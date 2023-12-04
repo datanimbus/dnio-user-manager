@@ -323,7 +323,7 @@ async function isLDAPDependenciesOk(envVariables) {
 			logger.error('Missing LDAP_SERVER_URL');
 			flag = false;
 		}
-		if (!envVariables.serverDetails.adminDN) {
+		if (!envVariables.serverDetails.bindDN) {
 			logger.error('Missing LDAP_BIND_DN');
 			flag = false;
 		}

@@ -149,10 +149,22 @@ function getLDAPDetails() {
 		'adminDN': ldapConfig['LDAP_BIND_DN'],
 		'bindCredentials': ldapConfig['LDAP_BIND_PASSWORD'],
 		'searchBase': ldapConfig['LDAP_BASE_DN'],
-		'searchFilter': ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? `(${ldapConfig['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})'
+		'searchFilter': ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? `(${ldapConfig['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})',
+		'tlsOptions': {
+			'rejectUnauthorized': false
+		}
 	};
-	if (ldapConfig['LDAP_CERTIFICATE']) {
-		options.serverDetails['tlsOptions'] = { ca: [ldapConfig['LDAP_CERTIFICATE']] };
+	if (ldapConfig['LDAP_CA_CERTIFICATE'] || ldapConfig['LDAP_CERTIFICATE'] || ldapConfig['LDAP_PRIVATE_KEY']) {
+		options.serverDetails['tlsOptions'] = {};
+		if (ldapConfig['LDAP_CA_CERTIFICATE']) {
+			options.serverDetails['tlsOptions'].ca = [ldapConfig['LDAP_CA_CERTIFICATE']];
+		}
+		if (ldapConfig['LDAP_CERTIFICATE']) {
+			options.serverDetails['tlsOptions'].cert = ldapConfig['LDAP_CERTIFICATE'];
+		}
+		if (ldapConfig['LDAP_PRIVATE_KEY']) {
+			options.serverDetails['tlsOptions'].key = ldapConfig['LDAP_PRIVATE_KEY'];
+		}
 	}
 	options.mapping = {
 		username: ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? ldapConfig['LDAP_USER_ID_ATTRIBUTE'] : 'cn',

@@ -747,13 +747,17 @@ function validateLdapLogin(ldapUser, done) {
 		.then(dbUser => {
 			logger.trace('dbUser in validateLdapLogin :: ', dbUser);
 			// For first time logging users
-			if (dbUser && JSON.stringify(dbUser.basicDetails) == '{}') {
-				dbUser.basicDetails = {
-					name: ldapUser[ldapMapping.name],
-					alternateEmail: ldapUser[ldapMapping.email],
-					phone: null
-				};
-				dbUser.save().then(user => {
+			if (dbUser) {
+				if (!dbUser.basicDetails) {
+					dbUser.basicDetails = {};
+				}
+				if (!dbUser.basicDetails.name) {
+					dbUser.basicDetails.name = ldapUser[ldapMapping.name];
+				}
+				if (!dbUser.basicDetails.alternateEmail) {
+					dbUser.basicDetails.alternateEmail = ldapUser[ldapMapping.email];
+				}
+				dbUser.save().then((user) => {
 					done(null, user);
 				});
 			} else {

@@ -5,12 +5,18 @@ var LdapStrategy = require('passport-ldapauth');
 var config = require('./config');
 var { validateLocalLogin, validateLdapLogin } = require('./../api/controllers/user.controller');
 
+let logger = global.logger;
+
 module.exports = function (passport) {
 	passport.use(new LocalStrategy(validateLocalLogin));
 
 	if (config.RBAC_USER_AUTH_MODES.includes('ldap')) {
 		let serverDetails = config.ldapDetails();
-		config.log(JSON.stringify(serverDetails));
+		if (logger) {
+			logger.debug('LDAP Server Details:', JSON.stringify(serverDetails));
+		} else {
+			console.log('LDAP Server Details:', JSON.stringify(serverDetails));
+		}
 		passport.use(new LdapStrategy({ server: serverDetails.serverDetails }, validateLdapLogin));
 	}
 

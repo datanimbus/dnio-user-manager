@@ -152,7 +152,7 @@ function getLDAPDetails() {
 		'searchFilter': ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? `(${ldapConfig['LDAP_USER_ID_ATTRIBUTE']}={{username}})` : '(uid={{username}})'
 	};
 	if (ldapConfig['LDAP_CERTIFICATE']) {
-		options.serverDetails['tlsOptions'] = { ca: ldapConfig['LDAP_CERTIFICATE'] };
+		options.serverDetails['tlsOptions'] = { ca: [ldapConfig['LDAP_CERTIFICATE']] };
 	}
 	options.mapping = {
 		username: ldapConfig['LDAP_USER_ID_ATTRIBUTE'] ? ldapConfig['LDAP_USER_ID_ATTRIBUTE'] : 'cn',

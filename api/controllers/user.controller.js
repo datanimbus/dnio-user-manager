@@ -1239,7 +1239,7 @@ async function validateUserSession(req, res) {
 
 		let tokenHash = md5(token);
 		logger.debug(`Token hash :: ${tokenHash}`);
-		const flag = cache.isTokenBlacklisted(tokenHash);
+		const flag = await cache.isTokenBlacklisted(tokenHash);
 
 		if (flag) throw 'invalid';
 

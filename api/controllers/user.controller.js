@@ -85,7 +85,6 @@ var generateToken = function (document, response, exp, isHtml, oldJwt, isExtend,
 		.then(() => {
 			resObj['token'] = token;
 			resObj['rToken'] = rToken;
-			delete resObj.isActive;
 			delete resObj.__v;
 			resObj.serverTime = Date.now();
 			resObj.expiresIn = (exp && !isExtend) ? exp * 1000 : Date.now() + (expireIn * 1000);

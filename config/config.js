@@ -73,27 +73,22 @@ let ldapConfig = {};
 
 async function fetchEnvironmentVariablesFromDB() {
 	try {
-		envVariables = await dataStackUtils.database.fetchEnvVariables();
-		configureAzure(azureConfig, envVariables);
-		configureLDAP(ldapConfig, envVariables);
+	  logger.info('Seeding environment variables');
+	  await seedConfigData();
 
-		return envVariables;
+	  logger.warn('Retry fetching environment variables from DB...');
+	  const envVariables = await dataStackUtils.database.fetchEnvVariables();
+
+	  configureAzure(azureConfig, envVariables);
+	  configureLDAP(ldapConfig, envVariables);
+  
+	  return envVariables;
 	} catch (error) {
-		logger.error(error);
-		try {
-			logger.info('No environment variables found in the database, try seeding environment variables');
-			await seedConfigData();
-			logger.warn('Retry fetching environment variables from DB...');
-			envVariables = await dataStackUtils.database.fetchEnvVariables();
-			configureAzure(azureConfig, envVariables);
-
-			return envVariables;
-		} catch (retryError) {
-			logger.error('Retry for environment variables failed. Crashing the component.');
-			process.exit(1);
-		}
+	  logger.error('Retry for environment variables failed. Crashing the component.', error);
+	  process.exit(1);
 	}
-}
+  }
+  
 
 function configureAzure(config, envVariables) {
 	config.clientId = envVariables.AZURE_AD_CLIENT_ID;

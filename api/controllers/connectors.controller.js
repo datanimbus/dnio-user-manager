@@ -292,7 +292,10 @@ async function fetchTables(req, res) {
 					tables = result.recordset.map(record => { return { "name": record.name, "type": record.type } });
 
 				} else if (data.type === 'MYSQL') {
-					tables = result[0].map(record => { return { "name": record.Tables_in_testdb } });
+					tables = result[0].map(record => { 
+						const dbName = Object.keys(record)[0];
+        				return { "name": record[dbName] };
+					 });
 
 				} else if (data.type === 'PGSQL') {
 					tables = result.rows.map(record => { return { "name": record.tablename } });
@@ -307,6 +310,11 @@ async function fetchTables(req, res) {
 		}
 	} catch (err) {
 		logger.error(err);
+		if (err.code === 'ENOTFOUND') {
+			return res.status(400).json({ message: 'Host not found. Please check the connector host configuration.' });
+		} else if (err.code === 'ECONNREFUSED') {
+			return res.status(400).json({ message: 'Connection refused on the specified port. Please check the connector port configuration.' });
+		}
 		return res.status(500).json({
 			message: err.message
 		});

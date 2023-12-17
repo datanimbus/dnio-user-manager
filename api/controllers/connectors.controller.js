@@ -221,8 +221,10 @@ async function testConnector(req, res) {
 		if (err.message && err.message.includes('Server selection timed out')) {
 			err.message = 'Unable to connect to server, please check your connection string';
 		}
-		if (err.message && err.message.includes('getaddrinfo')) {
-			err.message = `Unable to find server address '${err.message.split('EAI_AGAIN')[1].trim()}', please check your connection string`;
+		if (err.code === 'ENOTFOUND') {
+			return res.status(400).json({ message: 'Host not found. Please check the connector host configuration.' });
+		} else if (err.code === 'ECONNREFUSED') {
+			return res.status(400).json({ message: 'Connection refused on the specified port. Please check the connector port configuration.' });
 		}
 		return res.status(500).json({
 			message: err.message

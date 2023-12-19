@@ -17,6 +17,8 @@ const client = queueMgmt.client;
 const definition = require('../helpers/connectors.definition').definition;
 const availableConnectors = require('../helpers/connectors.list').data;
 
+const { fetchTableSchemaFromMySQL, transformSchemaMySQL } = require('../helpers/connectors/mysql.connector.helper');
+
 const schema = MakeSchema(definition);
 const logger = global.logger;
 const options = {
@@ -323,6 +325,40 @@ async function fetchTables(req, res) {
 	}
 }
 
+async function fetchTableSchema(req, res){
+	try {
+		const id = req.params.id;
+		const serviceName = req.query.serviceName;
+    	const tableName = req.query.tableName;
+
+		const data = await mongoose.model('config.connectors').findById(id).lean();
+		if(!data) {
+			return res.status(404).json({ message: `Connector ${id} not found` });
+		}
+
+		logger.trace(`Connector details :: ${JSON.stringify(data)}`);
+		logger.debug(`Connector Category :: ${data.category} :: Connector type :: ${data.type}`);
+
+		if (data.category !== 'DB') {
+			return res.status(400).json({ message: 'Not a DB connector, can\'t fetch table schema' });
+		}
+		
+		// TODO: Extend support to other SQL databases
+		if (data.type !== 'MYSQL') {
+			return res.status(400).json({ message: 'DB type not supported' });
+		}
+
+		const schema = await fetchTableSchemaFromMySQL(data, tableName);
+		logger.trace(`Schema for table ${tableName} :: ${JSON.stringify(schema)}`);
+		const transformedSchema = await transformSchemaMySQL(schema, serviceName);
+    	return res.status(200).json(transformedSchema);
+
+	} catch (err) {
+		logger.error(err);
+		return res.status(500).json({ message: err.message });
+	}
+}
+
 module.exports = {
 	listOptions: listOptions,
 	count: crudder.count,
@@ -332,5 +368,6 @@ module.exports = {
 	destroy: crudder.destroy,
 	update: crudder.update,
 	test: testConnector,
-	fetchTables: fetchTables
+	fetchTables: fetchTables,
+	fetchTableSchema: fetchTableSchema
 };

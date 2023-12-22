@@ -718,24 +718,26 @@ async function validateLocalLogin(username, password, done) {
 }
 
 function localLogin(req, res) {
+	commonLogin(req, res);
 	//Allow Admin User to login and import AD/LDAP Users
-	if (checkAuthMode(res, 'local') || req.body.username == 'admin') {
-		passport.authenticate('local', function (err, user, info) {
-			if (err) {
-				logger.error('error in local login ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return handleLoginFailure(res, err);
-			} else if (!user) {
-				logger.error('Something went wrong in localLogin:: ', info);
-				return handleLoginFailure(res, info);
-			} else {
-				let botKey = info;
-				return handleSessionAndGenerateToken(req, res, user, botKey, false);
-			}
-		})(req, res);
-	} else {
-		res.status(400).json({ message: 'Local Login Mode is Disabled' });
-	}
+
+	// if (checkAuthMode(res, 'local') || req.body.username == 'admin') {
+	// 	passport.authenticate('local', function (err, user, info) {
+	// 		if (err) {
+	// 			logger.error('error in local login ::: ', err);
+	// 			if (info) userLog.loginFailed(info, req, res);
+	// 			return handleLoginFailure(res, err);
+	// 		} else if (!user) {
+	// 			logger.error('Something went wrong in localLogin:: ', info);
+	// 			return handleLoginFailure(res, info);
+	// 		} else {
+	// 			let botKey = info;
+	// 			return handleSessionAndGenerateToken(req, res, user, botKey, false);
+	// 		}
+	// 	})(req, res);
+	// } else {
+	// 	res.status(400).json({ message: 'Local Login Mode is Disabled' });
+	// }
 }
 
 function validateLdapLogin(ldapUser, done) {
@@ -767,19 +769,93 @@ function validateLdapLogin(ldapUser, done) {
 }
 
 function ldapLogin(req, res) {
-	if (checkAuthMode(res, 'ldap')) {
-		passport.authenticate('ldapauth', function (err, user, info) {
-			if (err) {
-				logger.error('error in ldap ::: ', err);
-				if (info) userLog.loginFailed(info, req, res);
-				return handleLoginFailure(res, err);
-			} else if (!user) {
-				logger.error('Something went wrong in ldapLogin:: ', info);
-				return handleLoginFailure(res, info);
+	commonLogin(req, res);
+	// if (checkAuthMode(res, 'ldap')) {
+	// 	passport.authenticate('ldapauth', function (err, user, info) {
+	// 		if (err) {
+	// 			logger.error('error in ldap ::: ', err);
+	// 			if (info) userLog.loginFailed(info, req, res);
+	// 			return handleLoginFailure(res, err);
+	// 		} else if (!user) {
+	// 			logger.error('Something went wrong in ldapLogin:: ', info);
+	// 			return handleLoginFailure(res, info);
+	// 		} else {
+	// 			return handleSessionAndGenerateToken(req, res, user, null, false);
+	// 		}
+	// 	})(req, res);
+	// } else {
+	// 	res.status(400).json({ message: 'LDAP Login Mode is Disabled' });
+	// }
+}
+
+async function commonLogin(req, res) {
+	try {
+		if (!req.body.username) {
+			throw new Error('Username is required');
+		}
+		let userDoc = await crudder.model.findOne({
+			_id: new RegExp('^' + req.body.username + '$', 'i'),
+			'isActive': true
+		}, { username: 1, auth: 1 }).lean();
+		if (userDoc) {
+			if (userDoc.auth.authType == 'local') {
+				if (!checkAuthMode(res, 'local') && !req.body.username == 'admin') {
+					throw new Error('Auth Mode is Not Configured');
+				}
+				passport.authenticate('local', function (err, user, info) {
+					if (err) {
+						logger.error('error in local login ::: ', err);
+						if (info) userLog.loginFailed(info, req, res);
+						return handleLoginFailure(res, err);
+					} else if (!user) {
+						logger.error('Something went wrong in localLogin:: ', info);
+						return handleLoginFailure(res, info);
+					} else {
+						let botKey = info;
+						return handleSessionAndGenerateToken(req, res, user, botKey, false);
+					}
+				})(req, res);
+			} else if (userDoc.auth.authType == 'ldap') {
+				if (!checkAuthMode(res, 'ldap')) {
+					throw new Error('Auth Mode is Not Configured');
+				}
+				passport.authenticate('ldapauth', function (err, user, info) {
+					if (err) {
+						logger.error('error in ldap ::: ', err);
+						if (info) userLog.loginFailed(info, req, res);
+						return handleLoginFailure(res, err);
+					} else if (!user) {
+						logger.error('Something went wrong in ldapLogin:: ', info);
+						return handleLoginFailure(res, info);
+					} else {
+						return handleSessionAndGenerateToken(req, res, user, null, false);
+					}
+				})(req, res);
+			} else if (userDoc.auth.authType == 'azure') {
+				try {
+					logger.debug('Checking Azure Login.');
+					if (checkAuthMode(res, 'azure')) {
+						// passport.authenticate('AzureLogIn', { session: false })(req, res);
+						const url = await azureAdUtil.getAuthUrl();
+						return res.redirect(url);
+					}
+					if (req.header('content-type') == 'application/json') {
+						return res.status(400).json({ message: 'Azure auth mode not configured' });
+					}
+					return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+				} catch (err) {
+					logger.error(err);
+					return sendAzureCallbackResponse(res, 500, { message: Error.message });
+				}
 			} else {
-				return handleSessionAndGenerateToken(req, res, user, null, false);
+				throw new Error('Using Incorrect API for Login');
 			}
-		})(req, res);
+		} else {
+			throw new Error('Invalid Username/Password');
+		}
+	} catch (err) {
+		logger.error(err);
+		res.status(400).json({ message: err.message });
 	}
 }
 
@@ -843,22 +919,23 @@ async function customAzureAuthenticate(data, done) {
 	}
 }
 
-async function azureLogin(req, res) {
-	try {
-		logger.debug('Checking Azure Login.');
-		if (checkAuthMode(res, 'azure')) {
-			// passport.authenticate('AzureLogIn', { session: false })(req, res);
-			const url = await azureAdUtil.getAuthUrl();
-			return res.redirect(url);
-		}
-		if (req.header('content-type') == 'application/json') {
-			return res.status(400).json({ message: 'Azure auth mode not configured' });
-		}
-		return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
-	} catch (err) {
-		logger.error(err);
-		return sendAzureCallbackResponse(res, 500, { message: Error.message });
-	}
+function azureLogin(req, res) {
+	commonLogin(req, res);
+	// try {
+	// 	logger.debug('Checking Azure Login.');
+	// 	if (checkAuthMode(res, 'azure')) {
+	// 		// passport.authenticate('AzureLogIn', { session: false })(req, res);
+	// 		const url = await azureAdUtil.getAuthUrl();
+	// 		return res.redirect(url);
+	// 	}
+	// 	if (req.header('content-type') == 'application/json') {
+	// 		return res.status(400).json({ message: 'Azure auth mode not configured' });
+	// 	}
+	// 	return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+	// } catch (err) {
+	// 	logger.error(err);
+	// 	return sendAzureCallbackResponse(res, 500, { message: Error.message });
+	// }
 }
 
 async function azureLoginCallback(req, res) {

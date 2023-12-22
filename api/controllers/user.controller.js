@@ -796,11 +796,17 @@ async function commonLogin(req, res) {
 		let userDoc = await crudder.model.findOne({
 			_id: new RegExp('^' + req.body.username + '$', 'i'),
 			'isActive': true
-		}, { username: 1, auth: 1 }).lean();
+		}, { username: 1, auth: 1, bot: 1 }).lean();
 		if (userDoc) {
-			if (userDoc.auth.authType == 'local') {
+			if (!userDoc.auth) {
+				userDoc.auth = {};
+			}
+			if (!userDoc.auth.authType) {
+				userDoc.auth.authType = 'local';
+			}
+			if (userDoc.bot || userDoc.auth.authType == 'local') {
 				if (!checkAuthMode(res, 'local') && !req.body.username == 'admin') {
-					throw new Error('Auth Mode is Not Configured');
+					throw new Error('Local Auth Mode is Not Configured');
 				}
 				passport.authenticate('local', function (err, user, info) {
 					if (err) {
@@ -817,7 +823,7 @@ async function commonLogin(req, res) {
 				})(req, res);
 			} else if (userDoc.auth.authType == 'ldap') {
 				if (!checkAuthMode(res, 'ldap')) {
-					throw new Error('Auth Mode is Not Configured');
+					throw new Error('LDAP Auth Mode is Not Configured');
 				}
 				passport.authenticate('ldapauth', function (err, user, info) {
 					if (err) {

@@ -865,7 +865,7 @@ e.showApp = async (req, res) => {
 	logger.debug(`${req.user._id} :: Is Super Admin? :: ${req.user.isSuperAdmin}`);
 	logger.debug(`${req.user._id} :: app permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
 
-	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
+	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || (req.user.apps || []).includes(app)) {
 		let data = await crudder.model.find({ '_id': app }).lean();
 
 		if (data && data[0]) delete data[0].encryptionKey;
@@ -883,7 +883,7 @@ e.updateApp = (req, res) => {
 	logger.debug(`${req.user._id} :: Is Super Admin? :: ${req.user.isSuperAdmin}`);
 	logger.debug(`${req.user._id} :: App permissions :: ${JSON.stringify(req.user.allPermissions.map(e => e.app))}, ${JSON.stringify(req.user.apps)}`);
 
-	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || req.user.apps.includes(app)) {
+	if (req.user.isSuperAdmin || req.user.allPermissions.find(e => e.app === app) || (req.user.apps || []).includes(app)) {
 		return crudder.update(req, res);
 	} else {
 		res.status(400).json({ message: 'You don\'t have permission to view this app' });

@@ -73,22 +73,22 @@ let ldapConfig = {};
 
 async function fetchEnvironmentVariablesFromDB() {
 	try {
-	  logger.info('Seeding environment variables');
-	  await seedConfigData();
+		logger.info('Seeding environment variables');
+		await seedConfigData();
 
-	  logger.warn('Retry fetching environment variables from DB...');
-	  const envVariables = await dataStackUtils.database.fetchEnvVariables();
+		logger.warn('Retry fetching environment variables from DB...');
+		const envVariables = await dataStackUtils.database.fetchEnvVariables();
 
-	  configureAzure(azureConfig, envVariables);
-	  configureLDAP(ldapConfig, envVariables);
-  
-	  return envVariables;
+		configureAzure(azureConfig, envVariables);
+		configureLDAP(ldapConfig, envVariables);
+
+		return envVariables;
 	} catch (error) {
-	  logger.error('Retry for environment variables failed. Crashing the component.', error);
-	  process.exit(1);
+		logger.error('Retry for environment variables failed. Crashing the component.', error);
+		process.exit(1);
 	}
-  }
-  
+}
+
 
 function configureAzure(config, envVariables) {
 	config.clientId = envVariables.AZURE_AD_CLIENT_ID;
@@ -263,5 +263,6 @@ module.exports = {
 	RBAC_USER_LOGIN_FAILURE_DURATION: parseInt(process.env.RBAC_USER_LOGIN_FAILURE_DURATION || 600),
 	RBAC_USER_LOGIN_FAILURE_COOLDOWN: parseInt(process.env.RBAC_USER_LOGIN_FAILURE_COOLDOWN || 300),
 	RELEASE: envVariables.RELEASE || '2.7.0',
-	TLS_REJECT_UNAUTHORIZED: parseBoolean(envVariables.TLS_REJECT_UNAUTHORIZED)
+	TLS_REJECT_UNAUTHORIZED: parseBoolean(envVariables.TLS_REJECT_UNAUTHORIZED),
+	ODP_RULES: parseBoolean(process.env.ODP_RULES || 'false')
 };

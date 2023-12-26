@@ -6,7 +6,7 @@ const { SMCrud, MakeSchema } = require('@appveen/swagger-mongoose-crud');
 const schema = MakeSchema(definition);
 const logger = global.logger;
 const utils = require('@appveen/utils');
-const config = require('../../config/config')
+const config = require('../../config/config');
 
 var options = {
 	logger: logger,

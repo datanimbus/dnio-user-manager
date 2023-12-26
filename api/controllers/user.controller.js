@@ -3002,16 +3002,19 @@ function importUserToApp(req, res) {
 			}
 			usrdoc = usr;
 			return mongoose.model('group').find({
-				$or: [{
-					_id: {
-						'$in': groups
+				$or: [
+					{
+						_id: {
+							'$in': groups
+						}
+					},
+					{
+						name: '#',
+						app: {
+							'$in': apps
+						}
 					}
-				}, {
-					name: '#',
-					app: {
-						'$in': apps
-					}
-				}]
+				]
 			});
 		})
 		.then(_grps => {

@@ -101,7 +101,7 @@ schema.pre('save', function (next, req) {
 		return next();
 	}
 	if (req && req.user && req.user._id) {
-		if (users.indexOf(req.user._id) > -1) {
+		if (!config.ODP_RULES && users.indexOf(req.user._id) > -1) {
 			return next(new Error('Cannot manipulate a group, which you are part of.'));
 		}
 	}
@@ -173,18 +173,18 @@ schema.post('save', async function (doc) {
 
 		const permissions = await model.aggregate([
 			{ $match: { users: user } },
-			{ $unwind: "$roles" },
-			{ $group: { _id: "$roles.app", perms: { $addToSet: "$roles.id" } } }
+			{ $unwind: '$roles' },
+			{ $group: { _id: '$roles.app', perms: { $addToSet: '$roles.id' } } }
 		]);
 		if (permissions && permissions.length > 0) {
 			let promises = permissions.map(async (element) => {
-				return await cacheUtils.setUserPermissions(user + "_" + element._id, element.perms);
+				return await cacheUtils.setUserPermissions(user + '_' + element._id, element.perms);
 			});
 			await Promise.all(promises);
 		}
 
 	}, Promise.resolve());
-})
+});
 
 
 schema.pre('remove', dataStackUtils.auditTrail.getAuditPreRemoveHook());
@@ -246,7 +246,7 @@ async function customUpdate(req, res) {
 	if (data) {
 		crudder.update(req, res);
 	} else {
-		return res.status(404).json({ message: 'Group not found.'});
+		return res.status(404).json({ message: 'Group not found.' });
 	}
 }
 
@@ -255,9 +255,9 @@ async function customDelete(req, res) {
 	let data = await crudder.model.deleteOne({ _id: req.params.id, app: req.params.app });
 
 	if (data.deletedCount > 0) {
-		return res.status(200).json({ message: "Deleted" });
+		return res.status(200).json({ message: 'Deleted' });
 	} else {
-		return res.status(404).json({ message: 'Group not found'});
+		return res.status(404).json({ message: 'Group not found' });
 	}
 }
 
@@ -284,30 +284,30 @@ async function groupInApp(req, res) {
 	try {
 		modifyFilterForApp(req);
 		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
-		let data =  await crudder.model.find(JSON.parse(req.query.filter), select, { "count": req.query.count, "page": req.query.page, "sort": req.query.sort }).lean();
+		let data = await crudder.model.find(JSON.parse(req.query.filter), select, { 'count': req.query.count, 'page': req.query.page, 'sort': req.query.sort }).lean();
 
 		if (!data) {
 			return res.status(404).json({ message: 'Group not found.' });
 		}
-	
+
 		return res.status(200).json(data);
 	} catch (err) {
-		if (!res.headersSent) return res.status(500).json({ "message": err.message || err });
+		if (!res.headersSent) return res.status(500).json({ 'message': err.message || err });
 	}
 }
 
 async function groupInAppShow(req, res) {
 	try {
 		let select = req.query.select ? req.query.select.split(',').join(' ') : '';
-		let data =  await crudder.model.findOne({ _id: req.params.id, app: req.params.app }, select).lean();
+		let data = await crudder.model.findOne({ _id: req.params.id, app: req.params.app }, select).lean();
 
 		if (!data) {
 			return res.status(404).json({ message: 'Group not found.' });
 		}
-	
+
 		return res.status(200).json(data);
 	} catch (err) {
-		if (!res.headersSent) return res.status(500).json({ "message": err.message || err });
+		if (!res.headersSent) return res.status(500).json({ 'message': err.message || err });
 	}
 }
 function groupInAppCount(req, res) {

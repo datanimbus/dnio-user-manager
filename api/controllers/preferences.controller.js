@@ -89,15 +89,15 @@ function customDestroy(req, res) {
 }
 async function customUpdate(req, res) {
 	if (req.body.userId !== req.user._id) {
-		return res.status(403).json({ "message": "You don't have permissions for this API"});
+		return res.status(403).json({ 'message': 'You don\'t have permissions for this API'});
 	}
 	
-	let data =  await crudder.model.findOne({ "_id": req.params.id }).lean();
+	let data =  await crudder.model.findOne({ '_id': req.params.id }).lean();
 	if (data.userId !== req.body.userId || data.userId !== req.user._id) {
-		return res.status(400).json({ "message": "You can't manipulate preferences for another user." })
+		return res.status(400).json({ 'message': 'You can\'t manipulate preferences for another user.' });
 	}
 
-	data =  await crudder.model.findOneAndUpdate({ "_id": req.params.id }, req.body).lean();
+	data =  await crudder.model.findOneAndUpdate({ '_id': req.params.id }, req.body).lean();
 	if (data) {
 		return res.status(200).json(data);
 	} else {

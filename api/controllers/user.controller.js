@@ -1830,34 +1830,54 @@ function customizer(objValue, srcValue) {
 }
 
 async function customCreate(req, res) {
-	req.body._id = (!req.body._id && req.body.bot) ? cacheUtil.uuid() : req.body._id;
-	let authType = req.body.auth && req.body.auth.authType ? req.body.auth.authType : 'local';
-	if (!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
-		logger.error(authType + ' auth mode is not supported.');
-		return res.status(400).json({
-			message: authType + ' auth mode is not supported.'
-		});
+	let wasArray = true;
+	let payload = [];
+	if (Array.isArray(req.body)) {
+		payload = req.body;
+	} else {
+		wasArray = false;
+		payload.push(req.body);
 	}
-	if (!req.body.accessControl) {
-		req.body.accessControl = {
-			accessLevel: 'None',
-			app: []
-		};
-	}
-	if (authType == 'local') {
-		let password = req.body.password;
-		let result = checkPassword(password);
-		if (!result.success) {
-			return res.status(400).json({
-				message: result.message
-			});
+	let promises = payload.map(async (item) => {
+		try {
+			item._id = (!item._id && item.bot) ? cacheUtil.uuid() : item._id;
+			let authType = item.auth && item.auth.authType ? item.auth.authType : 'local';
+			if (!envConfig.RBAC_USER_AUTH_MODES.includes(authType)) {
+				logger.error(authType + ' auth mode is not supported.');
+				return {
+					message: authType + ' auth mode is not supported.'
+				};
+			}
+			if (!item.accessControl) {
+				item.accessControl = {
+					accessLevel: 'None',
+					app: []
+				};
+			}
+			if (authType == 'local') {
+				let password = item.password;
+				let result = checkPassword(password);
+				if (!result.success) {
+					return {
+						message: result.message
+					};
+				}
+			}
+			let doc = await crudder.model(item);
+			let user = await doc.save(req);
+			delete user._doc.password;
+			delete user._doc.salt;
+			return user;
+		} catch (err) {
+			return err;
 		}
+	});
+	let users = await Promise.all(promises);
+	if (wasArray) {
+		return res.status(200).json(users);
+	} else {
+		return res.status(200).json(users[0]);
 	}
-	let doc = await crudder.model(req.body);
-	let user = await doc.save(req);
-	delete user._doc.password;
-	delete user._doc.salt;
-	return res.status(200).json(user);
 }
 
 function createBotKey(req, res) {

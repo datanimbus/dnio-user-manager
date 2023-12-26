@@ -1187,6 +1187,21 @@ async function resetPassword(req, res) {
 	let userDoc = null;
 	let id = req.params.id;
 	let app = req.params.app;
+
+	const doc = await crudder.model.findOne({
+		'_id': id
+	});
+	if (doc) {
+		if (doc.auth && (doc.auth.authType === 'ldap' || (doc.auth.authType === 'azure' && !doc.bot))) {
+			return res.status(400).json({
+				message: 'Cannot update password of this User'
+			});
+		}
+	} else {
+		return res.status(400).json({
+			message: 'Invalid Credentials'
+		});
+	}
 	if (credentials.password == credentials.cpassword) {
 		let result = checkPassword(credentials.password);
 		if (result.success) {
@@ -1829,21 +1844,20 @@ async function customCreate(req, res) {
 			app: []
 		};
 	}
-	let password = req.body.password;
-	let result = checkPassword(password);
-	if (result.success) {
-		let doc = await crudder.model(req.body);
-		let user = await doc.save(req);
-
-		delete user._doc.password;
-		delete user._doc.salt;
-
-		return res.status(200).json(user);
-	} else {
-		return res.status(400).json({
-			message: result.message
-		});
+	if (authType == 'local') {
+		let password = req.body.password;
+		let result = checkPassword(password);
+		if (!result.success) {
+			return res.status(400).json({
+				message: result.message
+			});
+		}
 	}
+	let doc = await crudder.model(req.body);
+	let user = await doc.save(req);
+	delete user._doc.password;
+	delete user._doc.salt;
+	return res.status(200).json(user);
 }
 
 function createBotKey(req, res) {

@@ -20,7 +20,6 @@ const passport = require('passport');
 var cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 logger.level = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info';
-let timeOut;
 
 global.Promise = bluebird;
 global.logger = logger;
@@ -44,28 +43,20 @@ const cacheUtil = utils.cache;
 mongoose.Promise = global.Promise;
 
 let maxJSONSize;
-
-// if (conf.debugDB) mongoose.set('debug', conf.mongooseCustomLogger);
-// if (conf.debugDB) Logger.setLevel('debug');
-
+let timeOut;
 let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 
 logger.debug('Mongo Author URL', mongoUrl);
 logger.debug('Mongo Author Options', conf.mongoOptions);
 
-// mongoose.connect(mongoUrl, conf.mongoOptions, (err) => {
-// 	if (err) {
-// 		logger.error(err);
-// 	} else {
-// 		logger.info('Connected to Author DB');
-// 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
-// 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
-// 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
-// 	}
-// });
+
 (async () => {
 	try {
 		await mongoose.connect(mongoUrl, conf.mongoOptions);
+		mongoose.connection.on('connecting', () => logger.info(' *** Author DB :: Connecting'));
+		mongoose.connection.on('disconnected', () => logger.error(' *** Author DB :: connection lost'));
+		mongoose.connection.on('reconnect', () => logger.info(' *** Author DB :: Reconnected'));
+		mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: Reconnect attempt failed'));
 		logger.info('Connected to Author DB');
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
@@ -85,80 +76,69 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		logger.info(`DS_FUZZY_SEARCH :: ${envVariables.DS_FUZZY_SEARCH}`);
 		logger.info(`Max request file upload size :: ${envVariables.MAX_FILE_SIZE || '5MB'}`);
 		require('./config/passport')(passport);
+		initialize();
 	} catch (err) {
 		logger.error(err);
 	}
 })();
 
-app.use(express.json({
-	inflate: true,
-	limit: maxJSONSize,
-	strict: true
-}));
-app.use(cookieParser());
+function initialize() {
+	app.use(express.json({
+		inflate: true,
+		limit: maxJSONSize,
+		strict: true
+	}));
+	app.use(cookieParser());
 
-// MongoClient.connect(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions, async (error, db) => {
-// 	if (error) logger.error(error.message);
-// 	if (db) {
-// 		global.mongoConnection = db;
-// 		logger.info('Connected to Appcenter DB');
-// 		await mongoUtil.setIsTransactionAllowed();
-// 	}
-// });
+	cacheUtil.init();
+	globalCache.init();
 
-cacheUtil.init();
-globalCache.init();
+	var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
+	app.use(logMiddleware);
 
-mongoose.connection.on('connecting', () => logger.info(' *** Author DB :: Connecting'));
-mongoose.connection.on('disconnected', () => logger.error(' *** Author DB :: connection lost'));
-mongoose.connection.on('reconnect', () => logger.info(' *** Author DB :: Reconnected'));
-mongoose.connection.on('reconnectFailed', () => logger.error(' *** Author DB :: Reconnect attempt failed'));
+	app.use(passport.initialize());
+	app.use(require('./util/auth'));
+	app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));
 
-var logMiddleware = utils.logMiddleware.getLogMiddleware(logger);
-app.use(logMiddleware);
+	let dataStackUtils = require('@appveen/data.stack-utils');
+	let queueMgmt = require('./util/queueMgmt');
 
-app.use(passport.initialize());
-app.use(require('./util/auth'));
-app.use(fileUpload({ useTempFiles: true, tempFileDir: './tmp/files' }));
+	dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
+	app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, 'user.logs'));
 
-let dataStackUtils = require('@appveen/data.stack-utils');
-let queueMgmt = require('./util/queueMgmt');
+	app.use('/rbac', require('./api/controllers/controller'));
 
-dataStackUtils.eventsUtil.setNatsClient(queueMgmt.client);
-app.use(dataStackUtils.logToQueue('user', queueMgmt.client, conf.logQueueName, 'user.logs'));
-
-app.use('/rbac', require('./api/controllers/controller'));
-
-app.use(function (error, req, res, next) {
-	if (error) {
-		logger.error(error);
-		if (!res.headersSent) {
-			let statusCode = error.statusCode || 500;
-			if (error.message.includes('APP_NAME_ERROR')) {
-				statusCode = 400;
+	app.use(function (error, req, res, next) {
+		if (error) {
+			logger.error(error);
+			if (!res.headersSent) {
+				let statusCode = error.statusCode || 500;
+				if (error.message.includes('APP_NAME_ERROR')) {
+					statusCode = 400;
+				}
+				res.status(statusCode).json({
+					message: error.message
+				});
 			}
-			res.status(statusCode).json({
-				message: error.message
-			});
-		}
-	} else {
-		next();
-	}
-});
-
-const port = process.env.PORT || 10004;
-const server = app.listen(port, (err) => {
-	if (!err) {
-		logger.info('Server started on port ' + port);
-		app.use((err, req, res, next) => {
-			if (err) {
-				if (!res.headersSent)
-					return res.status(500).json({ message: err.message });
-				return;
-			}
+		} else {
 			next();
-		});
-	} else
-		logger.error(err);
-});
-server.setTimeout(parseInt(timeOut) * 1000);
+		}
+	});
+
+	const port = process.env.PORT || 10004;
+	const server = app.listen(port, (err) => {
+		if (!err) {
+			logger.info('Server started on port ' + port);
+			app.use((err, req, res, next) => {
+				if (err) {
+					if (!res.headersSent)
+						return res.status(500).json({ message: err.message });
+					return;
+				}
+				next();
+			});
+		} else
+			logger.error(err);
+	});
+	server.setTimeout(parseInt(timeOut) * 1000);
+}

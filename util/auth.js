@@ -107,6 +107,7 @@ const commonUrls = [
 	'/rbac/{app}/connector/utils/availableConnectors',
 	'/rbac/{app}/connector/utils/test',
 	'/rbac/{app}/connector/{id}/utils/fetchTables',
+	'/rbac/{app}/connector/{id}/utils/fetchTableSchema',
 	'/rbac/{app}/apiKeys/utils/count',
 	'/rbac/{app}/apiKeys',
 	'/rbac/{app}/apiKeys/{id}',
@@ -392,6 +393,9 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/connector/{id}/utils/fetchTables', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
+		return true;
+	}
+	if (compareURL('/rbac/{app}/connector/{id}/utils/fetchTableSchema', req.path) && _.intersectionWith(req.user.appPermissions, ['PMCON', 'PVCON'], comparator).length > 0) {
 		return true;
 	}
 

@@ -119,6 +119,7 @@ router.delete('/:app/connector/:id', ConnectorController.destroy);
 router.get('/:app/connector/utils/availableConnectors', ConnectorController.listOptions);
 router.post('/:app/connector/utils/test', ConnectorController.test);
 router.get('/:app/connector/:id/utils/fetchTables', ConnectorController.fetchTables);
+router.get('/:app/connector/:id/utils/fetchTableSchema', ConnectorController.fetchTableSchema);
 
 
 router.get('/data/:id/allRoles', UserController.getAllRolesofUser);

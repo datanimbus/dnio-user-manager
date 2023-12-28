@@ -17,6 +17,8 @@ const client = queueMgmt.client;
 const definition = require('../helpers/connectors.definition').definition;
 const availableConnectors = require('../helpers/connectors.list').data;
 
+const { fetchTableSchemaFromMySQL, transformSchemaMySQL } = require('../helpers/connectors/mysql.connector.helper');
+
 const schema = MakeSchema(definition);
 const logger = global.logger;
 const options = {
@@ -221,8 +223,10 @@ async function testConnector(req, res) {
 		if (err.message && err.message.includes('Server selection timed out')) {
 			err.message = 'Unable to connect to server, please check your connection string';
 		}
-		if (err.message && err.message.includes('getaddrinfo')) {
-			err.message = `Unable to find server address '${err.message.split('EAI_AGAIN')[1].trim()}', please check your connection string`;
+		if (err.code === 'ENOTFOUND') {
+			return res.status(400).json({ message: 'Host not found. Please check the connector host configuration.' });
+		} else if (err.code === 'ECONNREFUSED') {
+			return res.status(400).json({ message: 'Connection refused on the specified port. Please check the connector port configuration.' });
 		}
 		return res.status(500).json({
 			message: err.message
@@ -292,7 +296,10 @@ async function fetchTables(req, res) {
 					tables = result.recordset.map(record => { return { "name": record.name, "type": record.type } });
 
 				} else if (data.type === 'MYSQL') {
-					tables = result[0].map(record => { return { "name": record.Tables_in_testdb } });
+					tables = result[0].map(record => { 
+						const dbName = Object.keys(record)[0];
+        				return { "name": record[dbName] };
+					 });
 
 				} else if (data.type === 'PGSQL') {
 					tables = result.rows.map(record => { return { "name": record.tablename } });
@@ -307,9 +314,48 @@ async function fetchTables(req, res) {
 		}
 	} catch (err) {
 		logger.error(err);
+		if (err.code === 'ENOTFOUND') {
+			return res.status(400).json({ message: 'Host not found. Please check the connector host configuration.' });
+		} else if (err.code === 'ECONNREFUSED') {
+			return res.status(400).json({ message: 'Connection refused on the specified port. Please check the connector port configuration.' });
+		}
 		return res.status(500).json({
 			message: err.message
 		});
+	}
+}
+
+async function fetchTableSchema(req, res){
+	try {
+		const id = req.params.id;
+		const serviceName = req.query.serviceName;
+    	const tableName = req.query.tableName;
+
+		const data = await mongoose.model('config.connectors').findById(id).lean();
+		if(!data) {
+			return res.status(404).json({ message: `Connector ${id} not found` });
+		}
+
+		logger.trace(`Connector details :: ${JSON.stringify(data)}`);
+		logger.debug(`Connector Category :: ${data.category} :: Connector type :: ${data.type}`);
+
+		if (data.category !== 'DB') {
+			return res.status(400).json({ message: 'Not a DB connector, can\'t fetch table schema' });
+		}
+		
+		// TODO: Extend support to other SQL databases
+		if (data.type !== 'MYSQL') {
+			return res.status(400).json({ message: 'DB type not supported' });
+		}
+
+		const schema = await fetchTableSchemaFromMySQL(data, tableName);
+		logger.trace(`Schema for table ${tableName} :: ${JSON.stringify(schema)}`);
+		const transformedSchema = await transformSchemaMySQL(schema, serviceName);
+    	return res.status(200).json(transformedSchema);
+
+	} catch (err) {
+		logger.error(err);
+		return res.status(500).json({ message: err.message });
 	}
 }
 
@@ -322,5 +368,6 @@ module.exports = {
 	destroy: crudder.destroy,
 	update: crudder.update,
 	test: testConnector,
-	fetchTables: fetchTables
+	fetchTables: fetchTables,
+	fetchTableSchema: fetchTableSchema
 };

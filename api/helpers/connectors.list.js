@@ -19,6 +19,33 @@ const data = [
 				htmlInputType: 'text',
 				encrypted: false,
 				required: true
+			},
+			{
+				type: 'Boolean',
+				key: 'tls',
+				label: 'TLS',
+				htmlInputType: 'checkbox',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'certName',
+				label: 'Certificate File Name',
+				htmlInputType: 'text',
+				condition: {
+					tls: true
+				}
+			},
+			{
+				type: 'String',
+				key: 'cert',
+				label: 'Certificate Content',
+				htmlInputType: 'textarea',
+				encrypted: true,
+				condition: {
+					tls: true
+				}
 			}
 		]
 	},
@@ -172,7 +199,7 @@ const data = [
 				key: 'password',
 				label: 'SFTP Password',
 				htmlInputType: 'password',
-				condition: { 
+				condition: {
 					authType: 'password'
 				},
 				encrypted: true
@@ -182,7 +209,7 @@ const data = [
 				key: 'privateKey',
 				label: 'SFTP Private Key',
 				htmlInputType: 'textarea',
-				condition: { 
+				condition: {
 					authType: 'privateKey'
 				},
 				encrypted: true
@@ -192,7 +219,7 @@ const data = [
 				key: 'password',
 				label: 'SFTP Private Key Passphrase',
 				htmlInputType: 'password',
-				condition: { 
+				condition: {
 					authType: 'privateKey'
 				},
 				encrypted: true

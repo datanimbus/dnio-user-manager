@@ -2465,6 +2465,9 @@ function createUserinGroups(req, res) {
 		return res.status(400).json({ message: 'You can\'t create a superAdmin user' });
 	}
 	if (user && user.bot) {
+		if (!req.user.isSuperAdmin || req.user.appPermissions.includes('PMBBC')) {
+			return res.status(401).json({ message: 'You don\'t have permission to create a bot user' });
+		}
 		user._id = user._id ? user._id : (user.username ? user.username : cacheUtil.uuid());
 		user.username = user._id;
 	}

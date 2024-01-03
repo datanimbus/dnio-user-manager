@@ -329,9 +329,28 @@ function canAccessPath(req) {
 		return true;
 	}
 	if (compareURL('/rbac/{app}/bot', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+		if ((req.method === 'POST')) {
+			if (_.intersectionWith(req.user.appPermissions, ['PMBBC'], comparator).length > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
 		return true;
 	}
-	if (compareURL('/rbac/{app}/bot/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB'], comparator).length > 0) {
+	if (compareURL('/rbac/{app}/bot/{id}', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {
+		if (req.method === 'PUT') {
+			if (_.intersectionWith(req.user.appPermissions, ['PMBBU'], comparator).length > 0) {
+				return true;
+			}
+			return false;
+		}
+		if (req.method === 'DELETE') {
+			if (_.intersectionWith(req.user.appPermissions, ['PMBBD'], comparator).length > 0) {
+				return true;
+			}
+			return false;
+		}
 		return true;
 	}
 	if (compareURL('/rbac/{app}/bot/utils/count', req.path) && _.intersectionWith(req.user.appPermissions, ['PMB', 'PVB'], comparator).length > 0) {

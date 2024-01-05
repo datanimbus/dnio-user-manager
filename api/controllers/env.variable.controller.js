@@ -24,13 +24,11 @@ function replaceWithEnvVars(data) {
 async function getEnvironmentVariables(req, res) {
 	try {
 		const minimalInfo = req.query.minimal === 'true';
-
 		if (minimalInfo) {
 			let minimalResult = await crudder.model.find({}, { _id: 1, value: 1 });
 			minimalResult = replaceWithEnvVars(minimalResult);
 			return res.status(200).json(minimalResult);
 		}
-
 		const reqParams = {
 			filter: req.query.filter || '{}',
 			sort: req.query.sort || '_metadata.lastUpdated',
@@ -40,7 +38,6 @@ async function getEnvironmentVariables(req, res) {
 			search: req.query.search || null,
 			metadata: req.query.metadata ? req.query.metadata.toLowerCase() === 'true' : false,
 		};
-
 		try {
 			const filter = reqParams.filter ? JSON.parse(reqParams.filter) : {};
 			filter['_metadata.deleted'] = false;
@@ -73,7 +70,7 @@ async function getEnvironmentVariables(req, res) {
 async function environmentVariableCreateOrUpdate(req, res) {
 	try {
 		const updates = req.body;
-		const runTimeUpdates = updates.filter(update => update.classification === 'Runtime' );
+		const runTimeUpdates = updates.filter(update => update.classification === 'Runtime');
 		const installationUpdates = updates.filter(update => update.classification === 'Installation');
 
 		let environmentVariableUpdated = false;
@@ -124,8 +121,55 @@ async function environmentVariableCreateOrUpdate(req, res) {
 	}
 }
 
+function modifyFilterForApp(req) {
+	let filter = req.query.filter;
+	let app = req.params.app;
+	if (filter && typeof filter === 'string') {
+		filter = JSON.parse(filter);
+	}
+	if (filter && typeof filter === 'object') {
+		filter.app = app;
+	} else {
+		filter = { app };
+	}
+	filter.classification = 'User';
+	req.query.filter = JSON.stringify(filter);
+}
+
+function modifyBodyForApp(req) {
+	let app = req.params.app;
+	req.body.app = app;
+	req.body.classification = 'User';
+}
+
+function customCreate(req, res) {
+	modifyBodyForApp(req);
+	crudder.create(req, res);
+}
+function customIndex(req, res) {
+	modifyFilterForApp(req);
+	crudder.index(req, res);
+}
+function customShow(req, res) {
+	modifyFilterForApp(req);
+	crudder.show(req, res);
+}
+function customDestroy(req, res) {
+	modifyBodyForApp(req);
+	crudder.destroy(req, res);
+}
+function customUpdate(req, res) {
+	modifyBodyForApp(req);
+	crudder.update(req, res);
+}
+
 module.exports = {
 	envVariableCrudder: crudder,
 	getEnvironmentVariables,
-	environmentVariableCreateOrUpdate
+	environmentVariableCreateOrUpdate,
+	customIndex,
+	customCreate,
+	customShow,
+	customUpdate,
+	customDestroy
 };

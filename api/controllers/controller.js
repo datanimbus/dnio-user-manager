@@ -11,7 +11,6 @@ const GroupController = require('./group.controller.js');
 const ConfigController = require('./config.controller');
 const FilterController = require('./filter.controller');
 const BulkCreateController = require('./bulkCreate.controller.js');
-const BookmarkController = require('./bookmark.controller.js');
 const ConnectorController = require('./connectors.controller');
 const APIKeyController = require('./api-keys.controller');
 const MetadataController = require('./metadata.controller');
@@ -48,6 +47,12 @@ router.delete('/admin/group/:id', GroupController.destroy);
 
 router.get('/admin/environmentVariable', EnvVariableController.getEnvironmentVariables);
 router.put('/admin/environmentVariable', EnvVariableController.environmentVariableCreateOrUpdate);
+
+router.get('/:app/envVars', EnvVariableController.customIndex);
+router.post('/:app/envVars', EnvVariableController.customCreate);
+router.get('/:app/envVars/:id', EnvVariableController.customShow);
+router.put('/:app/envVars/:id', EnvVariableController.customUpdate);
+router.delete('/:app/envVars/:id', EnvVariableController.customDestroy);
 
 router.get('/:app/metadata/mapper/formula/count', MetadataController.count);
 router.get('/:app/metadata/mapper/formula', MetadataController.index);
@@ -152,13 +157,6 @@ router.get('/auth/extend', UserController.extendSession);
 router.get('/auth/refresh', UserController.refreshToken);
 router.put('/auth/hb', UserController.heartBeatAPI);
 router.get('/:app/app/ipwhitelisting', AppController.fetchIPwhitelisting);
-router.get('/:app/bookmark/utils/count', BookmarkController.customCount);
-router.post('/:app/bookmark', BookmarkController.create);
-router.get('/:app/bookmark', BookmarkController.customIndex);
-router.delete('/:app/bookmark/utils/bulkDelete', BookmarkController.bulkDelete);
-router.get('/:app/bookmark/:id', BookmarkController.show);
-router.put('/:app/bookmark/:id', BookmarkController.update);
-router.delete('/:app/bookmark/:id', BookmarkController.delete);
 
 router.get('/:app/apiKeys/utils/count', APIKeyController.apiKeyInAppCount);
 router.post('/:app/apiKeys', APIKeyController.apiKeyInAppCreate);
@@ -166,13 +164,6 @@ router.get('/:app/apiKeys', APIKeyController.apiKeyInApp);
 router.get('/:app/apiKeys/:id', APIKeyController.apiKeyInAppShow);
 router.put('/:app/apiKeys/:id', APIKeyController.apiKeyInAppUpdate);
 router.delete('/:app/apiKeys/:id', APIKeyController.apiKeyInAppDestroy);
-
-// router.get('/:app/secrets', SecretsController.list);
-// router.post('/:app/secrets', SecretsController.create);
-// router.get('/:app/secrets/utils/count', SecretsController.count);
-// router.get('/:app/secrets/:id', SecretsController.show);
-// router.put('/:app/secrets/:id', SecretsController.update);
-// router.delete('/:app/secrets/:id', SecretsController.destroy);
 
 router.use('/:app/secrets', SecretsController);
 

@@ -76,15 +76,16 @@ async function fetchEnvironmentVariablesFromDB() {
 		logger.info('Seeding environment variables');
 		await seedConfigData();
 
-		logger.warn('Retry fetching environment variables from DB...');
+		logger.info('Fetching environment variables from DB...');
 		const envVariables = await dataStackUtils.database.fetchEnvVariables();
 
 		configureAzure(azureConfig, envVariables);
 		configureLDAP(ldapConfig, envVariables);
 
+		logger.info('Successfully fetched environment variables from the database.');
 		return envVariables;
 	} catch (error) {
-		logger.error('Retry for environment variables failed. Crashing the component.', error);
+		logger.error('Fetching environment variables failed. Crashing the component.', error);
 		process.exit(1);
 	}
 }

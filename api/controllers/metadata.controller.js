@@ -79,7 +79,11 @@ function customCreate(req, res) {
 }
 function customIndex(req, res) {
 	modifyFilterForApp(req);
-	crudder.index(req, res);
+	if (req.query.countOnly == true || req.query.countOnly == 'true') {
+		crudder.count(req, res);
+	} else {
+		crudder.index(req, res);
+	}
 }
 function customShow(req, res) {
 	modifyFilterForApp(req);

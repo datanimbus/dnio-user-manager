@@ -61,6 +61,7 @@ router.get('/:app/metadata/mapper/formula/:id', MetadataController.show);
 router.put('/:app/metadata/mapper/formula/:id', MetadataController.update);
 router.delete('/:app/metadata/mapper/formula/:id', MetadataController.destroy);
 
+router.get('/:app/formula/utils/count', MetadataController.app.count);
 router.get('/:app/formula/count', MetadataController.app.count);
 router.get('/:app/formula', MetadataController.app.index);
 router.post('/:app/formula', MetadataController.app.create);

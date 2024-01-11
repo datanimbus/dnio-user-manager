@@ -78,9 +78,9 @@ logger.debug('DB Author Options', conf.dbAuthorOptions);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
 
-		logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
-		logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
-		await mongoose.createConnection(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions);
+		// logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
+		// logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
+		// await mongoose.createConnection(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions);
 
 		logger.info('DB Appcenter Type', conf.dbAppcenterType);
 		logger.info('DB Appcenter URL', conf.dbAppcenterUrl);

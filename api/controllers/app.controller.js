@@ -661,7 +661,8 @@ e.customDestroy = (req, res) => {
 					})
 					.then(() => {
 						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
-						return global.mongoConnection.useDb(dbName).dropDatabase();
+						// return global.mongoConnection.useDb(dbName).dropDatabase();
+						return global.dbAppcenterConnection.useDb(dbName).dropDatabase();
 					}).catch(err => {
 						logger.error(err);
 					});

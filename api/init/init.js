@@ -118,8 +118,11 @@ async function updateExistingServiceConnectors() {
 		logger.info('=== Updating existing services with default connectors ===');
 
 		const appModel = mongoose.model('app');
-		const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
-		let services = await db.collection('services').find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
+		// const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
+		// let services = await db.collection('services').find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
+		const servicesModel = mongoose.model('services');
+		let services = await servicesModel.find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
+
 
 		logger.info(`Total no. of services without connectors :: ${services.length}`);
 		logger.trace(`Services :: ${JSON.stringify(services)}`);
@@ -145,7 +148,8 @@ async function updateExistingServiceConnectors() {
 
 				doc.connectors = app.connectors;
 
-				await db.collection('services').updateOne({ '_id': doc._id }, { '$set': doc });
+				// await db.collection('services').updateOne({ '_id': doc._id }, { '$set': doc });
+				await servicesModel.updateOne({ '_id': doc._id }, { '$set': doc });
 			} catch (err) {
 				logger.error(err);
 			}
@@ -389,12 +393,12 @@ async function validateAuthModes() {
 
 
 async function createIndexForSession() {
-	const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
+	// const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
 	try {
-		await db.collection('userMgmt.sessions').createIndex(
+		await global.dbAuthorConnection.collection('userMgmt.sessions').createIndex(
 			{ 'expireAt': 1 }, { expireAfterSeconds: 0 }
 		);
-		await db.collection('userMgmt.sessions').createIndex(
+		await global.dbAuthorConnection.collection('userMgmt.sessions').createIndex(
 			{
 				username: 'text',
 				type: 'text'

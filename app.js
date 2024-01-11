@@ -44,15 +44,31 @@ mongoose.Promise = global.Promise;
 
 let maxJSONSize;
 let timeOut;
-let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
+// let mongoUrl = process.env.MONGO_AUTHOR_URL || 'mongodb://localhost';
 
-logger.debug('Mongo Author URL', mongoUrl);
-logger.debug('Mongo Author Options', conf.mongoOptions);
+// logger.debug('Mongo Author URL', mongoUrl);
+// logger.debug('Mongo Author Options', conf.mongoOptions);
+logger.debug('DB Author Type', conf.dbAuthorType);
+logger.debug('DB Author URL', conf.dbAuthorUrl);
+logger.debug('DB Author Options', conf.dbAuthorOptions);
 
 
+// var MongoClient = require('mongodb').MongoClient;
 (async () => {
 	try {
-		await mongoose.connect(mongoUrl, conf.mongoOptions);
+		// const client = new MongoClient(conf.dbAuthorUrl);
+		// let dbAuthorConnection = await client.connect();
+
+		// var server = tunnel(config, function (error, server) {
+		// 	if(error){
+		// 		console.log("SSH connection error: " + error);
+		// 	}
+		// 	mongoose.connect('mongodb://localhost:27000/');
+		// 	//...rest of mongoose connection
+		// }
+
+		// await mongoose.connect(mongoUrl, conf.mongoOptions);
+		await mongoose.connect(conf.dbAuthorUrl, conf.dbAuthorOptions);
 		mongoose.connection.on('connecting', () => logger.info(' *** Author DB :: Connecting'));
 		mongoose.connection.on('disconnected', () => logger.error(' *** Author DB :: connection lost'));
 		mongoose.connection.on('reconnect', () => logger.info(' *** Author DB :: Reconnected'));
@@ -61,10 +77,19 @@ logger.debug('Mongo Author Options', conf.mongoOptions);
 		logger.trace(`Connected to URL: ${mongoose.connection.host}`);
 		logger.trace(`Connected to DB:${mongoose.connection.name}`);
 		logger.trace(`Connected via User: ${mongoose.connection.user}`);
+
 		logger.info('Mongo Appcenter URL', conf.mongoUrlAppcenter);
 		logger.debug('Mongo Appcenter Options', conf.mongoAppcenterOptions);
 		await mongoose.createConnection(conf.mongoUrlAppcenter, conf.mongoAppcenterOptions);
+
+		logger.info('DB Appcenter Type', conf.dbAppcenterType);
+		logger.info('DB Appcenter URL', conf.dbAppcenterUrl);
+		logger.debug('DB Appcenter Options', conf.dbAppcenterUrl);
+		await mongoose.createConnection(conf.dbAppcenterUrl, conf.dbAppcenterOptions);
+
 		global.mongoConnection = mongoose.connections[1];
+		global.dbAuthorConnection = mongoose.connections[0];
+		global.dbAppcenterConnection = mongoose.connections[1];
 		logger.info('Connected to Appcenter DB');
 		await mongoUtil.setIsTransactionAllowed();
 

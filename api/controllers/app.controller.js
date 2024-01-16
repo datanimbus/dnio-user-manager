@@ -83,7 +83,7 @@ schema.pre('save', function (next) {
 		let connector = {};
 
 		connector.category = 'DB';
-		connector.type = 'MONGODB';
+		connector.type = config.dbAppcenterType.toUpperCase;
 		connector.name = 'Default DB Connector';
 		connector.app = this._doc._id;
 		connector.options = {

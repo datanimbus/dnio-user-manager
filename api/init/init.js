@@ -16,97 +16,102 @@ async function updateExistingAppConnectors() {
 	try {
 		logger.info('=== Updating existing apps with default connectors ===');
 
-		const connectorsModel = mongoose.model('config.connectors');
 		const apps = await mongoose.model('app').find({ 'connectors': { '$exists': false } }).lean();
 
 		logger.info(`Total no. of apps without connectors :: ${apps.length}`);
 		logger.trace(`Apps :: ${JSON.stringify(apps)}`);
 
-		const promises = apps.map(async (doc) => {
-			try {
-				logger.info(`Processing App :: ${doc._id}`);
-				logger.trace(`Processing App :: ${JSON.stringify(doc)}`);
+		if (apps.length > 0) {
+			const connectorsModel = await mongoose.model('config.connectors');
 
-				if (!doc.connectors || _.isEmpty(doc.connectors)) {
-					doc.connectors = {
-						data: {},
-						file: {}
-					};
+			const promises = apps.map(async (doc) => {
+				try {
+					logger.info(`Processing App :: ${doc._id}`);
+					logger.trace(`Processing App :: ${JSON.stringify(doc)}`);
+
+					if (!doc.connectors || _.isEmpty(doc.connectors)) {
+						doc.connectors = {
+							data: {},
+							file: {}
+						};
+					}
+
+					let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ['Default DB Connector', 'Default File Connector'] } }).lean();
+					logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
+					logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
+
+					let dbConnector = _.find(connectors, conn => conn.name === 'Default DB Connector');
+					let fileConnector = _.find(connectors, conn => conn.name === 'Default File Connector');
+
+					if (connectors.length !== 2) {
+						if (!fileConnector) {
+							logger.info(`File connector not found for app :: ${doc._id}`);
+							let connector = {};
+							connector.category = 'STORAGE';
+							connector.type = 'GRIDFS';
+							connector.name = 'Default File Connector';
+							connector.app = doc._id;
+							connector.options = {
+								default: true,
+								isValid: true
+							};
+							connector.values = {
+								connectionString: ''
+							};
+
+							let fileConnDoc = new connectorsModel(connector);
+							let status = await fileConnDoc.save();
+							logger.info(`File connector created for app :: ${doc._id} :: ${status._id}`);
+							doc.connectors.file = {
+								_id: status._id
+							};
+						}
+
+						if (!dbConnector) {
+							logger.info(`Data connector not found for app :: ${doc._id}`);
+							let connector = {};
+							connector.category = 'DB';
+							connector.type = 'MONGODB';
+							connector.name = 'Default DB Connector';
+							connector.app = doc._id;
+							connector.options = {
+								default: true,
+								isValid: true
+							};
+							connector.values = {
+								connectionString: '',
+								database: ''
+							};
+
+							let dbConnDoc = new connectorsModel(connector);
+							let status = await dbConnDoc.save();
+							logger.info(`Data connector created for app :: ${doc._id} :: ${status._id}`);
+							doc.connectors.data = {
+								_id: status._id
+							};
+						}
+					} else {
+						if (!doc.connectors?.data?._id) {
+							logger.info(`Setting data connector for app :: ${doc._id} :: ${dbConnector?._id}`);
+							doc.connectors.data._id = dbConnector?._id;
+						}
+
+						if (!doc.connectors?.file?._id) {
+							logger.info(`Setting file connector for app :: ${doc._id} :: ${fileConnector?._id}`);
+							doc.connectors.file._id = fileConnector?._id;
+						}
+					}
+					await mongoose.model('app').updateOne({ '_id': doc._id }, { '$set': doc });
+					logger.info(`Updated app :: ${doc._id} :: with connectors`);
+				} catch (err) {
+					logger.error(err);
 				}
-
-				let connectors = await connectorsModel.find({ app: doc._id, name: { $in: ['Default DB Connector', 'Default File Connector'] } }).lean();
-				logger.info(`No of connectors found for app :: ${doc._id} :: ${connectors.length}`);
-				logger.trace(`Connectors found for app :: ${doc._id} :: ${JSON.stringify(connectors)}`);
-
-				let dbConnector = _.find(connectors, conn => conn.name === 'Default DB Connector');
-				let fileConnector = _.find(connectors, conn => conn.name === 'Default File Connector');
-
-				if (connectors.length !== 2) {
-					if (!fileConnector) {
-						logger.info(`File connector not found for app :: ${doc._id}`);
-						let connector = {};
-						connector.category = 'STORAGE';
-						connector.type = 'GRIDFS';
-						connector.name = 'Default File Connector';
-						connector.app = doc._id;
-						connector.options = {
-							default: true,
-							isValid: true
-						};
-						connector.values = {
-							connectionString: ''
-						};
-
-						let fileConnDoc = new connectorsModel(connector);
-						let status = await fileConnDoc.save();
-						logger.info(`File connector created for app :: ${doc._id} :: ${status._id}`);
-						doc.connectors.file = {
-							_id: status._id
-						};
-					}
-
-					if (!dbConnector) {
-						logger.info(`Data connector not found for app :: ${doc._id}`);
-						let connector = {};
-						connector.category = 'DB';
-						connector.type = 'MONGODB';
-						connector.name = 'Default DB Connector';
-						connector.app = doc._id;
-						connector.options = {
-							default: true,
-							isValid: true
-						};
-						connector.values = {
-							connectionString: '',
-							database: ''
-						};
-
-						let dbConnDoc = new connectorsModel(connector);
-						let status = await dbConnDoc.save();
-						logger.info(`Data connector created for app :: ${doc._id} :: ${status._id}`);
-						doc.connectors.data = {
-							_id: status._id
-						};
-					}
-				} else {
-					if (!doc.connectors?.data?._id) {
-						logger.info(`Setting data connector for app :: ${doc._id} :: ${dbConnector?._id}`);
-						doc.connectors.data._id = dbConnector?._id;
-					}
-
-					if (!doc.connectors?.file?._id) {
-						logger.info(`Setting file connector for app :: ${doc._id} :: ${fileConnector?._id}`);
-						doc.connectors.file._id = fileConnector?._id;
-					}
-				}
-				await mongoose.model('app').updateOne({ '_id': doc._id }, { '$set': doc });
-				logger.info(`Updated app :: ${doc._id} :: with connectors`);
-			} catch (err) {
-				logger.error(err);
-			}
-		});
-		await Promise.all(promises);
-		logger.info('=== Updated all apps with default connectors ===');
+			});
+			await Promise.all(promises);
+			logger.info('=== Updated all apps with default connectors ===');
+		} else {
+			logger.info('=== No apps available to update with default connectors ===');
+		}
 	} catch (err) {
 		logger.error(err.message);
 	}
@@ -120,8 +125,7 @@ async function updateExistingServiceConnectors() {
 		const appModel = mongoose.model('app');
 		// const db = global.mongoConnection.useDb(config.mongoOptions.dbName);
 		// let services = await db.collection('services').find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
-		const servicesModel = mongoose.model('services');
-		let services = await servicesModel.find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
+		let services = await global.dbAuthorConnection.collection('services').find({ 'status': { '$nin': ['Draft'] }, 'connectors': { '$exists': false } }).toArray();
 
 
 		logger.info(`Total no. of services without connectors :: ${services.length}`);
@@ -132,8 +136,12 @@ async function updateExistingServiceConnectors() {
 		let appsList = [];
 
 		let promises = await apps.map(async e => {
-			let app = await appModel.findById(e, { 'connectors': 1 }).lean();
-			appsList.push(app);
+			try {
+				let app = await appModel.findById(e, { 'connectors': 1 }).lean();
+				appsList.push(app);
+			} catch (err) {
+				logger.error(err);
+			}
 		});
 		await Promise.all(promises);
 
@@ -398,12 +406,14 @@ async function createIndexForSession() {
 		await global.dbAuthorConnection.collection('userMgmt.sessions').createIndex(
 			{ 'expireAt': 1 }, { expireAfterSeconds: 0 }
 		);
-		await global.dbAuthorConnection.collection('userMgmt.sessions').createIndex(
-			{
-				username: 'text',
-				type: 'text'
-			}
-		);
+		if (config.dbAuthorType === 'mongodb') {
+			await global.dbAuthorConnection.collection('userMgmt.sessions').createIndex(
+				{
+					username: 'text',
+					type: 'text'
+				}
+			);
+		}
 		logger.info('Successfully created indexes for sessions collection');
 	} catch (error) {
 		logger.error(error);

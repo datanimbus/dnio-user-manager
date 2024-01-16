@@ -84,7 +84,7 @@ logger.debug('DB Author Options', conf.dbAuthorOptions);
 
 		logger.info('DB Appcenter Type', conf.dbAppcenterType);
 		logger.info('DB Appcenter URL', conf.dbAppcenterUrl);
-		logger.debug('DB Appcenter Options', conf.dbAppcenterUrl);
+		logger.debug('DB Appcenter Options', conf.dbAppcenterOptions);
 		await mongoose.createConnection(conf.dbAppcenterUrl, conf.dbAppcenterOptions);
 
 		global.mongoConnection = mongoose.connections[1];

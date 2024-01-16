@@ -237,6 +237,7 @@ module.exports = {
 	dbAuthorOptions: {
 		dbName: process.env.DB_AUTHOR_DBNAME || process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
 		useNewUrlParser: true,
+		useUnifiedTopology: true
 		// sslValidate: true,
 		// checkServerIdentity: false,
 		// sslCA: [fs.readFileSync(path.join(process.cwd(), process.env.DNIO_DATABASE_CERT_NAME), 'utf-8')]

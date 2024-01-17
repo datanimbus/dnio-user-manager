@@ -83,7 +83,7 @@ schema.pre('save', function (next) {
 		let connector = {};
 
 		connector.category = 'DB';
-		connector.type = 'MONGODB';
+		connector.type = config.dbAppcenterType.toUpperCase;
 		connector.name = 'Default DB Connector';
 		connector.app = this._doc._id;
 		connector.options = {
@@ -661,7 +661,8 @@ e.customDestroy = (req, res) => {
 					})
 					.then(() => {
 						var dbName = `${process.env.DATA_STACK_NAMESPACE}` + '-' + appName;
-						return global.mongoConnection.useDb(dbName).dropDatabase();
+						// return global.mongoConnection.useDb(dbName).dropDatabase();
+						return global.dbAppcenterConnection.useDb(dbName).dropDatabase();
 					}).catch(err => {
 						logger.error(err);
 					});

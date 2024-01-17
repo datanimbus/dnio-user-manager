@@ -1,4 +1,6 @@
 const log4js = require('log4js');
+const fs = require('fs');
+const path = require('path');
 const dataStackUtils = require('@appveen/data.stack-utils');
 const { seedConfigData } = require('../api/helpers/util/env.var.config/seed.env.config');
 
@@ -207,6 +209,10 @@ module.exports = {
 	dataStackNS: dataStackNS,
 	blockedAppNames: envVariables.BLOCKED_APP_NAMES ? envVariables.BLOCKED_APP_NAMES.split(',') : ['appAdmin', 'superAdmin'],
 	mongoUrlAppcenter: process.env.MONGO_APPCENTER_URL || 'mongodb://localhost',
+	dbAppcenterType: process.env.DB_APPCENTER_TYPE,
+	dbAppcenterUrl: process.env.DB_APPCENTER_URL || process.env.MONGO_APPCENTER_URL || 'mongodb://localhost:27017',
+	dbAuthorType: process.env.DB_AUTHOR_TYPE,
+	dbAuthorUrl: process.env.DB_AUTHOR_URL || process.env.MONGO_AUTHOR_URL || 'mongodb://localhost',
 	streamingConfig: {
 		url: process.env.STREAMING_HOST || 'nats://127.0.0.1:4222',
 		user: process.env.STREAMING_USER || '',
@@ -226,6 +232,17 @@ module.exports = {
 	mongoAppcenterOptions: {
 		// reconnectTries: process.env.MONGO_RECONN_TRIES,
 		// reconnectInterval: process.env.MONGO_RECONN_TIME_MILLI,
+		useNewUrlParser: true
+	},
+	dbAuthorOptions: {
+		dbName: process.env.DB_AUTHOR_DBNAME || process.env.MONGO_AUTHOR_DBNAME || 'datastackConfig',
+		useNewUrlParser: true,
+		useUnifiedTopology: true
+		// sslValidate: true,
+		// checkServerIdentity: false,
+		// sslCA: [fs.readFileSync(path.join(process.cwd(), process.env.DNIO_DATABASE_CERT_NAME), 'utf-8')]
+	},
+	dbAppcenterOptions: {
 		useNewUrlParser: true
 	},
 	mongooseCustomLogger: (coll, op, doc, proj) => {

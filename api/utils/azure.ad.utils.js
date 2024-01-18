@@ -17,13 +17,17 @@ if (tenant && clientSecret && applicationId) {
 	logger.debug('Tenant ::', tenant);
 	logger.debug('Client ID ::', applicationId);
 	logger.debug('Client Secret ::', clientSecret);
-	msalClient = new msal.ConfidentialClientApplication({
-		auth: {
-			clientId: applicationId,
-			authority: authorityUrl,
-			clientSecret: clientSecret
-		}
-	});
+	try {
+		msalClient = new msal.ConfidentialClientApplication({
+			auth: {
+				clientId: applicationId,
+				authority: authorityUrl,
+				clientSecret: clientSecret
+			}
+		});
+	} catch (err) {
+		logger.error('MSAL Client ERROR ::', err);
+	}
 } else {
 	logger.warning('Azure Details Missing:-');
 	logger.warning('Tenant ::', tenant);

@@ -13,6 +13,7 @@ let applicationId = azureConfig.clientId;
 let clientSecret = azureConfig.clientSecret;
 let msalClient;
 if (tenant && clientSecret && applicationId) {
+	logger.debug('Azure Details Found');
 	msalClient = new msal.ConfidentialClientApplication({
 		auth: {
 			clientId: applicationId,
@@ -20,6 +21,11 @@ if (tenant && clientSecret && applicationId) {
 			clientSecret: clientSecret
 		}
 	});
+} else {
+	logger.warning('Azure Details Missing:-');
+	logger.warning('Tenant:', tenant);
+	logger.warning('Client ID:', applicationId);
+	logger.warning('Client Secret:', clientSecret);
 }
 
 

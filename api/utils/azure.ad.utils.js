@@ -14,6 +14,9 @@ let clientSecret = azureConfig.clientSecret;
 let msalClient;
 if (tenant && clientSecret && applicationId) {
 	logger.debug('Azure Details Found');
+	logger.debug('Tenant ::', tenant);
+	logger.debug('Client ID ::', applicationId);
+	logger.debug('Client Secret ::', clientSecret);
 	msalClient = new msal.ConfidentialClientApplication({
 		auth: {
 			clientId: applicationId,
@@ -23,9 +26,9 @@ if (tenant && clientSecret && applicationId) {
 	});
 } else {
 	logger.warning('Azure Details Missing:-');
-	logger.warning('Tenant:', tenant);
-	logger.warning('Client ID:', applicationId);
-	logger.warning('Client Secret:', clientSecret);
+	logger.warning('Tenant ::', tenant);
+	logger.warning('Client ID ::', applicationId);
+	logger.warning('Client Secret ::', clientSecret);
 }
 
 
@@ -37,6 +40,7 @@ async function getAuthUrl(state) {
 			responseMode: msal.ResponseMode.QUERY,
 			state: state ? state : 'login'
 		});
+		logger.debug('Azure Auth URL ::', url);
 		return url;
 	} catch (err) {
 		logger.error('Error in validateAzureCredentials :: ', err);

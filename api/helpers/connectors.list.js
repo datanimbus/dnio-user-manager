@@ -51,6 +51,106 @@ const data = [
 	},
 	{
 		category: 'DB',
+		type: 'DOCUMENTDB',
+		label: 'DocumentDB',
+		fields: [
+			{
+				type: 'String',
+				key: 'connectionString',
+				label: 'Connection String',
+				htmlInputType: 'textarea',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'database',
+				label: 'Database Name',
+				htmlInputType: 'text',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'Boolean',
+				key: 'tls',
+				label: 'TLS',
+				htmlInputType: 'checkbox',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'certName',
+				label: 'Certificate File Name',
+				htmlInputType: 'text',
+				condition: {
+					tls: true
+				}
+			},
+			{
+				type: 'String',
+				key: 'cert',
+				label: 'Certificate Content',
+				htmlInputType: 'textarea',
+				encrypted: true,
+				condition: {
+					tls: true
+				}
+			}
+		]
+	},
+	{
+		category: 'DB',
+		type: 'COSMOSDB',
+		label: 'CosmosDB',
+		fields: [
+			{
+				type: 'String',
+				key: 'connectionString',
+				label: 'Connection String',
+				htmlInputType: 'textarea',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'database',
+				label: 'Database Name',
+				htmlInputType: 'text',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'Boolean',
+				key: 'tls',
+				label: 'TLS',
+				htmlInputType: 'checkbox',
+				encrypted: false,
+				required: true
+			},
+			{
+				type: 'String',
+				key: 'certName',
+				label: 'Certificate File Name',
+				htmlInputType: 'text',
+				condition: {
+					tls: true
+				}
+			},
+			{
+				type: 'String',
+				key: 'cert',
+				label: 'Certificate Content',
+				htmlInputType: 'textarea',
+				encrypted: true,
+				condition: {
+					tls: true
+				}
+			}
+		]
+	},
+	{
+		category: 'DB',
 		type: 'MYSQL',
 		label: 'MySQL',
 		fields: [

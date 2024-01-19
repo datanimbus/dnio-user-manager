@@ -721,7 +721,7 @@ function localLogin(req, res) {
 	commonLogin(req, res);
 	//Allow Admin User to login and import AD/LDAP Users
 
-	// if (checkAuthMode(res, 'local') || req.body.username == 'admin') {
+	// if (invalidAuthMode(res, 'local') || req.body.username == 'admin') {
 	// 	passport.authenticate('local', function (err, user, info) {
 	// 		if (err) {
 	// 			logger.error('error in local login ::: ', err);
@@ -770,7 +770,7 @@ function validateLdapLogin(ldapUser, done) {
 
 function ldapLogin(req, res) {
 	commonLogin(req, res);
-	// if (checkAuthMode(res, 'ldap')) {
+	// if (invalidAuthMode(res, 'ldap')) {
 	// 	passport.authenticate('ldapauth', function (err, user, info) {
 	// 		if (err) {
 	// 			logger.error('error in ldap ::: ', err);
@@ -805,7 +805,7 @@ async function commonLogin(req, res) {
 				userDoc.auth.authType = 'local';
 			}
 			if (userDoc.bot || userDoc.auth.authType == 'local') {
-				if (!checkAuthMode(res, 'local') && !req.body.username == 'admin') {
+				if (!invalidAuthMode(res, 'local')) {
 					throw new Error('Local Auth Mode is Not Configured');
 				}
 				passport.authenticate('local', function (err, user, info) {
@@ -822,7 +822,7 @@ async function commonLogin(req, res) {
 					}
 				})(req, res);
 			} else if (userDoc.auth.authType == 'ldap') {
-				if (!checkAuthMode(res, 'ldap')) {
+				if (!invalidAuthMode(res, 'ldap')) {
 					throw new Error('LDAP Auth Mode is Not Configured');
 				}
 				passport.authenticate('ldapauth', function (err, user, info) {
@@ -840,7 +840,7 @@ async function commonLogin(req, res) {
 			} else if (userDoc.auth.authType == 'azure') {
 				try {
 					logger.debug('Checking Azure Login.');
-					if (checkAuthMode(res, 'azure')) {
+					if (!invalidAuthMode(res, 'azure')) {
 						// passport.authenticate('AzureLogIn', { session: false })(req, res);
 						const url = await azureAdUtil.getAuthUrl();
 						return res.redirect(url);
@@ -929,7 +929,7 @@ function azureLogin(req, res) {
 	commonLogin(req, res);
 	// try {
 	// 	logger.debug('Checking Azure Login.');
-	// 	if (checkAuthMode(res, 'azure')) {
+	// 	if (!invalidAuthMode(res, 'azure')) {
 	// 		// passport.authenticate('AzureLogIn', { session: false })(req, res);
 	// 		const url = await azureAdUtil.getAuthUrl();
 	// 		return res.redirect(url);
@@ -947,7 +947,7 @@ function azureLogin(req, res) {
 async function azureLoginCallback(req, res) {
 	try {
 		logger.debug('login callback called : ', req.path);
-		if (checkAuthMode(res, 'azure')) {
+		if (!invalidAuthMode(res, 'azure')) {
 			const state = req.query.state;
 			let data;
 			try {
@@ -1008,14 +1008,11 @@ function sendAzureCallbackResponse(res, statusCode, body) {
 	`);
 }
 
-function checkAuthMode(res, authMode) {
+function invalidAuthMode(res, authMode) {
 	if (envConfig.RBAC_USER_AUTH_MODES.includes(authMode)) {
 		return true;
 	} else {
 		logger.debug('Supported auth modes are :: ', envConfig.RBAC_USER_AUTH_MODES);
-		res.status(400).json({
-			message: authMode + ' auth mode is not enabled.'
-		});
 		return false;
 	}
 }

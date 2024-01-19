@@ -721,7 +721,7 @@ function localLogin(req, res) {
 	commonLogin(req, res);
 	//Allow Admin User to login and import AD/LDAP Users
 
-	// if (invalidAuthMode(res, 'local') || req.body.username == 'admin') {
+	// if (isAuthModeValid(res, 'local') || req.body.username == 'admin') {
 	// 	passport.authenticate('local', function (err, user, info) {
 	// 		if (err) {
 	// 			logger.error('error in local login ::: ', err);
@@ -770,22 +770,6 @@ function validateLdapLogin(ldapUser, done) {
 
 function ldapLogin(req, res) {
 	commonLogin(req, res);
-	// if (invalidAuthMode(res, 'ldap')) {
-	// 	passport.authenticate('ldapauth', function (err, user, info) {
-	// 		if (err) {
-	// 			logger.error('error in ldap ::: ', err);
-	// 			if (info) userLog.loginFailed(info, req, res);
-	// 			return handleLoginFailure(res, err);
-	// 		} else if (!user) {
-	// 			logger.error('Something went wrong in ldapLogin:: ', info);
-	// 			return handleLoginFailure(res, info);
-	// 		} else {
-	// 			return handleSessionAndGenerateToken(req, res, user, null, false);
-	// 		}
-	// 	})(req, res);
-	// } else {
-	// 	res.status(400).json({ message: 'LDAP Login Mode is Disabled' });
-	// }
 }
 
 async function commonLogin(req, res) {
@@ -805,7 +789,7 @@ async function commonLogin(req, res) {
 				userDoc.auth.authType = 'local';
 			}
 			if (userDoc.bot || userDoc.auth.authType == 'local') {
-				if (!invalidAuthMode(res, 'local')) {
+				if (!isAuthModeValid(res, 'local')) {
 					throw new Error('Local Auth Mode is Not Configured');
 				}
 				passport.authenticate('local', function (err, user, info) {
@@ -822,7 +806,7 @@ async function commonLogin(req, res) {
 					}
 				})(req, res);
 			} else if (userDoc.auth.authType == 'ldap') {
-				if (!invalidAuthMode(res, 'ldap')) {
+				if (!isAuthModeValid(res, 'ldap')) {
 					throw new Error('LDAP Auth Mode is Not Configured');
 				}
 				passport.authenticate('ldapauth', function (err, user, info) {
@@ -840,15 +824,15 @@ async function commonLogin(req, res) {
 			} else if (userDoc.auth.authType == 'azure') {
 				try {
 					logger.debug('Checking Azure Login.');
-					if (!invalidAuthMode(res, 'azure')) {
-						// passport.authenticate('AzureLogIn', { session: false })(req, res);
-						const url = await azureAdUtil.getAuthUrl();
-						return res.redirect(url);
+					if (!isAuthModeValid(res, 'azure')) {
+						if (req.header('content-type') == 'application/json') {
+							throw new Error('Azure Auth Mode is Not Configured');
+						} else {
+							return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+						}
 					}
-					if (req.header('content-type') == 'application/json') {
-						return res.status(400).json({ message: 'Azure auth mode not configured' });
-					}
-					return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
+					const url = await azureAdUtil.getAuthUrl();
+					return res.redirect(url);
 				} catch (err) {
 					logger.error(err);
 					return sendAzureCallbackResponse(res, 500, { message: Error.message });
@@ -927,27 +911,12 @@ async function customAzureAuthenticate(data, done) {
 
 function azureLogin(req, res) {
 	commonLogin(req, res);
-	// try {
-	// 	logger.debug('Checking Azure Login.');
-	// 	if (!invalidAuthMode(res, 'azure')) {
-	// 		// passport.authenticate('AzureLogIn', { session: false })(req, res);
-	// 		const url = await azureAdUtil.getAuthUrl();
-	// 		return res.redirect(url);
-	// 	}
-	// 	if (req.header('content-type') == 'application/json') {
-	// 		return res.status(400).json({ message: 'Azure auth mode not configured' });
-	// 	}
-	// 	return sendAzureCallbackResponse(res, 400, { message: 'Azure auth mode not configured' });
-	// } catch (err) {
-	// 	logger.error(err);
-	// 	return sendAzureCallbackResponse(res, 500, { message: Error.message });
-	// }
 }
 
 async function azureLoginCallback(req, res) {
 	try {
 		logger.debug('login callback called : ', req.path);
-		if (!invalidAuthMode(res, 'azure')) {
+		if (isAuthModeValid(res, 'azure')) {
 			const state = req.query.state;
 			let data;
 			try {
@@ -1008,7 +977,7 @@ function sendAzureCallbackResponse(res, statusCode, body) {
 	`);
 }
 
-function invalidAuthMode(res, authMode) {
+function isAuthModeValid(res, authMode) {
 	if (envConfig.RBAC_USER_AUTH_MODES.includes(authMode)) {
 		return true;
 	} else {

@@ -538,7 +538,7 @@ e.sendEncryptionKey = async (req, res) => {
 		const keys = {};
 		keys.encryptionKey = config.encryptionKey;
 		const app = req.params.app;
-		const doc = await crudder.model.findOne({ app }).lean();
+		const doc = await crudder.model.findOne({ _id: app }).lean();
 		keys.appEncryptionKey = doc.encryptionKey;
 		res.status(200).json(keys);
 	} catch (err) {

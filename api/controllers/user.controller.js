@@ -3416,6 +3416,12 @@ async function importUsersFromAzure(req, res) {
 				if (!adUser) {
 					throw new Error('User Not Found');
 				}
+				if (!adUser.username) {
+					adUser.username = user.username;
+				}
+				if (!adUser.name) {
+					adUser.name = user.basicDetails.name;
+				}
 				if (!adUser.email) {
 					adUser.email = user.basicDetails.alternateEmail;
 				}

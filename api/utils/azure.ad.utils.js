@@ -29,10 +29,10 @@ if (tenant && clientSecret && applicationId) {
 		logger.error('MSAL Client ERROR ::', err);
 	}
 } else {
-	logger.warning('Azure Details Missing:-');
-	logger.warning('Tenant ::', tenant);
-	logger.warning('Client ID ::', applicationId);
-	logger.warning('Client Secret ::', clientSecret);
+	logger.warn('Azure Details Missing:-');
+	logger.warn('Tenant ::', tenant);
+	logger.warn('Client ID ::', applicationId);
+	logger.warn('Client Secret ::', clientSecret);
 }
 
 
